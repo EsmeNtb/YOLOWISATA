@@ -1,0 +1,60 @@
+{
+ "id": "rina",
+ "name": "Rina’s Village Walk",
+ "host": "Rina",
+ "sector": "Guide",
+ "e": "🥾",
+ "col": "#47C882",
+ "place": "Ondera village",
+ "pos": [
+  45,
+  40
+ ],
+ "chips": [
+  "Walking",
+  "Nature",
+  "Storytelling"
+ ],
+ "story": "Two or three sentences about the person and what makes the visit special.",
+ "L": {
+  "duration": "About 2 hours",
+  "price": "Rp75.000 per person",
+  "availability": "Every day",
+  "activities": "A guided walk"
+ },
+ "why": {
+  "nature": "A quiet walk through the rice terraces",
+  "culture": "Led by someone who grew up here"
+ },
+ "cards": [
+  {
+   "n": "Nickname",
+   "f": "🇩🇪",
+   "l": "German",
+   "t": "The visitor's words, exactly as written.",
+   "en": "English translation.",
+   "idt": "Terjemahan bahasa Indonesia.",
+   "bg": "sun",
+   "s": "🌿"
+  },
+  {
+   "n": "Sari",
+   "f": "🇮🇩",
+   "l": "Indonesian",
+   "t": "Kata-kata tamu lokal.",
+   "en": "English translation.",
+   "bg": "field",
+   "s": "💛",
+   "loc": 1
+  }
+ ],
+ "qs": [
+  {
+   "f": "🇬🇧",
+   "t": "A question a visitor asked.",
+   "idt": "Terjemahan."
+  }
+ ],
+ "bookings": [],
+ "threads": []
+}

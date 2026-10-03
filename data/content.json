@@ -1,0 +1,928 @@
+{
+ "village": {
+  "name": "Ondera",
+  "language": "id",
+  "gate": [
+   18,
+   86
+  ]
+ },
+ "sectors": {
+  "Farm": {
+   "emoji": "🌱",
+   "dna": {
+    "hands": 0.8,
+    "nature": 0.9,
+    "culture": 0.6,
+    "food": 0.6,
+    "quiet": 0.7,
+    "crowds": 0.05
+   },
+   "suffix": "Farm Experience",
+   "sample": "Nama saya Noor. Saya punya kebun kopi di dataran tinggi Ondera. Tamu bisa keliling kebun, petik kopi, lalu sangrai kopi sendiri di dapur saya dan minum kopinya. Lamanya kira-kira tiga jam. Harganya 150 ribu rupiah per orang. Saya buka hari Sabtu dan Minggu pagi."
+  },
+  "Craft": {
+   "emoji": "🪚",
+   "dna": {
+    "hands": 0.95,
+    "nature": 0.2,
+    "culture": 0.8,
+    "food": 0.05,
+    "quiet": 0.7,
+    "crowds": 0.05
+   },
+   "suffix": "Workshop",
+   "sample": "Nama saya Darto. Saya tukang kayu di desa. Tamu bisa belajar ukir kayu dan membuat sendok sendiri. Lamanya dua jam. Harganya 100 ribu rupiah per orang. Saya buka hari Sabtu dan Minggu."
+  },
+  "Food": {
+   "emoji": "🍲",
+   "dna": {
+    "hands": 0.8,
+    "nature": 0.2,
+    "culture": 0.85,
+    "food": 0.95,
+    "quiet": 0.5,
+    "crowds": 0.1
+   },
+   "suffix": "Kitchen",
+   "sample": "Nama saya Sari. Tamu bisa belanja ke pasar lalu masak sambal bersama saya di dapur. Lamanya tiga jam. Harganya 120 ribu rupiah per orang. Saya buka hari Rabu dan Sabtu."
+  },
+  "Guide": {
+   "emoji": "🥾",
+   "dna": {
+    "hands": 0.3,
+    "nature": 0.9,
+    "culture": 0.6,
+    "food": 0.2,
+    "quiet": 0.8,
+    "crowds": 0.1
+   },
+   "suffix": "Guided Walk",
+   "sample": "Nama saya Rina. Tamu bisa keliling desa bersama saya. Lamanya dua jam. Harganya 75 ribu rupiah per orang. Saya buka setiap hari."
+  },
+  "Homestay": {
+   "emoji": "🏡",
+   "dna": {
+    "hands": 0.3,
+    "nature": 0.5,
+    "culture": 0.9,
+    "food": 0.6,
+    "quiet": 0.8,
+    "crowds": 0.05
+   },
+   "suffix": "Homestay",
+   "sample": "Nama saya Rina. Tamu bisa keliling desa bersama saya. Lamanya dua jam. Harganya 75 ribu rupiah per orang. Saya buka setiap hari."
+  },
+  "Other": {
+   "emoji": "✨",
+   "dna": {
+    "hands": 0.5,
+    "nature": 0.5,
+    "culture": 0.7,
+    "food": 0.3,
+    "quiet": 0.6,
+    "crowds": 0.1
+   },
+   "suffix": "Experience",
+   "sample": "Nama saya Rina. Tamu bisa keliling desa bersama saya. Lamanya dua jam. Harganya 75 ribu rupiah per orang. Saya buka setiap hari."
+  }
+ },
+ "swipeCards": [
+  {
+   "t": "Coffee farm",
+   "e": "☕",
+   "d": "Pick, roast and drink it where it grows.",
+   "g": [
+    "hands",
+    "nature",
+    "food"
+   ]
+  },
+  {
+   "t": "Cooking with a local family",
+   "e": "🍲",
+   "d": "Their kitchen, their recipe, your hands.",
+   "g": [
+    "food",
+    "culture",
+    "hands"
+   ]
+  },
+  {
+   "t": "Textile or wood workshop",
+   "e": "🪚",
+   "d": "Learn a craft from the person who lives from it.",
+   "g": [
+    "hands",
+    "culture"
+   ]
+  },
+  {
+   "t": "Quiet village afternoon",
+   "e": "🏡",
+   "d": "No plan. A bench, some tea, a slow hour.",
+   "g": [
+    "quiet",
+    "culture"
+   ]
+  },
+  {
+   "t": "Mountain walk",
+   "e": "⛰️",
+   "d": "A trail, a ridge and nobody else on it.",
+   "g": [
+    "nature",
+    "quiet"
+   ]
+  },
+  {
+   "t": "Traditional market",
+   "e": "🧺",
+   "d": "Loud, busy and full of things to taste.",
+   "g": [
+    "food",
+    "culture",
+    "crowds"
+   ]
+  },
+  {
+   "t": "Music night",
+   "e": "🎶",
+   "d": "Local songs, a full room, a late night.",
+   "g": [
+    "culture",
+    "crowds"
+   ]
+  },
+  {
+   "t": "Crowded landmark",
+   "e": "🏛️",
+   "d": "The famous one. Everyone is there.",
+   "g": [
+    "crowds"
+   ]
+  },
+  {
+   "t": "Hands-on experience",
+   "e": "✋",
+   "d": "You would rather make it than watch it.",
+   "g": [
+    "hands"
+   ]
+  },
+  {
+   "t": "Scenic nature",
+   "e": "🌄",
+   "d": "A view worth the early alarm.",
+   "g": [
+    "nature",
+    "quiet"
+   ]
+  }
+ ],
+ "phrases": [
+  {
+   "id": "Selamat pagi!",
+   "en": "Good morning!",
+   "say": "suh-LAH-mat PAH-gee",
+   "emoji": "☀️"
+  },
+  {
+   "id": "Berapa harganya?",
+   "en": "How much is it?",
+   "say": "buh-RAH-pah har-GAH-nyah",
+   "emoji": "💰"
+  },
+  {
+   "id": "Boleh saya coba?",
+   "en": "May I try?",
+   "say": "BOH-leh SAH-yah CHOH-bah",
+   "emoji": "✋"
+  },
+  {
+   "id": "Terima kasih, enak sekali!",
+   "en": "Thank you, it was delicious!",
+   "say": "tuh-REE-mah KAH-see, EH-nak suh-KAH-lee",
+   "emoji": "😋"
+  },
+  {
+   "id": "Kopinya wangi sekali.",
+   "en": "The coffee smells wonderful.",
+   "say": "KOH-pee-nyah WAH-ngee suh-KAH-lee",
+   "emoji": "☕"
+  },
+  {
+   "id": "Bisa pelan-pelan?",
+   "en": "Could you speak slowly?",
+   "say": "BEE-sah puh-LAHN puh-LAHN",
+   "emoji": "🐢"
+  },
+  {
+   "id": "Saya tersesat. Bisa bantu?",
+   "en": "I am lost. Can you help?",
+   "say": "SAH-yah tur-SEH-sat. BEE-sah BAHN-too",
+   "emoji": "🧭"
+  },
+  {
+   "id": "Di mana rumah Bu Noor?",
+   "en": "Where is Ibu Noor’s house?",
+   "say": "dee MAH-nah ROO-mah boo NOOR",
+   "emoji": "🏡"
+  }
+ ],
+ "themes": {
+  "loved": {
+   "roast": {
+    "en": "Coffee roasting",
+    "id": "Menyangrai kopi",
+    "words": [
+     "roast",
+     "tost",
+     "sangrai",
+     "röst",
+     "焙煎",
+     "torréf"
+    ]
+   },
+   "walk": {
+    "en": "A walk around the place",
+    "id": "Jalan keliling",
+    "words": [
+     "walk",
+     "camina",
+     "keliling",
+     "spazier",
+     "散歩",
+     "promenade"
+    ]
+   },
+   "host": {
+    "en": "Talking with the host",
+    "id": "Mengobrol dengan tuan rumah",
+    "words": [
+     "noor",
+     "ノール",
+     "darto",
+     "sari",
+     "サリ",
+     "story",
+     "stories",
+     "historia",
+     "cerita",
+     "histoire"
+    ]
+   },
+   "view": {
+    "en": "The view",
+    "id": "Pemandangan",
+    "words": [
+     "view",
+     "vista",
+     "pemandangan",
+     "mirador",
+     "aussicht",
+     "景色",
+     "sunrise"
+    ]
+   },
+   "carve": {
+    "en": "Carving wood",
+    "id": "Mengukir kayu",
+    "words": [
+     "carv",
+     "ukir",
+     "tallar",
+     "schnitz"
+    ]
+   },
+   "cook": {
+    "en": "Cooking together",
+    "id": "Masak bersama",
+    "words": [
+     "cook",
+     "masak",
+     "cocin",
+     "koch",
+     "料理"
+    ]
+   }
+  },
+  "asks": {
+   "tasting": {
+    "en": "More tasting",
+    "id": "Lebih banyak mencicipi",
+    "words": [
+     "tasting",
+     "taste more",
+     "probar",
+     "cicip",
+     "dégust",
+     "verkost",
+     "試飲"
+    ]
+   },
+   "food": {
+    "en": "Food / meal included?",
+    "id": "Apakah termasuk makan?",
+    "words": [
+     "meal",
+     "lunch",
+     "comida",
+     "makan",
+     "essen",
+     "repas",
+     "食事"
+    ]
+   },
+   "directions": {
+    "en": "Easier directions",
+    "id": "Petunjuk arah lebih mudah",
+    "words": [
+     "direction",
+     "lost",
+     "arah",
+     "schwer zu finden",
+     "hard to find",
+     "cómo llegar"
+    ]
+   },
+   "beans": {
+    "en": "Buying something to take home",
+    "id": "Beli untuk dibawa pulang",
+    "words": [
+     "buy",
+     "beli",
+     "comprar",
+     "kaufen",
+     "acheter"
+    ]
+   },
+   "process": {
+    "en": "How it is made",
+    "id": "Cara pembuatannya",
+    "words": [
+     "proces",
+     "工程",
+     "how is it made",
+     "cara membuat"
+    ]
+   },
+   "stay": {
+    "en": "Staying overnight",
+    "id": "Menginap",
+    "words": [
+     "overnight",
+     "menginap",
+     "übernacht"
+    ]
+   },
+   "ship": {
+    "en": "Shipping it home",
+    "id": "Kirim ke rumah",
+    "words": [
+     "ship",
+     "kirim",
+     "envi",
+     "versand"
+    ]
+   }
+  }
+ },
+ "ideas": [
+  {
+   "need": [
+    "roast",
+    "tasting"
+   ],
+   "title": "A “Roast & Taste” add-on",
+   "text": "Visitors keep mentioning the roasting and keep asking for more tasting. You could test a short add-on where guests taste what they just roasted next to two other roasts.",
+   "title_id": "Tambahan “Sangrai & Cicip”",
+   "text_id": "Tamu sering menyebut sangrai kopi dan sering minta lebih banyak mencicipi. Ibu bisa mencoba tambahan singkat: tamu mencicipi kopi yang baru mereka sangrai, bersama dua sangraian lain.",
+   "say": "Banyak tamu suka menyangrai kopi dan minta lebih banyak mencicipi. Ibu bisa mencoba tambahan Sangrai dan Cicip."
+  },
+  {
+   "need": [
+    "carve",
+    "ship"
+   ],
+   "title": "A “Carve & Ship” service",
+   "text": "Visitors love the carving and keep asking to send pieces home. You could test a fixed shipping price for small pieces.",
+   "title_id": "Layanan “Ukir & Kirim”",
+   "text_id": "Tamu suka mengukir dan sering bertanya soal pengiriman. Bapak bisa mencoba harga kirim tetap untuk barang kecil.",
+   "say": "Banyak tamu suka mengukir dan bertanya soal kirim barang. Bapak bisa mencoba layanan kirim."
+  }
+ ],
+ "guestQuestions": [
+  {
+   "t": "How much is it?",
+   "id": "Berapa harganya?",
+   "auto": 1
+  },
+  {
+   "t": "Is a meal included?",
+   "id": "Apakah termasuk makan?"
+  },
+  {
+   "t": "Can you send directions?",
+   "id": "Bisa kirim petunjuk arah?"
+  },
+  {
+   "t": "Can we come this weekend?",
+   "id": "Bisa datang akhir pekan ini?"
+  }
+ ],
+ "ownerReplies": [
+  {
+   "t": "Ya, bisa. Silakan datang!",
+   "en": "Yes, you can. Please come!"
+  },
+  {
+   "t": "Maaf, belum bisa.",
+   "en": "Sorry, that is not possible yet."
+  },
+  {
+   "t": "Makan belum termasuk, tapi ada warung dekat sini.",
+   "en": "A meal is not included yet, but there is a small food stall nearby."
+  },
+  {
+   "t": "Saya kirim petunjuk arah lewat pesan ini.",
+   "en": "I will send directions in this chat."
+  }
+ ],
+ "businesses": [
+  {
+   "id": "noor",
+   "name": "Noor’s Coffee Farm",
+   "host": "Noor",
+   "sector": "Farm",
+   "e": "☕",
+   "col": "#47C882",
+   "place": "Ondera highlands",
+   "dna": {
+    "hands": 0.9,
+    "nature": 0.85,
+    "culture": 0.7,
+    "food": 0.6,
+    "quiet": 0.7,
+    "crowds": 0.05
+   },
+   "chips": [
+    "Coffee",
+    "Nature",
+    "Hands-on",
+    "Storytelling",
+    "Scenic",
+    "Family-friendly"
+   ],
+   "story": "Noor has farmed two hectares of coffee on the upper slope for eleven years, like her mother before her. She will walk you through the trees, hand you a basket, and let you roast what you picked in her kitchen.",
+   "L": {
+    "duration": "About 3 hours",
+    "price": "Rp150.000 per person",
+    "availability": "Saturday and Sunday mornings",
+    "activities": "A guided walk, Picking coffee cherries, Roasting your own coffee, Drinking the coffee"
+   },
+   "cards": [
+    {
+     "n": "Ana",
+     "f": "🇲🇽",
+     "l": "Spanish",
+     "t": "Siempre voy a recordar tostar café mientras empezaba la lluvia.",
+     "bg": "sun",
+     "s": "☕🌧️",
+     "en": "I'll always remember roasting coffee while the rain started.",
+     "idt": "Saya akan selalu ingat menyangrai kopi saat hujan mulai turun."
+    },
+    {
+     "n": "James",
+     "f": "🇬🇧",
+     "l": "English",
+     "t": "Ask Noor about how her family started the farm. Best story of my trip.",
+     "bg": "field",
+     "s": "🌿",
+     "idt": "Tanyakan pada Noor bagaimana keluarganya memulai kebun ini. Cerita terbaik dalam perjalanan saya."
+    },
+    {
+     "n": "Rani",
+     "f": "🇮🇩",
+     "l": "Indonesian",
+     "t": "Datang pagi-pagi, pemandangan dari kebun atas bagus sekali.",
+     "bg": "coral",
+     "s": "🌄",
+     "en": "Come early, the view from the upper farm is beautiful.",
+     "loc": 1
+    },
+    {
+     "n": "Lena",
+     "f": "🇩🇪",
+     "l": "German",
+     "t": "Kaffee selbst rösten, dann der Spaziergang durch die Farm. Gern mehr Verkostung!",
+     "bg": "sky",
+     "s": "☕",
+     "en": "Roasting coffee ourselves, then the walk through the farm. Would love more tasting!",
+     "idt": "Menyangrai kopi sendiri, lalu jalan-jalan di kebun. Ingin lebih banyak mencicipi!"
+    },
+    {
+     "n": "Yuki",
+     "f": "🇯🇵",
+     "l": "Japanese",
+     "t": "自分で焙煎したコーヒーの香りが忘れられません。農園の散歩も最高でした。",
+     "bg": "sun",
+     "s": "⭐",
+     "en": "I can't forget the smell of the coffee I roasted myself. The farm walk was wonderful too.",
+     "idt": "Saya tidak bisa melupakan aroma kopi yang saya sangrai sendiri. Jalan-jalan di kebun juga menyenangkan."
+    },
+    {
+     "n": "Camille",
+     "f": "🇫🇷",
+     "l": "French",
+     "t": "La torréfaction au feu de bois avec Noor, un moment magique. On aurait aimé une dégustation plus longue.",
+     "bg": "coral",
+     "s": "🔥💛",
+     "en": "Roasting over a wood fire with Noor, a magic moment. We would have liked a longer tasting.",
+     "idt": "Menyangrai dengan api kayu bersama Noor, momen yang ajaib. Kami ingin sesi mencicipi yang lebih lama."
+    },
+    {
+     "n": "Bayu",
+     "f": "🇮🇩",
+     "l": "Indonesian",
+     "t": "Sangrai kopi sendiri seru banget! Sayang belum bisa makan siang di sana.",
+     "bg": "field",
+     "s": "☕",
+     "en": "Roasting your own coffee is so much fun! Shame you can't have lunch there yet.",
+     "loc": 1
+    },
+    {
+     "n": "Sofía",
+     "f": "🇲🇽",
+     "l": "Spanish",
+     "t": "La caminata por el cafetal y las historias de Noor valen el viaje.",
+     "bg": "sky",
+     "s": "🌿",
+     "en": "The walk through the coffee field and Noor's stories are worth the trip.",
+     "idt": "Jalan kaki di kebun kopi dan cerita-cerita Noor sepadan dengan perjalanannya."
+    },
+    {
+     "n": "Tom",
+     "f": "🇺🇸",
+     "l": "English",
+     "t": "Roasting beans over the fire, then a slow walk between the coffee trees. Perfect morning.",
+     "bg": "sun",
+     "s": "☀️",
+     "idt": "Menyangrai biji kopi di atas api, lalu jalan santai di antara pohon kopi. Pagi yang sempurna."
+    },
+    {
+     "n": "Dewi",
+     "f": "🇮🇩",
+     "l": "Indonesian",
+     "t": "Keliling kebun sama Bu Noor, lalu sangrai kopi. Anak-anak senang sekali.",
+     "bg": "coral",
+     "s": "💛",
+     "en": "A walk around the farm with Ibu Noor, then roasting coffee. The kids loved it.",
+     "loc": 1
+    },
+    {
+     "n": "Priya",
+     "f": "🇮🇳",
+     "l": "English",
+     "t": "We roasted, we laughed, Noor told us stories about her grandmother. I wish we could taste more of her coffees.",
+     "bg": "field",
+     "s": "☕💛",
+     "idt": "Kami menyangrai, tertawa, dan Noor bercerita tentang neneknya. Andai bisa mencicipi lebih banyak kopinya."
+    },
+    {
+     "n": "Jonas",
+     "f": "🇩🇪",
+     "l": "German",
+     "t": "Das Rösten war das Highlight. Der Weg zur Farm war schwer zu finden.",
+     "bg": "sky",
+     "s": "🧭",
+     "en": "The roasting was the highlight. The way to the farm was hard to find.",
+     "idt": "Menyangrai adalah bagian terbaik. Jalan ke kebun sulit ditemukan."
+    },
+    {
+     "n": "Mei",
+     "f": "🇯🇵",
+     "l": "Japanese",
+     "t": "焙煎体験と農園の散歩、そしてノールさんの笑顔。",
+     "bg": "coral",
+     "s": "🌸",
+     "en": "The roasting, the farm walk, and Noor's smile.",
+     "idt": "Pengalaman menyangrai, jalan-jalan di kebun, dan senyum Bu Noor."
+    },
+    {
+     "n": "Agus",
+     "f": "🇮🇩",
+     "l": "Indonesian",
+     "t": "Sangrai kopi dan keliling kebun, pulang bawa cerita.",
+     "bg": "sun",
+     "s": "🌿",
+     "en": "Roasting coffee and walking the farm. I went home with stories.",
+     "loc": 1
+    },
+    {
+     "n": "Elena",
+     "f": "🇪🇸",
+     "l": "Spanish",
+     "t": "Tostamos nuestro propio café y caminamos hasta el mirador.",
+     "bg": "field",
+     "s": "⭐",
+     "en": "We roasted our own coffee and walked up to the viewpoint.",
+     "idt": "Kami menyangrai kopi sendiri dan berjalan sampai ke titik pandang."
+    }
+   ],
+   "qs": [
+    {
+     "f": "🇬🇧",
+     "t": "Can we do more tasting of different roasts?",
+     "idt": "Bisa mencicipi lebih banyak jenis sangraian?"
+    },
+    {
+     "f": "🇲🇽",
+     "t": "¿Se puede probar más tipos de café?",
+     "en": "Can we try more kinds of coffee?",
+     "idt": "Bisa mencoba lebih banyak jenis kopi?"
+    },
+    {
+     "f": "🇩🇪",
+     "t": "Ist ein Essen dabei?",
+     "en": "Is a meal included?",
+     "idt": "Apakah termasuk makan?"
+    },
+    {
+     "f": "🇮🇩",
+     "t": "Apakah termasuk makan siang?",
+     "en": "Is lunch included?",
+     "loc": 1
+    },
+    {
+     "f": "🇫🇷",
+     "t": "Le repas est-il inclus ?",
+     "en": "Is the meal included?",
+     "idt": "Apakah makan sudah termasuk?"
+    },
+    {
+     "f": "🇺🇸",
+     "t": "Do you have directions from the main road? We got lost.",
+     "idt": "Ada petunjuk arah dari jalan besar? Kami tersesat."
+    },
+    {
+     "f": "🇮🇩",
+     "t": "Ada petunjuk arah dari jalan besar?",
+     "en": "Are there directions from the main road?",
+     "loc": 1
+    },
+    {
+     "f": "🇮🇩",
+     "t": "Bisa beli biji kopi untuk dibawa pulang?",
+     "en": "Can I buy beans to take home?",
+     "loc": 1
+    },
+    {
+     "f": "🇮🇩",
+     "t": "Boleh beli kopi sangrai 1 kg?",
+     "en": "Can I buy 1 kg of roasted coffee?",
+     "loc": 1
+    },
+    {
+     "f": "🇯🇵",
+     "t": "収穫から焙煎までの工程を教えてください。",
+     "en": "Please tell me the steps from harvest to roasting.",
+     "idt": "Tolong jelaskan prosesnya dari panen sampai sangrai."
+    },
+    {
+     "f": "🇬🇧",
+     "t": "How do you process the cherries after harvest?",
+     "idt": "Bagaimana buah kopi diproses setelah panen?"
+    },
+    {
+     "f": "🇲🇽",
+     "t": "¿Cómo es el proceso de secado?",
+     "en": "What is the drying process like?",
+     "idt": "Bagaimana proses pengeringannya?"
+    },
+    {
+     "f": "🇮🇩",
+     "t": "Bisa menginap di kebun?",
+     "en": "Can we stay overnight at the farm?",
+     "loc": 1
+    }
+   ],
+   "bookings": [
+    {
+     "who": "Lena 🇩🇪",
+     "date": "Sat 10 Oct",
+     "people": 2,
+     "status": "confirmed"
+    },
+    {
+     "who": "Tom 🇺🇸",
+     "date": "Sun 11 Oct",
+     "people": 4,
+     "status": "pending"
+    }
+   ],
+   "threads": [
+    {
+     "id": "camille",
+     "who": "Camille",
+     "f": "🇫🇷",
+     "msgs": [
+      {
+       "from": "g",
+       "t": "Bonjour ! Peut-on venir avec deux enfants ?",
+       "en": "Hello! Can we come with two children?",
+       "id": "Halo! Bisa datang dengan dua anak?"
+      }
+     ]
+    }
+   ],
+   "why": {
+    "hands": "Hands-on coffee roasting",
+    "nature": "Scenic outdoor experience",
+    "culture": "Small local operator with family stories",
+    "food": "Coffee tasted where it is grown",
+    "quiet": "Small groups, far from the crowds"
+   },
+   "pos": [
+    70.0,
+    22.0
+   ]
+  },
+  {
+   "id": "darto",
+   "name": "Pak Darto’s Wood Workshop",
+   "host": "Pak Darto",
+   "sector": "Craft",
+   "e": "🪚",
+   "col": "#7193D8",
+   "place": "Ondera village",
+   "dna": {
+    "hands": 0.95,
+    "nature": 0.2,
+    "culture": 0.8,
+    "food": 0.05,
+    "quiet": 0.7,
+    "crowds": 0.05
+   },
+   "chips": [
+    "Woodwork",
+    "Hands-on",
+    "Craft",
+    "Storytelling",
+    "Take it home"
+   ],
+   "story": "Pak Darto builds doors and furniture for the whole village from a workshop behind his house. Sit at his bench for two hours and leave with a spoon or a small box you carved yourself.",
+   "L": {
+    "duration": "About 2 hours",
+    "price": "Rp100.000 per person",
+    "availability": "Saturday and Sunday",
+    "activities": "Wood carving, Making your own piece"
+   },
+   "cards": [
+    {
+     "n": "Hana",
+     "f": "🇰🇷",
+     "l": "English",
+     "t": "I carved a small spoon with Pak Darto. My hands still smell like teak.",
+     "bg": "sky",
+     "s": "🪵",
+     "idt": "Saya mengukir sendok kecil bersama Pak Darto. Tangan saya masih wangi kayu jati."
+    },
+    {
+     "n": "Luis",
+     "f": "🇪🇸",
+     "l": "Spanish",
+     "t": "Tallar madera con Pak Darto fue lo mejor del viaje.",
+     "bg": "sun",
+     "s": "⭐",
+     "en": "Carving wood with Pak Darto was the best part of the trip.",
+     "idt": "Mengukir kayu bersama Pak Darto adalah bagian terbaik perjalanan ini."
+    },
+    {
+     "n": "Putri",
+     "f": "🇮🇩",
+     "l": "Indonesian",
+     "t": "Belajar ukir kayu, sabar sekali Pak Darto mengajarnya. Bisa kirim ke Jakarta?",
+     "bg": "coral",
+     "s": "💛",
+     "en": "Learned wood carving, Pak Darto is such a patient teacher. Can it be shipped to Jakarta?",
+     "loc": 1
+    }
+   ],
+   "qs": [
+    {
+     "f": "🇬🇧",
+     "t": "Can you ship a chair to London?",
+     "idt": "Bisa kirim kursi ke London?"
+    },
+    {
+     "f": "🇮🇩",
+     "t": "Bisa kirim meja ke Jakarta?",
+     "en": "Can you send a table to Jakarta?",
+     "loc": 1
+    }
+   ],
+   "bookings": [
+    {
+     "who": "Hana 🇰🇷",
+     "date": "Sat 10 Oct",
+     "people": 1,
+     "status": "pending"
+    }
+   ],
+   "threads": [
+    {
+     "id": "luis",
+     "who": "Luis",
+     "f": "🇪🇸",
+     "msgs": [
+      {
+       "from": "g",
+       "t": "¿Puedo llevar a mi hijo de 8 años?",
+       "en": "Can I bring my 8-year-old son?",
+       "id": "Bisa bawa anak saya umur 8 tahun?"
+      }
+     ]
+    }
+   ],
+   "why": {
+    "hands": "You carve your own piece",
+    "culture": "A village carpenter, three generations in",
+    "quiet": "One bench, one teacher, no crowd"
+   },
+   "pos": [
+    38.0,
+    58.0
+   ]
+  },
+  {
+   "id": "sari",
+   "name": "Ibu Sari’s Kitchen",
+   "host": "Ibu Sari",
+   "sector": "Food",
+   "e": "🍲",
+   "col": "#FF7043",
+   "place": "Ondera village",
+   "dna": {
+    "hands": 0.8,
+    "nature": 0.2,
+    "culture": 0.85,
+    "food": 0.95,
+    "quiet": 0.5,
+    "crowds": 0.1
+   },
+   "chips": [
+    "Home cooking",
+    "Market visit",
+    "Hands-on",
+    "Family"
+   ],
+   "story": "Ibu Sari cooks for village weddings. On quiet days she takes guests to the morning market, then back to her kitchen to grind sambal by hand and eat together.",
+   "L": {
+    "duration": "About 3 hours",
+    "price": "Rp120.000 per person",
+    "availability": "Wednesday and Saturday",
+    "activities": "Market shopping, Cooking together"
+   },
+   "cards": [
+    {
+     "n": "Emma",
+     "f": "🇦🇺",
+     "l": "English",
+     "t": "We cooked sambal from scratch in Ibu Sari's kitchen. I cried, in a good way.",
+     "bg": "coral",
+     "s": "🌶️",
+     "idt": "Kami membuat sambal dari awal di dapur Ibu Sari. Saya menangis, tapi senang."
+    },
+    {
+     "n": "Kenji",
+     "f": "🇯🇵",
+     "l": "Japanese",
+     "t": "イブ・サリさんと一緒に料理しました。市場の買い物も楽しかった。",
+     "bg": "sun",
+     "s": "🧺",
+     "en": "I cooked together with Ibu Sari. Shopping at the market was fun too.",
+     "idt": "Saya memasak bersama Ibu Sari. Belanja di pasar juga seru."
+    }
+   ],
+   "qs": [
+    {
+     "f": "🇬🇧",
+     "t": "Can we buy the sambal to take home?",
+     "idt": "Bisa beli sambalnya untuk dibawa pulang?"
+    }
+   ],
+   "bookings": [],
+   "threads": [],
+   "why": {
+    "hands": "You cook it yourself",
+    "culture": "A family kitchen, not a restaurant",
+    "food": "Market to table with a local cook"
+   },
+   "pos": [
+    56.0,
+    74.0
+   ]
+  }
+ ]
+}
