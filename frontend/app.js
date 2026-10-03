@@ -16,7 +16,7 @@ function applyContent(c){CARDS=c.swipeCards;GATE=(c.village&&c.village.gate)||GA
 const tagsOf=(txt,lex)=>{const s=txt.toLowerCase();return Object.keys(lex).filter(k=>lex[k][1].some(w=>s.includes(w)))};
 const T=(id,en)=>S.blang==="en"?en:id;
 const label=n=>n>=6?["strong",T("Pola kuat","Strong pattern")]:n>=3?["early",T("Sinyal awal","Early signal")]:["thin",T("Bukti belum cukup","Not enough evidence yet")];
-const lab=(k,b)=>k==="host"?T("Mengobrol dengan ","Talking with ")+b.host:T(LID[k],(LOVED[k]||ASKS[k])[0]);
+const lab=(k,b)=>k==="host"?T("Mengobrol dengan ","Talking with ")+b.host:T(LID[k]||k,(LOVED[k]||ASKS[k]||[k])[0]);
 const RID=[["per person","per orang"],["About ","Sekitar "],[" hours"," jam"],["Every day","Setiap hari"],[" mornings"," pagi"],["Saturday","Sabtu"],["Sunday","Minggu"],["Monday","Senin"],["Tuesday","Selasa"],["Wednesday","Rabu"],["Thursday","Kamis"],["Friday","Jumat"],[" and "," dan "],["A guided walk","jalan keliling"],["Picking coffee cherries","petik kopi"],["Roasting your own coffee","sangrai kopi sendiri"],["Drinking the coffee","minum kopi"],["Wood carving","mengukir kayu"],["Making your own piece","membuat karya sendiri"],["Market shopping","belanja ke pasar"],["Cooking together","masak bersama"],["Tasting","mencicipi"],["Weaving","menenun"],["Coffee Farm Experience","Wisata Kebun Kopi"],["Coffee Farm","Kebun Kopi"],["Farm Experience","Wisata Kebun"],["Wood Workshop","Bengkel Kayu"],["Workshop","Bengkel"],["Kitchen","Dapur"],["Guided Walk","Jalan Keliling"],["Experience","Wisata"],["A visit in","Kunjungan di"],["Sat ","Sab "],["Sun ","Min "],["Mon ","Sen "],["Tue ","Sel "],["Wed ","Rab "],["Thu ","Kam "],["Fri ","Jum "],[" Oct"," Okt"],[" Dec"," Des"],[" Aug"," Agu"],[" May"," Mei"]];
 const CHID={Coffee:"Kopi",Nature:"Alam","Hands-on":"Praktik langsung",Storytelling:"Cerita",Scenic:"Pemandangan indah","Family-friendly":"Ramah keluarga",Woodwork:"Kayu",Craft:"Kerajinan","Take it home":"Bisa dibawa pulang","Home cooking":"Masakan rumah","Market visit":"Ke pasar",Family:"Keluarga","New on YoloWisata":"Baru bergabung",Farm:"Kebun",Food:"Makanan",Guide:"Pemandu",Other:"Lainnya"};
 function tv(v){if(S.blang==="en"||!v)return v;let o=String(v).replace(/A (\d+)-hour visit in/,"Kunjungan $1 jam di");RID.forEach(([a,b])=>{o=o.replace(new RegExp(a,"gi"),b)});
@@ -72,6 +72,95 @@ function analyse(b){const hw=b.host.toLowerCase().split(" ").pop(),LV=Object.ass
  cards.forEach(c=>{tagsOf(c.t,LV).forEach(k=>add(loved,k,c));tagsOf(c.t,ASKS).forEach(k=>add(asks,k,c))});
  qs.forEach(q=>tagsOf(q.t,ASKS).forEach(k=>{add(asks,k,q);const g=q.loc?"loc":"intl";seg[g][k]=(seg[g][k]||0)+1}));
  return{loved,asks,ev,seg,cardAsk:k=>(ev[k]||[]).filter(x=>x.n).length,qAsk:k=>(ev[k]||[]).filter(x=>!x.n).length,nCards:cards.length,nQ:qs.length,waiting}}
+
+/* Online insights are read-only and kept separately from the on-device analyzer/state.
+   Only the seeded Noor alias has a known database counterpart; never fuzzy-match businesses. */
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const insightCache=new Map();
+let noorInsightId=null;
+const insightBusiness=()=>S.role==="biz"&&["b-insights","b-journey"].includes(S.screen)?all().find(b=>b.id===S.myBiz):null;
+const canFetchInsights=b=>!!(b&&API&&S.online&&navigator.onLine!==false&&(UUID.test(b.id)||b.id==="noor"));
+function adaptInsights(data){
+ const object=v=>v&&typeof v==="object"&&!Array.isArray(v);
+ const count=v=>Number.isSafeInteger(v)&&v>=0;
+ if(!object(data)||!count(data.postcards)||!count(data.questions)||!object(data.segments))throw new Error("Invalid insights");
+ const out={source:"backend",loved:{},asks:{},ev:{},evidence:{loved:{},asks:{}},labels:{loved:{},asks:{}},seg:{intl:{},loc:{}},nCards:data.postcards,nQ:data.questions,waiting:0};
+ for(const group of ["loved","asks"]){
+  if(!object(data[group]))throw new Error("Invalid insight themes");
+  for(const [k,e] of Object.entries(data[group])){
+   if(!object(e)||!count(e.count)||typeof e.label!=="string"||!Array.isArray(e.quotes)||!e.quotes.every(q=>typeof q==="string"))throw new Error("Invalid insight evidence");
+   // Quotes have no author, language or postcard/question attribution in this API.
+   Object.defineProperty(out[group],k,{value:e.count,enumerable:true});
+   Object.defineProperty(out.labels[group],k,{value:e.label,enumerable:true});
+   Object.defineProperty(out.evidence[group],k,{value:e.quotes.map(t=>({t,backend:true})),enumerable:true});
+  }
+ }
+ for(const [remote,local] of [["international","intl"],["local","loc"]]){
+  if(!object(data.segments[remote])||!Object.values(data.segments[remote]).every(count))throw new Error("Invalid insight segments");
+  out.seg[local]={...data.segments[remote]};
+ }
+ return out;
+}
+function insightsFor(b){
+ if(b.id===S.myBiz&&canFetchInsights(b)){
+  const entry=insightCache.get(b.id);
+  if(entry&&entry.data)return entry.data;
+  if(!entry||(entry.status==="loading"&&!entry.fallback))return {...adaptInsights({loved:{},asks:{},segments:{international:{},local:{}},postcards:0,questions:0}),source:"loading"};
+ }
+ return {...analyse(b),source:"local"};
+}
+function insightLabel(a,group,k){
+ if(a.source!=="backend")return label(a[group][k]||0);
+ const value=a.labels[group][k];
+ if(value==="Strong pattern")return ["strong",T("Pola kuat",value)];
+ if(value==="Early signal")return ["early",T("Sinyal awal",value)];
+ return ["thin",value==="Not enough evidence yet"?T("Bukti belum cukup",value):value];
+}
+function insightIdea(a){
+ return IDEAS.find(i=>(a.loved[i.need[0]]||0)>=6&&(a.asks[i.need[1]]||0)>=3&&
+  (a.source!=="backend"||(a.labels.loved[i.need[0]]==="Strong pattern"&&
+   ["Early signal","Strong pattern"].includes(a.labels.asks[i.need[1]])&&
+   a.evidence.loved[i.need[0]].length&&a.evidence.asks[i.need[1]].length)));
+}
+async function insightJSON(path){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);
+ try{
+  const response=await fetch(API+path,{method:"GET",cache:"no-store",signal:controller.signal});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  return await response.json();
+ }finally{clearTimeout(timer)}
+}
+async function refreshInsights(force=false){
+ const b=insightBusiness();if(!canFetchInsights(b))return;
+ const previous=insightCache.get(b.id);
+ if(previous&&(previous.status==="loading"||(!force&&Date.now()-previous.at<8000)))return previous.pending;
+ const entry={status:"loading",at:Date.now(),data:previous&&previous.data,fallback:previous&&previous.status==="failed"};
+ insightCache.set(b.id,entry);
+ entry.pending=(async()=>{
+  try{
+   let id=b.id;
+   if(id==="noor"){
+    if(!noorInsightId){
+     const result=await insightJSON("/api/businesses");
+     const matches=result.ok===true&&Array.isArray(result.businesses)?result.businesses.filter(row=>row.name==="Noor Coffee Farm"):[];
+     if(matches.length!==1||!UUID.test(matches[0].id))throw new Error("No unique Noor business");
+     noorInsightId=matches[0].id;
+    }
+    id=noorInsightId;
+   }
+   if(insightCache.get(b.id)!==entry||!canFetchInsights(b))return;
+   const data=adaptInsights(await insightJSON("/api/businesses/"+encodeURIComponent(id)+"/insights"));
+   if(insightCache.get(b.id)!==entry||!canFetchInsights(b))return;
+   entry.data=data;entry.status="ready";
+  }catch(e){entry.data=null;entry.status="failed"}
+  finally{
+   entry.at=Date.now();
+   // Refresh only these read-only views; do not trigger the legacy write queue.
+   if(insightCache.get(b.id)===entry&&insightBusiness()?.id===b.id){$("#view").innerHTML=V[S.screen]();renderOver()}
+  }
+ })();
+ return entry.pending;
+}
 
 /* ---------- AI 2: voice note to listing (rule-based extraction, nothing invented) ---------- */
 function extract(t,b){const s=t.toLowerCase(),o={},num={satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6};
@@ -276,27 +365,28 @@ V["b-book"]=()=>{const b=B(),ks=bookingsOf(b);return `<div class="pad"><h1 style
  ${k.sync==="pending"?`<p class="small" style="margin-top:.5rem">📦 ${T("Permintaan ini belum terkirim dari ponsel tamu.","This request has not left the guest’s phone yet.")}</p>`:k.status==="pending"?`<div class="row" style="margin-top:.7rem"><button class="btn" data-a="bdec" data-id="${k.id}" data-v="confirmed">${T("Terima","Confirm")}</button><button class="btn alt" data-a="bdec" data-id="${k.id}" data-v="declined">${T("Tolak","Decline")}</button></div>`:""}</div>`).join(""):`<div class="box"><b>${T("Belum ada pesanan","No bookings yet")}</b><p class="sub">${T("Permintaan dari tamu akan muncul di sini.","Requests from guests will appear here.")}</p></div>`}
  <p class="small" style="margin-top:.8rem">${T("YoloWisata tidak pernah menerima pesanan atas nama Anda.","YoloWisata never accepts a booking for you.")}</p></div>`};
 
-V["b-insights"]=()=>{const b=B(),A=analyse(b);
- const list=(o,unit)=>Object.keys(o).sort((x,y)=>o[y]-o[x]).map(k=>{const [c,t]=label(o[k]);return `<button class="cnt" data-a="evid" data-k="${k}"><b>${lab(k,b)}</b><em>${o[k]} ${unit(o[k])}</em><span class="tag ${c}">${t}</span></button>`}).join("")||`<p class="sub">${T("Belum ada. Bukti belum cukup.","Nothing yet. Not enough evidence.")}</p>`;
- const idea=IDEAS.find(i=>(A.loved[i.need[0]]||0)>=6&&(A.asks[i.need[1]]||0)>=3),s=A.seg,top=o=>Object.keys(o).sort((x,y)=>o[y]-o[x])[0],ti=top(s.intl),tl=top(s.loc),st=S.idea[b.id],I=idea&&IDEAID[idea.title];
+V["b-insights"]=()=>{const b=B(),A=insightsFor(b);
+ const list=(group,unit)=>{const o=A[group];return Object.keys(o).sort((x,y)=>o[y]-o[x]).map(k=>{const [c,t]=insightLabel(A,group,k);return `<button class="cnt" data-a="evid" data-group="${group}" data-k="${esc(k)}"><b>${esc(lab(k,b))}</b><em>${o[k]} ${unit(o[k])}</em><span class="tag ${c}">${esc(t)}</span></button>`}).join("")||`<p class="sub">${T("Belum ada. Bukti belum cukup.","Nothing yet. Not enough evidence.")}</p>`};
+ const idea=insightIdea(A),s=A.seg,top=o=>Object.keys(o).sort((x,y)=>o[y]-o[x])[0],ti=top(s.intl),tl=top(s.loc),st=S.idea[b.id],I=idea&&IDEAID[idea.title];
  return `<div class="pad"><div class="hello">${MASCOT}<div><p class="small">Halo, ${esc(b.host)}</p><h1 style="font-size:1.6rem">${T("Yang diingat tamu","What visitors remember")}</h1></div></div>
  <p class="sub" style="margin-top:.5rem">${T(`Dari ${A.nCards} kartu pos dan ${A.nQ} pertanyaan`,`From ${A.nCards} postcards and ${A.nQ} questions`)}${A.waiting?T(`. ${A.waiting} lagi menunggu sinyal`,`. ${A.waiting} more waiting to sync`):""}.</p>
+ <p class="small">${A.source==="backend"?T("Wawasan daring · umpan balik dari server","Online insights · feedback from the server"):A.source==="loading"?T("Memuat wawasan daring…","Loading online insights…"):T("Analisis cadangan di perangkat · data di ponsel ini","On-device fallback · data on this phone")}</p>
  <div style="margin-top:.8rem">${b.chips.map(c=>`<span class="chip">${T(CHID[c]||c,c)}</span>`).join("")}</div>
- <div class="box"><b>${T("Yang disukai tamu","What visitors loved")}</b>${list(A.loved,n=>T("kali disebut","mention"+(n===1?"":"s")))}</div>
- <div class="box"><b>${T("Yang sering ditanyakan","What visitors often ask for")}</b>${list(A.asks,n=>T("permintaan","request"+(n===1?"":"s")))}</div>
+ <div class="box"><b>${T("Yang disukai tamu","What visitors loved")}</b>${list("loved",n=>T("kali disebut","mention"+(n===1?"":"s")))}</div>
+ <div class="box"><b>${T("Yang sering ditanyakan","What visitors often ask for")}</b>${list("asks",n=>T("permintaan","request"+(n===1?"":"s")))}</div>
  <div class="box"><b>${T("Pola tamu","Visitor patterns")}</b>
- ${ti?`<p style="margin-top:.4rem">${T("Tamu mancanegara paling sering bertanya tentang","International visitors most often ask about")}: ${lab(ti,b).toLowerCase()} (${s.intl[ti]} ${T("pertanyaan","questions")}). <span class="tag ${label(s.intl[ti])[0]}">${label(s.intl[ti])[1]}</span></p>`:""}
- ${tl?`<p style="margin-top:.5rem">${T("Tamu lokal paling sering bertanya tentang","Local visitors most often ask about")}: ${lab(tl,b).toLowerCase()} (${s.loc[tl]} ${T("pertanyaan","questions")}). <span class="tag ${label(s.loc[tl])[0]}">${label(s.loc[tl])[1]}</span></p>`:""}
+ ${ti?`<p style="margin-top:.4rem">${T("Tamu mancanegara paling sering bertanya tentang","International visitors most often ask about")}: ${esc(lab(ti,b).toLowerCase())} (${s.intl[ti]} ${T("pertanyaan","questions")}). <span class="tag ${label(s.intl[ti])[0]}">${label(s.intl[ti])[1]}</span></p>`:""}
+ ${tl?`<p style="margin-top:.5rem">${T("Tamu lokal paling sering bertanya tentang","Local visitors most often ask about")}: ${esc(lab(tl,b).toLowerCase())} (${s.loc[tl]} ${T("pertanyaan","questions")}). <span class="tag ${label(s.loc[tl])[0]}">${label(s.loc[tl])[1]}</span></p>`:""}
  ${ti||tl?"":`<p class="sub">${T("Pertanyaan belum cukup untuk dibandingkan.","Not enough questions yet to compare groups.")}</p>`}</div>
  ${idea?`<div class="opp"><span class="tag" style="background:var(--white)">${T("Peluang · Sinyal awal","Possible opportunity · Early signal")}</span><h3>${T(I[0],idea.title)}</h3><p>${T(I[1],idea.text)}</p>
- <p class="small" style="color:var(--ink);margin-top:.5rem">${T(`Berdasarkan ${A.loved[idea.need[0]]} kartu pos yang menyebutnya, ${A.cardAsk(idea.need[1])} kartu pos yang meminta lebih, dan ${A.qAsk(idea.need[1])} pertanyaan berulang. Layak dicoba kecil-kecilan, belum pasti berhasil.`,`Based on ${A.loved[idea.need[0]]} postcards that mention it, ${A.cardAsk(idea.need[1])} postcards that ask for more, and ${A.qAsk(idea.need[1])} repeated questions. Worth a small test, not a sure thing.`)}</p>
+ <p class="small" style="color:var(--ink);margin-top:.5rem">${A.source==="backend"?T(`Berdasarkan ${A.loved[idea.need[0]]} penyebutan dan ${A.asks[idea.need[1]]} permintaan dalam umpan balik tamu. Layak dicoba kecil-kecilan, belum pasti berhasil.`,`Based on ${A.loved[idea.need[0]]} mentions and ${A.asks[idea.need[1]]} requests in visitor feedback. Worth a small test, not a sure thing.`):T(`Berdasarkan ${A.loved[idea.need[0]]} kartu pos yang menyebutnya, ${A.cardAsk(idea.need[1])} kartu pos yang meminta lebih, dan ${A.qAsk(idea.need[1])} pertanyaan berulang. Layak dicoba kecil-kecilan, belum pasti berhasil.`,`Based on ${A.loved[idea.need[0]]} postcards that mention it, ${A.cardAsk(idea.need[1])} postcards that ask for more, and ${A.qAsk(idea.need[1])} repeated questions. Worth a small test, not a sure thing.`)}</p>
  ${st==="saved"?`<p style="margin-top:.7rem;font-weight:800">🌱 ${T("Disimpan di ide Anda. Anda yang menentukan kapan mencobanya.","Saved to your ideas. You decide when to try it.")}</p>`:st==="later"?`<p style="margin-top:.7rem;font-weight:800">${T("Baik, lain kali. Tidak ada yang diubah.","Okay, not now. Nothing was changed.")}</p>`:""}
  <div class="row" style="margin-top:.8rem"><button class="btn" data-a="idea" data-v="saved">${T("Simpan ide","Save idea")}</button><button class="btn alt" data-a="idea" data-v="later">${T("Lain kali","Not now")}</button></div>
- <div class="row" style="margin-top:.5rem"><button class="btn alt" data-a="evid" data-k="${idea.need[1]}">${T("Kenapa?","Learn why")}</button><button class="btn alt" data-a="say" data-t="${esc(idea.say)}">🔊 ${T("Dengarkan","Listen")}</button></div></div>`
+ <div class="row" style="margin-top:.5rem"><button class="btn alt" data-a="evid" data-group="asks" data-k="${esc(idea.need[1])}">${T("Kenapa?","Learn why")}</button><button class="btn alt" data-a="say" data-t="${esc(idea.say)}">🔊 ${T("Dengarkan","Listen")}</button></div></div>`
  :`<div class="box" style="background:var(--pale);border:0"><b>${T("Belum ada saran","No suggestion yet")}</b><p>${T("Bukti belum cukup untuk menyarankan hal baru. Belum yakin, jadi tanyakan pada tamu berikutnya apa yang mereka harapkan.","There is not enough evidence to suggest something new. Not sure, so ask your next visitors what they wished for.")}</p></div>`}
  <p class="small" style="margin-top:.8rem">${T("YoloWisata tidak pernah mengubah daftar atau harga Anda sendiri. Anda yang memilih.","YoloWisata never changes your listing or prices by itself. You choose.")}</p></div>`};
 
-V["b-journey"]=()=>{const b=B(),A=analyse(b),has=!!(S.listings[b.id]||!b.custom),old=!b.custom&&b.id==="noor";
+V["b-journey"]=()=>{const b=B(),A=insightsFor(b),has=!!(S.listings[b.id]||!b.custom),old=!b.custom&&b.id==="noor";
  const M=[[T("Daftar usaha dibuat","Listing created"),T("Tamu bisa menemukan Anda.","Guests can find you."),has],[T("10 tamu pertama","First 10 visitors"),old?T("Tamu mulai berdatangan.","People are coming."):T("Terus semangat.","Keep going."),old],[T("5 kartu pos pertama","First 5 postcards"),A.nCards+T(" kenangan sejauh ini."," memories left so far."),A.nCards>=5],[T("Rekomendasi pertama","First referral"),T("Seorang tamu mengajak temannya.","A visitor sent a friend."),old],[T("Ide baru pertama","First new idea discovered"),T("Dari apa yang sering dikatakan tamu.","From what visitors keep saying."),S.idea[b.id]==="saved"],[T("Perbaikan pertama","First experience improvement"),T("Coba satu ide, lalu lihat kata kartu pos.","Try an idea, then see what the postcards say."),0]];
  return `<div class="pad"><h1 style="font-size:1.6rem">${T("Usaha Anda tumbuh","Your business is growing")}</h1>
  <div class="plant">${M.slice().reverse().map(m=>`<div class="m ${m[2]?"":"todo"}"><b>${m[2]?"":T("Berikutnya: ","Next: ")}${m[0]}</b><span class="small">${m[1]}</span></div>`).join("")}</div>
@@ -306,19 +396,19 @@ V.ai=()=>`<div class="pad ai"><h1 style="font-size:1.5rem">How it works offline,
  <div class="box" style="background:var(--pale);border:0"><h3>A website that behaves like an app</h3><p>YoloWisata is a website, so there is nothing to download from a store. The first time it opens with any signal, the browser keeps a copy of the app and of the places you saved. After that it opens with no internet at all. Anything you do offline (a postcard, a message, a booking, a voice note) waits on the phone and is sent when a signal appears. Tap the Online pill at the top to try it.</p></div>
  <div class="box"><h3>1. Travel DNA matching</h3><p>Ten swipes become six numbers. The match score is the distance between those numbers and each business’s Experience DNA. A weak match says so.</p></div>
  <div class="box"><h3>2. Voice to listing</h3><p>The owner speaks in Bahasa Indonesia. Speech-to-text, then extraction into six fields. Anything not heard is marked “Not sure”, never guessed. Nothing is published until the owner confirms.</p></div>
- <div class="box"><h3>Owner’s language first</h3><p>The business side is in Bahasa Indonesia by default, including postcards and questions that guests wrote in other languages. The 🌐 button switches it to English, and every translated quote keeps its original underneath.</p></div>
+ <div class="box"><h3>Owner’s language first</h3><p>The business side is in Bahasa Indonesia by default. The 🌐 button switches it to English. Online insight quotes keep the visitor’s original text, including English and Indonesian. When a local translation is available, it keeps the original underneath.</p></div>
  <div class="box"><h3>3. Translation in messages</h3><p>Guests write in their language, the owner reads Indonesian, and the other way round. The original is always one tap away. Reply suggestions come from a fixed list and are never sent automatically.</p></div>
- <div class="box"><h3>4. Experience DNA</h3><p>Postcards, questions and guest messages are counted by theme. Each finding carries its count and a label: Strong pattern (6 or more), Early signal (3 to 5), Not enough evidence yet. Suggestions always show the quotes behind them.</p></div>
+ <div class="box"><h3>4. Experience DNA</h3><p>With the backend connected, visitor insights use its theme counts, evidence labels and original quotes. Offline or when that request fails, the on-device analyzer uses the feedback saved on this phone. Each finding carries its count and a label: Strong pattern (6 or more), Early signal (3 to 5), Not enough evidence yet. Suggested experiments use the existing idea templates only when the evidence supports them. Saving an idea never publishes or changes a listing.</p></div>
  <div class="box"><h3>Location</h3><p>Guests can choose to share their location to see what is near and how far. GPS needs no internet, the position stays on the phone, and everything works without it. In this demo the village is fictional, so the pin starts at the village gate.</p></div>
  <div class="box"><h3>Any sector</h3><p>A farm, a carpenter and a kitchen share the same screens. A new business picks a sector, records one voice note and is listed. New businesses start with “Not enough evidence yet” until real visitors write.</p></div>
  <div class="box"><h3>Data</h3><p>In this prototype: 20 postcards, 16 visitor questions and a handful of messages and bookings, all synthetic and written by the team. They do not cover real visitor wording, slang, sarcasm, voice recordings, or any language beyond the seven used here. Planned for the real build: NLLB-200 (translation), Mozilla Common Voice and MMS (Indonesian speech), MASSIVE (sorting guest messages by intent), OpenStreetMap (what is findable near the village today).</p></div>
- <div class="box"><h3>What is real in this prototype</h3><p>Matching, theme counts, evidence labels, listing extraction, bookings and the message flow are computed live in your browser. With the backend connected, postcards, messages, bookings and listings are shared between phones; without it they stay on one device. Translations here come from a small prepared phrase list, standing in for an on-device translation model; sentences outside it are shown untranslated and say so. A keyword lexicon stands in for a small language model in the theme counts. The microphone is simulated, and “offline” is simulated with the pill. All postcards, questions, messages and bookings are synthetic.</p></div></div>`;
+ <div class="box"><h3>What is real in this prototype</h3><p>Matching and listing extraction run in your browser. Visitor theme counts and evidence labels come from the backend when available, with on-device analysis as fallback. With the backend connected, postcards, messages, bookings and listings are shared between phones; without it they stay on one device. Translations here come from a small prepared phrase list, standing in for an on-device translation model; sentences outside it are shown untranslated and say so. A keyword lexicon stands in for a small language model in the theme counts. The microphone is simulated, and “offline” is simulated with the pill. The bundled demo feedback is synthetic.</p></div></div>`;
 
 /* ---------- Render ---------- */
 const GNAV=[["explore","🧭","Explore"],["swipe","🧬","Travel DNA"],["inbox","💬","Messages"],["trips","📅","Visits"],["help","🗣️","Phrases"]];
 const BNAV=()=>[["b-list","🎙️",T("Usaha","Listing")],["b-insights","💛",T("Tamu","Visitors")],["b-msgs","💬",T("Pesan","Messages")],["b-book","📅",T("Pesanan","Bookings")],["b-journey","🌱",T("Tumbuh","Growth")]];
 const GROUP={chat:"inbox",dna:"swipe",match:"swipe",exp:"explore",card:"explore",thanks:"explore",story:"explore","b-thread":"b-msgs"};
-function render(){const s=S.screen;$("#view").innerHTML=(V[s]||V.land)();
+function render(){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]||V.land)();
  $("#net").className="pill net"+(S.online?"":" off");$("#net").textContent=S.online?"● Online":"○ Offline";
  $("#acct").textContent=S.role==="biz"?B().e+" "+B().host:"🧳 "+(S.guest.n||"Guest");
  const nav=s==="land"||s==="login"||s==="ai"?null:S.role==="biz"?BNAV():GNAV,g=GROUP[s]||s;const lg=$("#lang");lg.style.display=S.role==="biz"&&s!=="land"&&s!=="login"?"":"none";lg.textContent=S.blang==="en"?"🌐 ID":"🌐 EN";
@@ -329,9 +419,11 @@ const stepsHTML=()=>STEPS.map(([k,t,w])=>`<li><button class="${S.screen===k||(k=
 function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toast" role="status">${ui.toast}</div>`:"";if(!m){o.innerHTML=t;return}
  let h="";
  if(m.t==="pc"){const c=cardsOf(biz(S.biz)).find(c=>c.id===m.id);h=`<div class="modal" data-a="close"><div class="in">${pcHTML(c,true)}<button class="btn alt wide" style="margin-top:.8rem" data-a="close">Back to the field</button></div></div>`}
- if(m.t==="evid"){const b=B(),ev=analyse(b).ev[m.k]||[],[c,tx]=label(ev.length);
-  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><span class="tag ${c}">${tx}</span><h2 style="font-size:1.3rem;margin:.4rem 0">${lab(m.k,b)}</h2><p class="sub">${T(`${ev.length} hal yang benar-benar ditulis tamu.`,`The ${ev.length} thing${ev.length===1?"":"s"} visitors actually wrote.`)} ${ev.length<3?T("Terlalu sedikit untuk bertindak. Tanyakan pada tamu berikutnya.","Too few to act on. Ask your next visitors."):""}</p>
-  ${ev.map(e=>{const o=ownerText(e);return `<div class="quote">“${esc(o||e.t)}”<small>${e.n?esc(e.n)+" "+e.f+" · "+T("kartu pos","postcard"):e.f+" · "+T("pertanyaan","question")}${o?" · "+T("diterjemahkan, aslinya: ","translated, original: ")+esc(e.t):""}</small></div>`}).join("")}
+ if(m.t==="menu")h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.2rem;margin-bottom:.5rem">The story, step by step</h2><ol class="steps">${stepsHTML()}</ol>
+ <div class="row" style="margin-top:.8rem"><button class="btn alt" data-a="go" data-s="ai">How it works</button><button class="btn alt" data-a="reset">Reset demo</button></div></div></div>`;
+ if(m.t==="evid"){const b=B(),a=insightsFor(b),group=m.group||"asks",ev=(a.source==="backend"?a.evidence[group][m.k]:a.ev[m.k])||[],[c,tx]=insightLabel(a,group,m.k);
+  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><span class="tag ${c}">${esc(tx||T("Bukti belum cukup","Not enough evidence yet"))}</span><h2 style="font-size:1.3rem;margin:.4rem 0">${esc(lab(m.k,b))}</h2><p class="sub">${T(`${ev.length} hal yang benar-benar ditulis tamu.`,`The ${ev.length} thing${ev.length===1?"":"s"} visitors actually wrote.`)} ${c==="thin"?T("Terlalu sedikit untuk bertindak. Tanyakan pada tamu berikutnya.","Too few to act on. Ask your next visitors."):""}</p>
+  ${ev.map(e=>{const o=e.backend?null:ownerText(e);return `<div class="quote">“${esc(o||e.t)}”<small>${e.backend?T("Bukti tamu · teks asli","Visitor evidence · original text"):e.n?esc(e.n)+" "+e.f+" · "+T("kartu pos","postcard"):e.f+" · "+T("pertanyaan","question")}${o?" · "+T("diterjemahkan, aslinya: ","translated, original: ")+esc(e.t):""}</small></div>`}).join("")}
   <button class="btn wide" style="margin-top:1rem" data-a="close">${T("Tutup","Close")}</button></div></div>`}
  if(m.t==="book"){const b=biz(S.biz),d=new Date(Date.now()+6*864e5).toISOString().slice(0,10);
   h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.3rem">Ask ${esc(b.host)} for a visit</h2><p class="sub">${esc(Lst(b).availability?"Open: "+Lst(b).availability:"Ask about opening days")}. ${esc(b.host)} confirms each request personally.</p>
@@ -340,7 +432,7 @@ function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toas
   <button class="btn wide" style="margin-top:1rem" data-a="book">Send request</button><p class="small" style="margin-top:.5rem">${S.online?"No payment in this demo.":"You are offline. The request is kept on this phone and sent later."}</p></div></div>`}
  o.innerHTML=h+t}
 let tt;function toast(t){ui.toast=t;renderOver();clearTimeout(tt);tt=setTimeout(()=>{ui.toast="";renderOver()},3600)}
-function go(s){if(s.startsWith("b-"))S.role="biz";else if(s!=="login"&&s!=="ai"&&s!=="land")S.role="guest";S.screen=s;ui.modal=null;render();if(s!=="chat"&&s!=="b-thread")$("#view").scrollTop=0}
+function go(s){if(s.startsWith("b-"))S.role="biz";else if(s!=="login"&&s!=="ai"&&s!=="land")S.role="guest";S.screen=s;ui.modal=null;refreshInsights(true);render();if(s!=="chat"&&s!=="b-thread")$("#view").scrollTop=0}
 
 /* ---------- Actions ---------- */
 function swipe(v){S.likes[S.i]=v?1:0;S.i++;if(S.i>=CARDS.length){S.dna=computeDNA();S.screen="dna"}render()}
@@ -349,7 +441,7 @@ function bindSwipe(){const el=$("#top");if(!el)return;let x0=null,dx=0;
  el.onpointermove=e=>{if(x0===null)return;dx=e.clientX-x0;el.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;el.querySelector(".yes").style.opacity=Math.max(0,dx/80);el.querySelector(".no").style.opacity=Math.max(0,-dx/80)};
  el.onpointerup=el.onpointercancel=()=>{if(x0===null)return;x0=null;if(Math.abs(dx)>80){const v=dx>0;el.style.transition="transform .2s";el.style.transform=`translateX(${v?500:-500}px) rotate(${v?25:-25}deg)`;setTimeout(()=>swipe(v),170)}else{el.style.transition="transform .2s";el.style.transform="";el.querySelectorAll(".stampy").forEach(s=>s.style.opacity=0)}dx=0}}
 const st=()=>S.online?"sent":"pending";
-function setOnline(on){if(S.online===on)return;S.online=on;if(on){let n=0;
+function setOnline(on){if(S.online===on)return;S.online=on;insightCache.clear();if(on){let n=0;
   S.mine.forEach(m=>{if(m.status!=="sent"){m.status="sent";n++}});S.bookings.forEach(k=>{if(k.sync==="pending"){k.sync="sent";n++}});
   for(const k in S.msgs)S.msgs[k].forEach(m=>{if(m.sync==="pending"){m.sync="sent";n++}});
   for(const k in S.lsync)if(S.lsync[k].startsWith("Saved locally")){S.lsync[k]="Synced. Guests can find it now.";n++}
@@ -384,8 +476,8 @@ const A={
  redo:()=>{S.i=0;S.likes=[];S.dna=null;go("swipe")},
  net:()=>setOnline(!S.online),
  close:(el,e)=>{if(e.target===el||el.tagName==="BUTTON"){ui.modal=null;renderOver()}},
- reset:()=>{S=fresh();ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};render();toast("Cleared. This device is back to a fresh start.")},
- asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go("explore");toast("Saved.")},
+ reset:()=>{S=fresh();insightCache.clear();noorInsightId=null;ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};render();toast("Cleared. This device is back to a fresh start.")},
+ asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go(S.dna?"explore":"swipe");toast("Saved.")},
  ltab:el=>{ui.ltab=el.dataset.t;go("login")},
  logout:()=>{S.acct=null;render();toast("Logged out. Your data stays on this device.")},
  glogin:()=>{const phone=$("#lp").value.replace(/\D/g,""),pin=$("#lpin").value;if(phone.length<8||pin.length<4){toast("Enter your phone number and a PIN of 4 to 6 digits.");return}
@@ -427,7 +519,7 @@ const A={
  bookopen:()=>{ui.modal={t:"book"};renderOver()},
  book:()=>{const d=$("#bd").value,b=biz(S.biz);if(!d){toast("Pick a day first.");return}
   const nice=new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
+  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
  bdec:el=>{const id=el.dataset.id,k=S.bookings.find(k=>k.id===id);if(k){k.status=el.dataset.v;k.ts=Date.now()}else{S.bstat[id]=el.dataset.v;S.bts[id]=Date.now()}render();toast(T((el.dataset.v==="confirmed"?"Diterima.":"Ditolak.")+(S.online?" Tamu sudah bisa melihatnya.":" Tersimpan di ponsel. Dikirim saat ada sinyal."),(el.dataset.v==="confirmed"?"Confirmed.":"Declined.")+(S.online?" The guest can see it now.":" Saved locally. Will sync when connection returns.")))},
  prompt:el=>{S.draft.p=+el.dataset.i;keep();render()}, bg:el=>{S.draft.bg=el.dataset.b;keep();render()},
  stk:el=>{const s=el.dataset.s,a=S.draft.s;a.includes(s)?a.splice(a.indexOf(s),1):a.length<4&&a.push(s);keep();render()},
@@ -452,7 +544,7 @@ const A={
   S.listings[b.id]=L;S.lts[b.id]=Date.now();S.lsync[b.id]=S.online?"Synced. Guests can find it now.":"Saved locally. Will sync when connection returns.";const c=S.custom.find(x=>x.id===b.id);if(c){c.name=L.name;c.story=L.description}
   ui.transcript="";ui.edit=false;render();toast(T(S.online?"Terkirim. Tamu sudah bisa menemukannya.":"Tersimpan di ponsel. Dikirim saat ada sinyal.",S.lsync[b.id]))},
  idea:el=>{S.idea[B().id]=el.dataset.v;render()},
- evid:el=>{ui.modal={t:"evid",k:el.dataset.k};renderOver()},
+ evid:el=>{ui.modal={t:"evid",k:el.dataset.k,group:el.dataset.group||"asks"};renderOver()},
  say:el=>{const t=el.dataset.t;try{const u=new SpeechSynthesisUtterance(t);u.lang="id-ID";speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}toast("🔊 “"+t+"”")}
 };
 function keep(){const m=$("#msg");if(m)S.draft.t=m.value}
@@ -470,6 +562,11 @@ async function boot(){let c=window.YOLO_CONTENT;
  if(!c&&API){try{c=await api("/api/content")}catch(e){}}
  if(!c){try{c=await (await fetch("/data/content.json")).json()}catch(e){}}
  if(!c){$("#view").innerHTML='<div class="pad"><h1 style="font-size:1.5rem">YoloWisata could not load its content</h1><p class="sub">Open it once with a connection. After that it works offline.</p></div>';return}
- applyContent(c);if(navigator.onLine===false)S.online=false;   /* opened with no connection */
- render();if(API){pull();setInterval(()=>{pull();flush()},8000)}}
+ applyContent(c);
+ if(navigator.onLine===false)S.online=false;
+ render();
+ if(API){
+   pull();
+   setInterval(()=>{pull();flush();refreshInsights()},8000)
+ }}
 boot();

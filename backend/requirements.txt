@@ -1,5 +1,6 @@
 fastapi>=0.110
 uvicorn[standard]>=0.29
 python-multipart>=0.0.9
+supabase>=2.32.0
 # Optional, for real speech-to-text (large download). Then set YOLO_WHISPER_MODEL in .env:
 # faster-whisper

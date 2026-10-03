@@ -1,3 +1,12 @@
+# Environment secrets
+.env
+.env.*
+backend/.env
+
+# Keep examples
+!.env.example
+!backend/.env.example
+
 data/store.json
 data/store.tmp
 backend/.env
