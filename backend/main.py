@@ -6,7 +6,7 @@ It does three things:
   3. serves the website itself so one command runs everything locally.
 
 Current migration state:
-  - Supabase backs read endpoints, visitor insights and postcard writes.
+  - Supabase backs reads, visitor insights, postcards, messages and bookings.
   - data/store.json is temporarily preserved for legacy frontend sync/write compatibility.
 
 Run from the project root:
@@ -36,6 +36,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.database import supabase
+from backend import phase4
 
 
 try:
@@ -740,6 +741,92 @@ def insights(
 
 
 # ============================================================
+# SUPABASE MESSAGES / BOOKINGS WITH LEGACY MIRRORS
+# ============================================================
+
+
+async def phase4_record(req: Request):
+    raw = await req.body()
+    if len(raw) > MAX_BYTES:
+        raise HTTPException(413, "Record is too large.")
+    try:
+        rec = json.loads(raw)
+    except (ValueError, UnicodeDecodeError):
+        raise HTTPException(400, "Body must be JSON.") from None
+    if not isinstance(rec, dict):
+        raise HTTPException(400, "Body must be a JSON object.")
+    phase4.timestamp(rec)
+    return rec
+
+
+def phase4_write(kind, rec):
+    """Write the database first. Serialize this process's compatibility mirrors."""
+    try:
+        with _lock:
+            store = load()
+            old = store.get(kind, {}).get(rec.get("id")) if isinstance(rec.get("id"), str) else None
+            # Both booking routes can carry an owner decision for the same record.
+            related = []
+            if kind in ("bookings", "bookingstatus"):
+                record_id = phase4.stable_id("bookings", rec.get("id"))
+                for bucket in ("bookings", "bookingstatus"):
+                    related.extend(r for r in store.get(bucket, {}).values()
+                                   if phase4.stable_id("bookings", r["id"]) == record_id)
+            latest = max([r.get("ts", 0) or 0 for r in related] + [0])
+            stale = bool(related and "ts" in rec and latest > rec["ts"])
+            if kind == "messages":
+                saved = phase4.write_message(supabase, rec, business_uuid, country_from_flag)
+            elif kind == "bookings":
+                saved = phase4.write_booking(supabase, rec, business_uuid, stale)
+            else:
+                saved = phase4.write_status(supabase, rec, stale)
+
+            legacy = (kind == "messages" and all(rec.get(k) for k in ("id", "thread", "t", "from"))) or (
+                kind == "bookings" and all(rec.get(k) for k in ("id", "biz", "date", "people"))) or kind == "bookingstatus"
+            if legacy and not stale:
+                mirrored = dict(rec)
+                if kind in ("bookings", "bookingstatus") and "status" in mirrored:
+                    mirrored["status"] = "declined" if saved["status"] == "rejected" else saved["status"]
+                # Messages are immutable in the DB; retries must not replace their mirror.
+                if kind != "messages" or not old:
+                    store.setdefault(kind, {})[rec["id"]] = mirrored
+                save_needed = True
+            else:
+                save_needed = False
+            if kind in ("bookings", "bookingstatus") and not stale:
+                # A native UUID status update must also reach an existing legacy UI copy.
+                for record in related:
+                    record["status"] = "declined" if saved["status"] == "rejected" else saved["status"]
+                    if "ts" in rec:
+                        record["ts"] = rec["ts"]
+                    save_needed = True
+            if save_needed:
+                save(store)
+        return {"ok": True, "message" if kind == "messages" else "booking": saved}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        if getattr(exc, "code", None) in ("23503", "23514", "22P02", "22007", "22008"):
+            raise HTTPException(400, "Invalid database relationship or field value.") from None
+        raise HTTPException(500, "Failed to save " + kind + ".") from None
+
+
+@app.post("/api/messages")
+async def create_message(req: Request):
+    return phase4_write("messages", await phase4_record(req))
+
+
+@app.post("/api/bookings")
+async def create_booking(req: Request):
+    return phase4_write("bookings", await phase4_record(req))
+
+
+@app.post("/api/bookingstatus")
+async def update_booking_status(req: Request):
+    return phase4_write("bookingstatus", await phase4_record(req))
+
+
+# ============================================================
 # LEGACY WRITE ENDPOINT
 #
 # IMPORTANT:
@@ -747,8 +834,7 @@ def insights(
 #
 # The current frontend still sends:
 #   POST /api/postcards
-#   POST /api/messages
-#   POST /api/bookings
+# Explicit Supabase routes above take precedence for migrated kinds.
 #   POST /api/businesses
 #   etc.
 #

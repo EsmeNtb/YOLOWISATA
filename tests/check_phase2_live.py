@@ -70,8 +70,10 @@ def run():
         assert retry.status_code == 200 and retry.json()["postcard"]["id"] == ids[1]
         assert get("/api/sync")["postcards"][legacy["id"]]["t"] == legacy["t"]
         for kind, payload in (
-            ("messages", {"id": "phase2-message", "thread": "noor:gtest", "from": "g", "t": "Synthetic check"}),
-            ("bookings", {"id": "phase2-booking", "biz": "noor", "date": "2026-10-03", "people": 1}),
+            # Messages/bookings now have their own Phase 4 acceptance check and cleanup.
+            # Exercise the remaining generic route using only the temporary store.
+            ("listings", {"id": "phase2-listing", "L": {"name": "Synthetic check"}}),
+            ("businesses", {"id": "phase2-business", "name": "Synthetic check", "host": "Demo", "sector": "Other"}),
         ):
             assert client.post("/api/" + kind, json=payload).status_code == 200
             assert payload["id"] in get("/api/sync")[kind]

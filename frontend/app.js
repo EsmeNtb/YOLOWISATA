@@ -489,7 +489,7 @@ const A={
  bookopen:()=>{ui.modal={t:"book"};renderOver()},
  book:()=>{const d=$("#bd").value,b=biz(S.biz);if(!d){toast("Pick a day first.");return}
   const nice=new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
+  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
  bdec:el=>{const id=el.dataset.id,k=S.bookings.find(k=>k.id===id);if(k){k.status=el.dataset.v;k.ts=Date.now()}else{S.bstat[id]=el.dataset.v;S.bts[id]=Date.now()}render();toast(T((el.dataset.v==="confirmed"?"Diterima.":"Ditolak.")+(S.online?" Tamu sudah bisa melihatnya.":" Tersimpan di ponsel. Dikirim saat ada sinyal."),(el.dataset.v==="confirmed"?"Confirmed.":"Declined.")+(S.online?" The guest can see it now.":" Saved locally. Will sync when connection returns.")))},
  prompt:el=>{S.draft.p=+el.dataset.i;keep();render()}, bg:el=>{S.draft.bg=el.dataset.b;keep();render()},
  stk:el=>{const s=el.dataset.s,a=S.draft.s;a.includes(s)?a.splice(a.indexOf(s),1):a.length<4&&a.push(s);keep();render()},

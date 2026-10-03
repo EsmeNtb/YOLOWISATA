@@ -24,7 +24,7 @@ class Database:
                 {"id": EXP, "business_id": BIZ, "is_active": True},
                 {"id": OLD_EXP, "business_id": BIZ, "is_active": False},
             ],
-            "postcards": [], "conversations": [], "messages": [],
+            "postcards": [], "conversations": [], "messages": [], "bookings": [],
             "traveler_profiles": [], "profiles": [],
         }
 
@@ -196,7 +196,7 @@ class Phase2Tests(unittest.TestCase):
     def test_legacy_routes_static_files_and_registration_order(self):
         for kind, record in (
             ("messages", {"id": "m1", "thread": "noor:g1", "t": "Hello", "from": "g"}),
-            ("bookings", {"id": "k1", "biz": "noor", "date": "2026-10-03", "people": 1}),
+            ("bookings", {"id": "k1", "gid": "guest-device", "biz": "noor", "date": "2026-10-03", "people": 1}),
         ):
             self.assertEqual(self.client.post("/api/" + kind, json=record).status_code, 200)
             self.assertEqual(self.client.get("/api/sync").json()[kind][record["id"]], record)
