@@ -1,0 +1,17 @@
+{
+  "name": "YoloWisata",
+  "short_name": "YoloWisata",
+  "description": "Travel local. Stay connected. Even offline.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF9F0",
+  "theme_color": "#FF7043",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
