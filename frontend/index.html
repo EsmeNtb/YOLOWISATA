@@ -11,24 +11,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="./app.css">
 </head>
 <body>
 <div class="stage">
-  <aside class="guide" aria-label="Demo guide">
-    <h2>YoloWisata</h2>
-    <p>Every visitor leaves a memory. Small AI turns those memories into what to build next. The local business decides.</p>
-    <ol class="steps" id="steps"></ol>
-    <button class="extra" data-a="go" data-s="ai">How it works offline, and what the AI does</button>
-    <button class="extra" data-a="reset">Reset the demo</button>
-  </aside>
   <main class="phone" id="phone">
     <header class="bar">
       <button class="logo" data-a="go" data-s="land" aria-label="YoloWisata home"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 14c27 0 46 19 46 45 0 29-21 49-46 49S14 88 14 59C14 33 33 14 60 14z" fill="#FF7043"/><circle cx="38" cy="70" r="7" fill="#FFC928" opacity=".9"/><circle cx="82" cy="70" r="7" fill="#FFC928" opacity=".9"/><path d="M40 58q6 7 12 0M68 58q6 7 12 0M50 74q10 10 20 0" fill="none" stroke="#171717" stroke-width="4" stroke-linecap="round"/></svg>YoloWisata</button>
       <button class="pill net" id="net" data-a="net" aria-live="polite"></button>
       <button class="pill" id="acct" data-a="go" data-s="login"></button>
       <button class="pill" id="lang" data-a="lang" aria-label="Switch language"></button>
-      <button class="pill menu-btn" data-a="menu" aria-label="Demo map">☰</button>
     </header>
     <div id="view"></div>
     <div id="nav"></div>
@@ -36,8 +28,8 @@
   </main>
 </div>
 <noscript>YoloWisata needs JavaScript turned on.</noscript>
-<script src="/config.js"></script>
-<script src="/app.js"></script>
+<script src="./config.js"></script>
+<script src="./app.js"></script>
 <script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
 </body>
 </html>

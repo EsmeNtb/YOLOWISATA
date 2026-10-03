@@ -14,8 +14,11 @@ Run from the project root:
     uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 """
 
+import hashlib
+import hmac
 import json
 import os
+import secrets
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -570,6 +573,48 @@ async def create_postcard(req: Request):
 # ------------------------------------------------------------
 # TEXT -> STRUCTURED LISTING
 # ------------------------------------------------------------
+
+def _hash(pin: str, salt: str) -> str:
+    return hashlib.pbkdf2_hmac("sha256", pin.encode(), bytes.fromhex(salt), 100_000).hex()
+
+
+@app.post("/api/login")
+async def login(req: Request):
+    """Phone number + PIN. The first login with a number creates the account.
+    kind "guest": returns the guest id, so visits and chats follow the person to another device.
+    kind "biz":   returns the business id. Creating one needs "bizId" (sent by the register form).
+    This identifies people; it does not yet protect the other endpoints (see README, Known limits)."""
+    b = await req.json()
+    kind, phone, pin = b.get("kind"), "".join(ch for ch in str(b.get("phone", "")) if ch.isdigit()), str(b.get("pin", ""))
+    if kind not in ("guest", "biz") or not 8 <= len(phone) <= 15 or not (4 <= len(pin) <= 6 and pin.isdigit()):
+        raise HTTPException(400, "Need kind, a phone number and a PIN of 4 to 6 digits.")
+    key = kind + ":" + phone
+    with _lock:
+        store = load()
+        accounts = store.setdefault("accounts", {})
+        acc = accounts.get(key)
+        if acc:
+            if b.get("bizId") and kind == "biz":
+                raise HTTPException(409, "This number already has a business.")
+            if not hmac.compare_digest(acc["hash"], _hash(pin, acc["salt"])):
+                raise HTTPException(401, "Wrong PIN.")
+            created = False
+        else:
+            if kind == "biz" and not b.get("bizId"):
+                raise HTTPException(404, "No business uses this number.")
+            salt = secrets.token_hex(16)
+            acc = {"salt": salt, "hash": _hash(pin, salt)}
+            if kind == "guest":
+                acc.update(gid=str(b.get("gid") or secrets.token_hex(5))[:40], name=str(b.get("name", ""))[:20], flag=str(b.get("flag", "🌍"))[:8])
+            else:
+                acc.update(bizId=str(b["bizId"])[:80])
+            accounts[key] = acc
+            save(store)
+            created = True
+    out = {k: v for k, v in acc.items() if k not in ("salt", "hash")}
+    out["created"] = created
+    return out
+
 
 @app.post("/api/extract")
 async def extract(

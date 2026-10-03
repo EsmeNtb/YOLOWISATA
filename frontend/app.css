@@ -242,3 +242,38 @@ body{background:var(--cream)}
 .stage{display:block;padding:0;gap:0}
 .guide{display:none!important}.menu-btn{display:inline-block!important}
 @media(min-width:760px){.phone{width:100%;border-radius:0;box-shadow:none}.nav{width:220px}.pad,.chat{max-width:760px}.splash .inner{max-width:560px}}
+
+/* --- navigation: outline icons; a compact sidebar on computers --- */
+body{font-size:1rem}
+.nav button{color:var(--soft)}
+.nav button span{display:grid;place-items:center}
+.nav svg{width:22px;height:22px;display:block}
+.nav button.on{background:#FFE4D9;color:var(--ink)}
+@media(min-width:760px){
+ .nav{flex-direction:column;justify-content:flex-start;gap:.25rem;width:240px;height:100%;padding:1.1rem .9rem;background:var(--cream);border-top:0;border-right:1px solid var(--line)}
+ .nav button{flex:none;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:.85rem;font-size:1rem;font-weight:600;padding:.75rem 1rem;border-radius:18px;text-align:left}
+ .nav button.on{font-weight:700}
+}
+/* larger text and a wider column on big monitors */
+@media(min-width:1200px){html{font-size:112.5%}.pad,.chat{max-width:880px}.nav{width:260px}}
+@media(min-width:1700px){html{font-size:125%}}
+
+/* account screen tabs */
+.tabs2{display:grid;grid-template-columns:1fr 1fr;background:var(--white);border:1.5px solid var(--line);border-radius:16px;padding:4px;margin-top:1rem}
+.tabs2 button{padding:.6rem;border-radius:12px;font-weight:700;color:var(--soft)}
+.tabs2 button.on{background:var(--yellow);color:var(--ink)}
+
+/* --- colourful, lively navigation icons --- */
+.nav .ni{width:34px;height:34px;border-radius:12px;background:var(--c,#FFF2C6);font-size:1.15rem;line-height:1;display:grid;place-items:center;flex:none;transition:transform .2s}
+.nav button:hover .ni{animation:nwig .5s ease-in-out}
+.nav button.on .ni{animation:nhop .9s cubic-bezier(.3,1.6,.5,1) 1,nbob 2.6s ease-in-out .9s infinite;box-shadow:0 3px 0 rgba(23,23,23,.12)}
+.nav button:active .ni{transform:scale(.88)}
+@keyframes nwig{25%{transform:rotate(-12deg) scale(1.1)}75%{transform:rotate(12deg) scale(1.1)}}
+@keyframes nhop{0%{transform:translateY(0) scale(.8)}45%{transform:translateY(-7px) scale(1.15)}100%{transform:translateY(0) scale(1)}}
+@keyframes nbob{50%{transform:translateY(-3px)}}
+@media(max-width:759px){.nav .ni{width:32px;height:30px;border-radius:11px}}
+@media(prefers-reduced-motion:reduce){.nav button .ni,.nav button.on .ni,.nav button:hover .ni{animation:none}}
+details.box summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:.6rem}
+details.box summary::-webkit-details-marker{display:none}
+details.box summary::after{content:"＋";font-weight:800}
+details.box[open] summary::after{content:"－"}

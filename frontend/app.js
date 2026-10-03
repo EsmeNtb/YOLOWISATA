@@ -1,4 +1,3 @@
-
 /* ---------- Content. Loaded from /data/content.json (or from the backend). Edit the data there, not here. ---------- */
 const API=((window.YOLO_CONFIG||{}).api||"").replace(/\/$/,"");
 const DIMS={hands:"Hands-on",nature:"Nature",culture:"Local culture",food:"Food discovery",quiet:"Quiet places",crowds:"Crowded attractions"};
@@ -28,11 +27,11 @@ const ownerText=e=>{if(S.blang==="en")return e.en||null;if(e.loc||e.l==="Indones
 /* ---------- State, kept on the device ---------- */
 const KEY="yolowisata-v3";
 const newId=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
-const fresh=()=>({gid:newId(),acked:{},bts:{},lts:{},screen:"land",role:"guest",guest:{n:"",f:"🌍"},blang:"id",learned:{},here:null,biz:"noor",myBiz:"noor",custom:[],online:true,i:0,likes:[],dna:null,saved:{},mine:[],msgs:{},bookings:[],bstat:{},idea:{},listings:{},lsync:{},sector:"All",draft:{bg:"sun",s:[],p:0,t:"",voice:false,photo:""},tr:{}});
+const fresh=()=>({acct:null,gid:newId(),acked:{},bts:{},lts:{},screen:"land",role:"guest",guest:{n:"",f:"🌍"},blang:"id",learned:{},here:null,biz:"noor",myBiz:"noor",custom:[],online:true,i:0,likes:[],dna:null,saved:{},mine:[],msgs:{},bookings:[],bstat:{},idea:{},listings:{},lsync:{},sector:"All",draft:{bg:"sun",s:[],p:0,t:"",voice:false,photo:""},tr:{}});
 let S=fresh();
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(fresh(),JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-let ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft"};
+let ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const all=()=>BIZ0.concat(S.custom);
@@ -41,7 +40,11 @@ const B=()=>biz(S.role==="biz"?S.myBiz:S.biz);
 const Lst=b=>Object.assign({},b.L,S.listings[b.id]);
 const cardsOf=b=>b.cards.map((c,i)=>({...c,id:b.id+"-s"+i})).concat(S.mine.filter(m=>m.biz===b.id));
 const thread=(b,tid)=>((b.threads.find(t=>t.id===tid)||{}).msgs||[]).concat(S.msgs[b.id+":"+tid]||[]);
-const gt=()=>"g"+S.gid;   /* this guest's own thread id */
+const gt=()=>"g"+S.gid;
+/* after logging in on a new device: take over the account's guest id, and move anything made here under it */
+function adopt(gid){if(!gid||gid===S.gid)return;const old=S.gid;S.mine.forEach(m=>{if(m.gid===old)m.gid=gid});S.bookings.forEach(k=>{if(k.gid===old)k.gid=gid});
+ for(const k of Object.keys(S.msgs)){S.msgs[k].forEach(m=>{if(m.own===old)m.own=gid});if(k.endsWith(":g"+old)){const nk=k.slice(0,-old.length)+gid;S.msgs[nk]=(S.msgs[nk]||[]).concat(S.msgs[k]);delete S.msgs[k]}}
+ S.acked={};S.gid=gid}   /* this guest's own thread id */
 const threadsOf=b=>b.threads.concat(Object.keys(S.msgs).filter(k=>k.startsWith(b.id+":g")).map(k=>{const m=S.msgs[k].find(m=>m.from==="g")||{};return{id:k.slice(b.id.length+1),who:m.who||"Guest",f:m.f||"🌍"}}));
 const bookingsOf=b=>b.bookings.map((k,i)=>({...k,id:b.id+"-b"+i,status:S.bstat[b.id+"-b"+i]||k.status})).concat(S.bookings.filter(k=>k.biz===b.id));
 const MASCOT=`<svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 14c27 0 46 19 46 45 0 29-21 49-46 49S14 88 14 59C14 33 33 14 60 14z" fill="#FF7043"/><circle cx="38" cy="70" r="7" fill="#FFC928" opacity=".9"/><circle cx="82" cy="70" r="7" fill="#FFC928" opacity=".9"/><path d="M40 58q6 7 12 0M68 58q6 7 12 0M50 74q10 10 20 0" fill="none" stroke="#171717" stroke-width="4" stroke-linecap="round"/></svg>`;
@@ -53,7 +56,7 @@ function mapSVG(list){const X=v=>v*3.6,Y=v=>v*2.1;
  <path d="M${X(GATE[0])} ${Y(GATE[1])} Q130 150 ${X(38)} ${Y(58)} T${X(70)} ${Y(22)}" fill="none" stroke="#FFF9F0" stroke-width="9" stroke-linecap="round"/>
  ${list.map(b=>`<g><circle cx="${X(pos(b)[0])}" cy="${Y(pos(b)[1])}" r="15" fill="${b.col}" stroke="#FFFFFF" stroke-width="3"/><text x="${X(pos(b)[0])}" y="${Y(pos(b)[1])+6}" text-anchor="middle" font-size="16">${b.e}</text><text x="${X(pos(b)[0])}" y="${Y(pos(b)[1])+30}" text-anchor="middle" font-size="10" font-weight="700" fill="#171717">${esc(b.host)}</text></g>`).join("")}
  <g><circle cx="${X(S.here[0])}" cy="${Y(S.here[1])}" r="13" fill="#FF7043" opacity=".3"/><circle cx="${X(S.here[0])}" cy="${Y(S.here[1])}" r="6" fill="#FF7043" stroke="#FFFFFF" stroke-width="2.5"/><text x="${X(S.here[0])+16}" y="${Y(S.here[1])+4}" font-size="10" font-weight="700" fill="#171717">You</text></g></svg>`}
-const STEPS=[["login","Enter as guest or local business","Everyone"],["swipe","Discover your Travel DNA","Guest"],["match","Get matched to local businesses","Guest"],["exp","View Noor’s experience","Guest"],["inbox","Message local businesses across languages","Guest"],["trips","Ask to book a visit","Guest"],["help","Phrase cards for talking face to face","Guest"],["card","Leave a postcard","Guest"],["story","The Story of This Place","Guest"],["b-list","Describe the business by voice","Local business"],["b-msgs","Reply to guests, translated","Local business"],["b-book","Confirm or decline bookings","Local business"],["b-insights","See what visitors remember","Local business"]];
+const STEPS=[["login","Browse as a guest, or log in","Everyone"],["swipe","Discover your Travel DNA","Guest"],["match","Get matched to local businesses","Guest"],["exp","View Noor’s experience","Guest"],["inbox","Message local businesses across languages","Guest"],["trips","Ask to book a visit","Guest"],["help","Phrase cards for talking face to face","Guest"],["card","Leave a postcard","Guest"],["story","The Story of This Place","Guest"],["b-list","Describe the business by voice","Local business"],["b-msgs","Reply to guests, translated","Local business"],["b-book","Confirm or decline bookings","Local business"],["b-insights","See what visitors remember","Local business"]];
 
 /* ---------- AI 1: Travel DNA and matching ---------- */
 function computeDNA(){const d={};for(const k in DIMS){let tot=0,yes=0;CARDS.forEach((c,i)=>{if(c.g.includes(k)){tot++;if(S.likes[i])yes++}});d[k]=yes/tot}return d}
@@ -188,21 +191,36 @@ ${mail?`<g><rect x="191" y="478" width="9" height="62" rx="3" fill="#7193D8"/><r
 const V={};
 V.land=()=>`<div class="splash"><div class="inner"><div class="mascot">${MASCOT.replaceAll("#FF7043","#FFC928").replaceAll('fill="#FFC928" opacity=".9"','fill="#FF7043" opacity=".55"')}</div>
 <h1>Travel local. Stay connected.</h1><p class="tagline">Download the place. Discover the people. <em>Live the moment, even offline.</em></p></div>
-<div class="inner"><button class="btn sun wide" data-a="go" data-s="login">Start your journey</button>
-<div class="row" style="margin-top:.7rem"><button class="btn" data-a="go" data-s="explore">Explore a place</button><button class="btn" data-a="go" data-s="login">I run a business</button></div>
-<p class="small" style="color:var(--ink);text-align:center;margin-top:1rem">Built for real local businesses, not just the ones already online.</p></div></div>`;
+<div class="inner"><button class="btn sun wide" data-a="go" data-s="explore">Start exploring</button>
+<div class="row" style="margin-top:.7rem"><button class="btn" data-a="go" data-s="swipe">Find my Travel DNA</button><button class="btn" data-a="ltab" data-t="biz">I run a business</button></div>
+<p class="small" style="color:var(--ink);text-align:center;margin-top:1rem">No account needed to look around. Built for real local businesses, not just the ones already online.</p></div></div>`;
 
-V.login=()=>`<div class="pad"><div class="hello">${MASCOT}<div><h1 style="font-size:1.7rem">Who is here today?</h1><p class="sub">One website for both sides. Nothing to install.</p></div></div>
- <div class="box sel"><h3>🧳 I am a guest</h3><p class="sub">Find local experiences, message the people who run them, ask to book.</p>
- <div class="row"><div style="flex:2"><label class="f" for="gn">Nickname (optional)</label><input class="t" id="gn" maxlength="20" value="${esc(S.guest.n)}"></div>
- <div style="flex:1"><label class="f" for="gf">From</label><select class="t" id="gf">${["🌍","🇮🇩","🇲🇽","🇬🇧","🇺🇸","🇩🇪","🇫🇷","🇯🇵","🇪🇸","🇮🇳","🇰🇷","🇧🇷","🇦🇺"].map(f=>`<option ${f===S.guest.f?"selected":""}>${f}</option>`).join("")}</select></div></div>
- <button class="btn wide" style="margin-top:.9rem" data-a="asguest">Continue as guest</button></div>
- <div class="box"><h3>🏡 I run a local business</h3><p class="sub">Any kind: a farm, a workshop, a kitchen, a homestay, a guide.</p>
- ${all().map(b=>`<button class="bz" data-a="asbiz" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${b.sector}${b.custom?"":" · demo account"}</span></span></button>`).join("")}
- <label class="f" for="bn">Or register a new one</label><input class="t" id="bn" maxlength="24" placeholder="Your first name, for example Rina">
- <div style="margin-top:.6rem">${Object.keys(SECTORS).map(s=>`<button class="chip pick ${ui.newSector===s?"on":""}" data-a="nsec" data-s="${s}">${SECTORS[s][0]} ${s}</button>`).join("")}</div>
- <button class="btn sun wide" data-a="register">Register and describe it by voice</button></div>
- <p class="small" style="margin-top:.8rem">Demo: no password. The real version would use a phone number and a one-time SMS code, because that works on a basic phone.</p></div>`;
+V.login=()=>{const a=S.acct,biz=ui.ltab==="biz",flags=["🌍","🇮🇩","🇲🇽","🇬🇧","🇺🇸","🇩🇪","🇫🇷","🇯🇵","🇪🇸","🇮🇳","🇰🇷","🇧🇷","🇦🇺"];
+ const phonePin=`<div class="row"><div style="flex:3"><label class="f" for="lp">Phone number</label><input class="t" id="lp" inputmode="tel" autocomplete="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="lpin">PIN (4 to 6 digits)</label><input class="t" id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div></div>`;
+ return `<div class="pad"><div class="hello">${MASCOT}<div><h1 style="font-size:1.7rem">Your account</h1><p class="sub">${a?"Logged in as "+esc(a.phone)+".":"You are browsing as a guest. That is all you need."}</p></div></div>
+ <div class="tabs2"><button class="${biz?"":"on"}" data-a="ltab" data-t="guest">🧳 Guest</button><button class="${biz?"on":""}" data-a="ltab" data-t="biz">🏡 Local business</button></div>
+ ${biz?`
+ <div class="box"><h3>Log in to your business</h3><p class="sub">Use the phone number and PIN you registered with.</p>${phonePin}
+ <button class="btn wide" style="margin-top:.9rem" data-a="blogin">Log in</button></div>
+ <div class="box"><h3>New here? Register your business</h3><p class="sub">Any kind: a farm, a workshop, a kitchen, a homestay, a guide.</p>
+ <label class="f" for="bn">Your first name</label><input class="t" id="bn" maxlength="24" placeholder="For example Rina">
+ <div style="margin-top:.6rem">${Object.keys(SECTORS).map(k=>`<button class="chip pick ${ui.newSector===k?"on":""}" data-a="nsec" data-s="${k}">${SECTORS[k][0]} ${k}</button>`).join("")}</div>
+ <div class="row"><div style="flex:3"><label class="f" for="rp">Phone number</label><input class="t" id="rp" inputmode="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="rpin">Choose a PIN</label><input class="t" id="rpin" type="password" inputmode="numeric" maxlength="6"></div></div>
+ <button class="btn sun wide" style="margin-top:.9rem" data-a="register">Register and describe it by voice</button>
+ ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected, so the phone number and PIN are optional and this business lives on this device only.</p>`}</div>
+ <details class="box"><summary><b>Try a sample business</b> <span class="small">no login needed</span></summary>
+ ${all().map(b=>`<button class="bz" data-a="asbiz" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${b.sector}</span></span></button>`).join("")}</details>`
+ :`
+ <div class="box sel"><h3>How guests see you</h3><p class="sub">Optional. Used on your messages, bookings and postcards.</p>
+ <div class="row"><div style="flex:2"><label class="f" for="gn">Nickname</label><input class="t" id="gn" maxlength="20" value="${esc(S.guest.n)}"></div>
+ <div style="flex:1"><label class="f" for="gf">From</label><select class="t" id="gf">${flags.map(x=>`<option ${x===S.guest.f?"selected":""}>${x}</option>`).join("")}</select></div></div>
+ <button class="btn wide" style="margin-top:.9rem" data-a="asguest">Save and keep exploring</button></div>
+ ${a&&a.kind==="guest"?`<div class="box"><h3>Logged in</h3><p class="sub">Your visits and chats follow you to any device where you log in with ${esc(a.phone)}.</p><button class="btn alt wide" style="margin-top:.8rem" data-a="logout">Log out</button></div>`
+ :`<div class="box"><h3>Log in or create an account</h3><p class="sub">Only needed if you want your visits and chats on another device. The first time you use a number, this creates the account.</p>${phonePin}
+ <button class="btn alt wide" style="margin-top:.9rem" data-a="glogin">Log in</button>
+ ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected right now, so accounts are switched off. Everything you do is still kept on this device.</p>`}</div>`}`}
+ <p class="small" style="margin-top:1.2rem;display:flex;gap:1rem;flex-wrap:wrap"><button style="text-decoration:underline;font-weight:700" data-a="go" data-s="ai">How YoloWisata works</button><button style="text-decoration:underline" data-a="reset">Clear everything on this device</button></p>
+ </div>`};
 
 V.explore=()=>{const cats=[["All","✨"]].concat(Object.keys(SECTORS).slice(0,5).map(k=>[k,SECTORS[k][0]]));
  let list=all().filter(b=>S.sector==="All"||b.sector===S.sector).map(b=>({b,m:S.dna?matchOf(b).score:null,d:kmTo(b)}));
@@ -394,8 +412,8 @@ function render(){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]|
  $("#net").className="pill net"+(S.online?"":" off");$("#net").textContent=S.online?"● Online":"○ Offline";
  $("#acct").textContent=S.role==="biz"?B().e+" "+B().host:"🧳 "+(S.guest.n||"Guest");
  const nav=s==="land"||s==="login"||s==="ai"?null:S.role==="biz"?BNAV():GNAV,g=GROUP[s]||s;const lg=$("#lang");lg.style.display=S.role==="biz"&&s!=="land"&&s!=="login"?"":"none";lg.textContent=S.blang==="en"?"🌐 ID":"🌐 EN";
- $("#nav").innerHTML=nav?`<nav class="nav">${nav.map(n=>`<button class="${n[0]===g?"on":""}" data-a="go" data-s="${n[0]}"><span>${n[1]}</span>${n[2]}</button>`).join("")}</nav>`:"";
- $("#steps").innerHTML=stepsHTML();renderOver();if(s==="swipe")bindSwipe();
+ $("#nav").innerHTML=nav?`<nav class="nav">${nav.map((n,i)=>`<button class="${n[0]===g?"on":""}" data-a="go" data-s="${n[0]}"><span class="ni" style="--c:${["#FFE4D9","#FFF2C6","#D6E8FA","#DCF4E7","#FFE4D9"][i%5]}" aria-hidden="true">${n[1]}</span>${n[2]}</button>`).join("")}</nav>`:"";
+ renderOver();if(s==="swipe")bindSwipe();
  if(s==="chat"||s==="b-thread")$("#view").scrollTop=1e6;save();flush()}
 const stepsHTML=()=>STEPS.map(([k,t,w])=>`<li><button class="${S.screen===k||(k==="swipe"&&S.screen==="dna")||(k==="card"&&S.screen==="thanks")||(k==="b-msgs"&&S.screen==="b-thread")?"on":""}" data-a="go" data-s="${k}"><span>${t}<span class="who">${w}</span></span></button></li>`).join("");
 function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toast" role="status">${ui.toast}</div>`:"";if(!m){o.innerHTML=t;return}
@@ -457,14 +475,26 @@ const A={
  go:el=>go(el.dataset.s), swipe:el=>swipe(+el.dataset.v),
  redo:()=>{S.i=0;S.likes=[];S.dna=null;go("swipe")},
  net:()=>setOnline(!S.online),
- menu:()=>{ui.modal={t:"menu"};renderOver()},
  close:(el,e)=>{if(e.target===el||el.tagName==="BUTTON"){ui.modal=null;renderOver()}},
- reset:()=>{S=fresh();insightCache.clear();noorInsightId=null;ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft"};render();toast("Demo reset.")},
- asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go(S.dna?"explore":"swipe")},
+ reset:()=>{S=fresh();insightCache.clear();noorInsightId=null;ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};render();toast("Cleared. This device is back to a fresh start.")},
+ asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go(S.dna?"explore":"swipe");toast("Saved.")},
+ ltab:el=>{ui.ltab=el.dataset.t;go("login")},
+ logout:()=>{S.acct=null;render();toast("Logged out. Your data stays on this device.")},
+ glogin:()=>{const phone=$("#lp").value.replace(/\D/g,""),pin=$("#lpin").value;if(phone.length<8||pin.length<4){toast("Enter your phone number and a PIN of 4 to 6 digits.");return}
+  if(!API||!S.online){toast(API?"You are offline. Log in when you have signal.":"Accounts need the server. Your data is still kept on this device.");return}
+  api("/api/login","POST",{kind:"guest",phone,pin,gid:S.gid,name:S.guest.n,flag:S.guest.f}).then(r=>{adopt(r.gid);if(r.name||!S.guest.n)S.guest={n:r.name||"",f:r.flag||S.guest.f};S.acct={kind:"guest",phone};render();pull();toast(r.created?"Account created.":"Welcome back"+(r.name?", "+r.name:"")+".")})
+  .catch(e=>toast(/401/.test(e.message)?"That PIN does not match this number.":"Could not reach the server. Try again."))},
+ blogin:()=>{const phone=$("#lp").value.replace(/\D/g,""),pin=$("#lpin").value;if(phone.length<8||pin.length<4){toast("Enter your phone number and PIN.");return}
+  if(!API||!S.online){toast(API?"You are offline. Log in when you have signal.":"Business login needs the server. Use a demo account below.");return}
+  api("/api/login","POST",{kind:"biz",phone,pin}).then(r=>{S.acct={kind:"biz",phone};pull();setTimeout(()=>{S.myBiz=r.bizId;ui.transcript="";go("b-insights")},600)})
+  .catch(e=>toast(/401/.test(e.message)?"That PIN does not match this number.":/404/.test(e.message)?"No business uses this number yet. Register below.":"Could not reach the server. Try again."))},
  asbiz:el=>{S.myBiz=el.dataset.id;ui.transcript="";go("b-insights")},
  nsec:el=>{ui.newSector=el.dataset.s;const v=$("#bn").value;render();$("#bn").value=v},
  register:()=>{const n=$("#bn").value.trim();if(!n){toast("Type your first name so guests know who you are.");return}const sec=ui.newSector,id="c"+newId();
   S.custom.push({id,name:n+"’s "+SECTORS[sec][2],host:n,sector:sec,e:SECTORS[sec][0],col:PAL[S.custom.length%4],place:"Ondera village",dna:SECTORS[sec][1],chips:[sec,"New on YoloWisata"],story:"",L:{},cards:[],qs:[],bookings:[],threads:[],custom:true});
+  const phone=$("#rp").value.replace(/\D/g,""),pin=$("#rpin").value;
+  if(API&&S.online){if(phone.length<8||pin.length<4){S.custom.pop();toast("Add a phone number and a PIN of 4 to 6 digits, so you can log in again later.");return}
+   api("/api/login","POST",{kind:"biz",phone,pin,bizId:id}).then(()=>{S.acct={kind:"biz",phone};save()}).catch(e=>toast(/401|409/.test(e.message)?"This number already has a business. Log in instead.":"Could not save the login. The business is kept on this device."))}
   S.myBiz=id;ui.transcript="";go("b-list");toast("Welcome, "+n+". Now tell guests what you offer.")},
  flip:el=>el.classList.toggle("on"),
  hear:el=>{const t=PHR[+el.dataset.i];try{const vs=speechSynthesis.getVoices(),v=vs.find(v=>v.lang.toLowerCase().startsWith("id")),u=new SpeechSynthesisUtterance(t[0]);u.lang="id-ID";u.rate=+el.dataset.r;if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u);
@@ -532,5 +562,11 @@ async function boot(){let c=window.YOLO_CONTENT;
  if(!c&&API){try{c=await api("/api/content")}catch(e){}}
  if(!c){try{c=await (await fetch("/data/content.json")).json()}catch(e){}}
  if(!c){$("#view").innerHTML='<div class="pad"><h1 style="font-size:1.5rem">YoloWisata could not load its content</h1><p class="sub">Open it once with a connection. After that it works offline.</p></div>';return}
- applyContent(c);render();if(API){pull();setInterval(()=>{pull();flush();refreshInsights()},8000)}}
+ applyContent(c);
+ if(navigator.onLine===false)S.online=false;
+ render();
+ if(API){
+   pull();
+   setInterval(()=>{pull();flush();refreshInsights()},8000)
+ }}
 boot();

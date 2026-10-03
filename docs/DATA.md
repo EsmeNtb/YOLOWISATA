@@ -93,7 +93,19 @@ Things only editable in the JSON:
 - A theme needs 3 mentions to show as "Early signal" and 6 for "Strong pattern", so a handful of postcards will correctly show "Not enough evidence yet".
 - Keep synthetic and real rows apart in your data sheet for the judges.
 
-## 4. The data sheet to show the judges
+## 4. How to curate your own dataset, step by step
+
+1. **Collect.** For each business, gather what visitors actually said: WhatsApp messages, guest-book notes, reviews, things the owner remembers being asked. Ask permission. Aim for the owner's real visitors before inventing anything.
+2. **Split.** Something a visitor remembered or loved goes in the Postcards sheet. Something a visitor asked for or asked about goes in the Questions sheet. One thought per row.
+3. **Clean.** Keep the visitor's own words and language in `text`. Remove surnames, phone numbers and anything that identifies a person. Use a nickname.
+4. **Translate.** Fill `english` and `indonesian` for every row not already in that language. Have a fluent speaker check them; these are what the owner and the guest actually read.
+5. **Mark.** Set `local` to 1 for domestic visitors. Keep a separate note of which rows are real and which are invented, for the judges' data sheet.
+6. **Import.** Save the spreadsheet and run `python scripts/xlsx_to_data.py`.
+7. **Read the warnings.** "matches no theme keyword" means that row will not be counted. Either the row is off-topic, or you need to add a keyword for it under `themes` in `data/content.json` (in every language that appears).
+8. **Check the result.** Run the site, log in as that business, open Visitors, and tap each count to see the quotes behind it. If a quote is counted under the wrong theme, tighten the keyword.
+9. **Commit** `data/content.json`, `frontend/data/content.json` and the spreadsheet together.
+
+## 5. The data sheet to show the judges
 
 | Dataset | Source | License | Size | What it does not cover |
 |---|---|---|---|---|
