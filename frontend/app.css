@@ -242,3 +242,18 @@ body{background:var(--cream)}
 .stage{display:block;padding:0;gap:0}
 .guide{display:none!important}.menu-btn{display:inline-block!important}
 @media(min-width:760px){.phone{width:100%;border-radius:0;box-shadow:none}.nav{width:220px}.pad,.chat{max-width:760px}.splash .inner{max-width:560px}}
+
+/* --- navigation: outline icons; a compact sidebar on computers --- */
+body{font-size:1rem}
+.nav button{color:var(--soft)}
+.nav button span{display:grid;place-items:center}
+.nav svg{width:22px;height:22px;display:block}
+.nav button.on{background:#FFE4D9;color:var(--ink)}
+@media(min-width:760px){
+ .nav{flex-direction:column;justify-content:flex-start;gap:.25rem;width:240px;height:100%;padding:1.1rem .9rem;background:var(--cream);border-top:0;border-right:1px solid var(--line)}
+ .nav button{flex:none;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:.85rem;font-size:1rem;font-weight:600;padding:.75rem 1rem;border-radius:18px;text-align:left}
+ .nav button.on{font-weight:700}
+}
+/* larger text and a wider column on big monitors */
+@media(min-width:1200px){html{font-size:112.5%}.pad,.chat{max-width:880px}.nav{width:260px}}
+@media(min-width:1700px){html{font-size:125%}}
