@@ -1,0 +1,118 @@
+You are working inside the existing YoloWisata hackathon repository.
+
+DO NOT rewrite the application.
+DO NOT redesign the architecture.
+DO NOT remove working legacy behavior unless explicitly instructed.
+
+Current verified state:
+- FastAPI runs successfully.
+- backend/database.py connects to Supabase.
+- GET /api/health reports database.connected = true.
+- Supabase schema, RLS policies, indexes, and seed data already exist.
+- GET /api/businesses works from Supabase.
+- GET /api/experiences works from Supabase.
+- GET /api/postcards works from Supabase.
+- Noor Coffee Farm exists.
+- Coffee Farm & Roasting Walk exists.
+- 10 synthetic demo postcards exist in Supabase.
+- The existing frontend still depends on legacy GET /api/sync and POST /api/{kind}.
+- backend/ai.py contains the existing Experience DNA / visitor insight logic.
+- app.mount("/") MUST remain the final route registration.
+
+IMPORTANT:
+Inspect backend/main.py, backend/ai.py, frontend/app.js, and the Supabase schema before editing.
+Preserve the current frontend payload contracts whenever possible.
+
+TASK: PHASE 2 SUPABASE INTEGRATION
+
+1. Migrate:
+   GET /api/businesses/{biz_id}/insights
+
+   so that it reads its business, experiences, postcards, and relevant messages from Supabase instead of data/store.json.
+
+2. Only include postcards where:
+   consent_for_analysis = true.
+
+3. Preserve the current ai.analyse() behavior unless a small compatibility adapter is required.
+
+4. If Supabase records use different field names than ai.analyse() expects, create a clear adapter at the API boundary.
+   Do not silently rewrite the entire AI module.
+
+5. Add a specific Supabase-backed endpoint:
+
+   POST /api/postcards
+
+   It MUST be declared before the generic:
+   POST /api/{kind}
+
+6. Preserve compatibility with the CURRENT frontend payload.
+   Inspect frontend/app.js to determine exactly what POST /api/postcards currently sends.
+
+7. The new POST /api/postcards endpoint should accept both:
+   - the existing legacy frontend payload, when possible
+   - the new Supabase-shaped payload
+
+8. For a legacy postcard containing a business id but no experience_id:
+   - look up active experiences for that business
+   - if exactly one active experience exists, use it
+   - if none exist, return HTTP 400
+   - if multiple exist and the request does not identify one, return HTTP 400 rather than guessing
+
+9. Preserve:
+   GET /api/sync
+   POST /api/{kind}
+   data/store.json
+   for legacy compatibility for now.
+
+10. Do NOT migrate messages or bookings yet.
+
+11. Do NOT modify:
+   - Supabase migrations
+   - RLS policies
+   - indexes
+   - frontend styling
+   - authentication
+   - database secrets
+
+12. Never expose SUPABASE_SECRET_KEY.
+
+13. Keep app.mount("/") last.
+
+After editing, run checks and report:
+
+- exact files changed
+- exact endpoints changed
+- how frontend postcard payload fields map to Supabase columns
+- whether ai.analyse() required an adapter
+- any incompatibilities discovered
+- commands used to test
+
+Acceptance tests:
+
+GET /api/health
+=> database.connected = true
+
+GET /api/businesses
+=> Noor Coffee Farm exists
+
+GET /api/postcards
+=> returns the existing Supabase postcards
+
+GET /api/businesses/{NOOR_BUSINESS_UUID}/insights
+=> successfully analyzes Supabase feedback and returns insights
+
+POST /api/postcards
+=> inserts a new row into Supabase
+
+After POST /api/postcards:
+GET /api/postcards
+=> includes the newly-created postcard
+
+Existing frontend:
+=> still loads successfully
+
+Existing legacy endpoints:
+=> remain available
+
+Do not proceed to messages/bookings/offline sync in this task.
+Stop after Phase 2 and summarize results.
