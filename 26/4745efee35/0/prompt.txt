@@ -1,0 +1,325 @@
+You are continuing work on the YoloWisata hackathon repository.
+
+Current branch:
+Backend
+
+Phase 2 is complete, tested, committed, and pushed.
+
+CURRENT VERIFIED STATE
+
+Backend:
+- FastAPI works.
+- Supabase connectivity works.
+- GET /api/health returns database.connected = true.
+- GET /api/businesses reads from Supabase.
+- GET /api/experiences reads from Supabase.
+- GET /api/postcards reads from Supabase.
+- POST /api/postcards writes to Supabase.
+- GET /api/businesses/{biz_id}/insights now reads Supabase business data,
+  experiences, consented postcards, and relevant messages.
+- ai.analyse() remains unchanged.
+- Existing legacy GET /api/sync and POST /api/{kind} still work.
+- app.mount("/") remains last.
+- Phase 2 unit tests pass.
+
+Frontend:
+- Vanilla HTML/CSS/JS.
+- Existing UI already renders Experience DNA / visitor insights.
+- The frontend still computes some or all insights locally.
+- Existing local logic is useful as offline fallback.
+
+PHASE 3 GOAL
+
+Make the business dashboard use the real backend Experience DNA endpoint
+when online, while preserving the existing local/on-device insight logic
+as an offline fallback.
+
+DO NOT redesign the app.
+DO NOT introduce frameworks.
+DO NOT migrate bookings/messages yet.
+DO NOT modify Supabase migrations, RLS, indexes, authentication, or secrets.
+DO NOT remove offline-compatible logic.
+
+TASKS
+
+1. Inspect before editing:
+   - frontend/app.js
+   - frontend/config.js
+   - backend/main.py
+   - backend/ai.py
+   - existing tests
+
+2. Find exactly where business insights / Experience DNA are currently:
+   - computed
+   - stored
+   - rendered
+   - refreshed
+
+3. When the app is online and a valid business is selected:
+   fetch:
+
+   GET /api/businesses/{biz_id}/insights
+
+4. Treat backend insights as authoritative while online.
+
+5. Preserve the current local insight analyzer as fallback when:
+   - navigator is offline
+   - request fails
+   - backend is unavailable
+
+6. Do not break existing UI structure or styling.
+
+7. Adapt backend response fields to the existing frontend view model
+   rather than rewriting the entire UI.
+
+8. The visible business insight experience should support, where present:
+   - recurring visitor themes
+   - evidence counts
+   - evidence strength labels
+   - opportunities / suggested experiments
+   - supporting visitor evidence
+   - uncertainty / weak-signal handling
+
+9. Preserve human-in-the-loop behavior:
+   AI may suggest an opportunity,
+   but must never automatically:
+   - change a listing
+   - change pricing
+   - create an experience
+   - publish anything
+
+10. Preserve multilingual evidence.
+    English and Indonesian postcards from Supabase should be able to
+    contribute to the visible Experience DNA.
+
+11. Avoid fake certainty.
+    If the backend says evidence is weak or insufficient,
+    render that state instead of inventing a recommendation.
+
+12. Do not remove the legacy local analyzer.
+    Keep it clearly separated as:
+    online backend source vs offline fallback source.
+
+13. Add/update tests for:
+    - successful online backend insights fetch
+    - rendering backend insights
+    - API failure fallback
+    - offline fallback
+    - no accidental mutation/publishing from AI suggestions
+
+14. Preserve all Phase 2 tests.
+
+15. Do not proceed to:
+    - bookings migration
+    - messages migration
+    - IndexedDB rewrite
+    - offline outbox
+    - Whisper installation
+    - auth
+    - UI redesign
+
+ACCEPTANCE CRITERIA
+
+A. Existing Phase 2 tests still pass.
+
+B. With internet/backend available:
+   Noor Coffee Farm dashboard calls:
+   GET /api/businesses/{NOOR_UUID}/insights
+
+C. Supabase postcards influence what Noor visibly sees
+   in Experience DNA.
+
+D. Indonesian and English visitor feedback can appear
+   as supporting evidence.
+
+E. If backend insights fail:
+   the current local analyzer still produces a usable result.
+
+F. The frontend continues to work as a PWA.
+
+G. No new framework/dependency is added.
+
+H. Existing visuals remain substantially unchanged.
+
+AFTER IMPLEMENTATION
+
+Run:
+- Python tests
+- JS syntax checks
+- any frontend DOM-stub tests already used
+- git diff --check
+
+Then report:
+
+1. Exact files changed.
+2. Exact frontend logic replaced or redirected.
+3. What remains as offline fallback.
+4. Backend response shape used by frontend.
+5. Any compatibility adapters added.
+6. Test results.
+7. Any known limitations.
+8. Do not start Phase 4.
+
+Stop after Phase 3.You are continuing work on the YoloWisata hackathon repository.
+
+Current branch:
+Backend
+
+Phase 2 is complete, tested, committed, and pushed.
+
+CURRENT VERIFIED STATE
+
+Backend:
+- FastAPI works.
+- Supabase connectivity works.
+- GET /api/health returns database.connected = true.
+- GET /api/businesses reads from Supabase.
+- GET /api/experiences reads from Supabase.
+- GET /api/postcards reads from Supabase.
+- POST /api/postcards writes to Supabase.
+- GET /api/businesses/{biz_id}/insights now reads Supabase business data,
+  experiences, consented postcards, and relevant messages.
+- ai.analyse() remains unchanged.
+- Existing legacy GET /api/sync and POST /api/{kind} still work.
+- app.mount("/") remains last.
+- Phase 2 unit tests pass.
+
+Frontend:
+- Vanilla HTML/CSS/JS.
+- Existing UI already renders Experience DNA / visitor insights.
+- The frontend still computes some or all insights locally.
+- Existing local logic is useful as offline fallback.
+
+PHASE 3 GOAL
+
+Make the business dashboard use the real backend Experience DNA endpoint
+when online, while preserving the existing local/on-device insight logic
+as an offline fallback.
+
+DO NOT redesign the app.
+DO NOT introduce frameworks.
+DO NOT migrate bookings/messages yet.
+DO NOT modify Supabase migrations, RLS, indexes, authentication, or secrets.
+DO NOT remove offline-compatible logic.
+
+TASKS
+
+1. Inspect before editing:
+   - frontend/app.js
+   - frontend/config.js
+   - backend/main.py
+   - backend/ai.py
+   - existing tests
+
+2. Find exactly where business insights / Experience DNA are currently:
+   - computed
+   - stored
+   - rendered
+   - refreshed
+
+3. When the app is online and a valid business is selected:
+   fetch:
+
+   GET /api/businesses/{biz_id}/insights
+
+4. Treat backend insights as authoritative while online.
+
+5. Preserve the current local insight analyzer as fallback when:
+   - navigator is offline
+   - request fails
+   - backend is unavailable
+
+6. Do not break existing UI structure or styling.
+
+7. Adapt backend response fields to the existing frontend view model
+   rather than rewriting the entire UI.
+
+8. The visible business insight experience should support, where present:
+   - recurring visitor themes
+   - evidence counts
+   - evidence strength labels
+   - opportunities / suggested experiments
+   - supporting visitor evidence
+   - uncertainty / weak-signal handling
+
+9. Preserve human-in-the-loop behavior:
+   AI may suggest an opportunity,
+   but must never automatically:
+   - change a listing
+   - change pricing
+   - create an experience
+   - publish anything
+
+10. Preserve multilingual evidence.
+    English and Indonesian postcards from Supabase should be able to
+    contribute to the visible Experience DNA.
+
+11. Avoid fake certainty.
+    If the backend says evidence is weak or insufficient,
+    render that state instead of inventing a recommendation.
+
+12. Do not remove the legacy local analyzer.
+    Keep it clearly separated as:
+    online backend source vs offline fallback source.
+
+13. Add/update tests for:
+    - successful online backend insights fetch
+    - rendering backend insights
+    - API failure fallback
+    - offline fallback
+    - no accidental mutation/publishing from AI suggestions
+
+14. Preserve all Phase 2 tests.
+
+15. Do not proceed to:
+    - bookings migration
+    - messages migration
+    - IndexedDB rewrite
+    - offline outbox
+    - Whisper installation
+    - auth
+    - UI redesign
+
+ACCEPTANCE CRITERIA
+
+A. Existing Phase 2 tests still pass.
+
+B. With internet/backend available:
+   Noor Coffee Farm dashboard calls:
+   GET /api/businesses/{NOOR_UUID}/insights
+
+C. Supabase postcards influence what Noor visibly sees
+   in Experience DNA.
+
+D. Indonesian and English visitor feedback can appear
+   as supporting evidence.
+
+E. If backend insights fail:
+   the current local analyzer still produces a usable result.
+
+F. The frontend continues to work as a PWA.
+
+G. No new framework/dependency is added.
+
+H. Existing visuals remain substantially unchanged.
+
+AFTER IMPLEMENTATION
+
+Run:
+- Python tests
+- JS syntax checks
+- any frontend DOM-stub tests already used
+- git diff --check
+
+Then report:
+
+1. Exact files changed.
+2. Exact frontend logic replaced or redirected.
+3. What remains as offline fallback.
+4. Backend response shape used by frontend.
+5. Any compatibility adapters added.
+6. Test results.
+7. Any known limitations.
+8. Do not start Phase 4.
+
+Stop after Phase 3.
