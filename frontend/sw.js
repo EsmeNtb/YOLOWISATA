@@ -1,6 +1,6 @@
 // Service worker: keeps the website working with no internet after the first visit.
 // Bump VERSION every time you deploy a change, so phones pick up the new files.
-const VERSION="yolowisata-v3";
+const VERSION="yolowisata-v5";
 const SHELL=["/","/index.html","/app.css","/app.js","/config.js","/data/content.json","/icon.svg","/manifest.webmanifest"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

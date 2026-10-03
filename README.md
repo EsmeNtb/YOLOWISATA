@@ -93,6 +93,7 @@ Website (phone or computer) <── content ───────────┤
 | `GET /api/health` | Is the server up, and is a speech model set |
 | `GET /api/content` | data/content.json |
 | `GET /api/sync` | Everything shared so far |
+| `POST /api/login` | Phone number and PIN, for guests and for businesses. The first login with a number creates the account |
 | `POST /api/postcards`, `/messages`, `/bookings`, `/bookingstatus`, `/listings`, `/businesses` | Save one record by its id. An older copy never replaces a newer one |
 | `POST /api/extract` | Text of a voice note in, listing fields out, plus which fields were not heard |
 | `POST /api/voice` | Audio in, transcript and listing fields out. With no speech model it returns the sector's sample transcript and `"demo": true` |
@@ -127,7 +128,8 @@ Website (phone or computer) <── content ───────────┤
 
 ## Known limits (be upfront about these)
 
-- **No real login.** There are no passwords. Anyone who knows the backend address can read every message and booking. Do not put real personal data in it.
+- **Login identifies, it does not protect yet.** Guests browse with no account. Guests and businesses can log in with a phone number and PIN (stored hashed), which lets them pick up their data on another device. But the other endpoints do not check who is calling, so anyone who knows the backend address can still read every message and booking. Do not put real personal data in it. There is also no SMS check that the number is really theirs, and no PIN reset.
+- **Accounts need the backend.** On the Vercel-only deployment, login is switched off and says so; the demo business accounts still work.
 - **File store.** Fine for a demo and a pilot village; a real launch needs a database.
 - **Not yet tested by me:** the live microphone upload in a real browser, the speech model path, and the layouts on real devices. The backend API, the two-phone sync logic and all screens were tested by script.
 - **Indonesian wording** on the business side should be read by a native speaker.
