@@ -3,22 +3,28 @@
   "checkpoint_id": "102d62c7b09d",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 3,
+  "checkpoints_count": 6,
   "files_touched": [
     ".gitignore",
     "backend/listing_ai.py",
     "backend/main.py",
     "backend/requirements.txt",
     "backend/voice.py",
+    "data/processed/evaluation_results.json",
+    "docs/VOICE_AI.md",
     "frontend/app.css",
     "frontend/app.js",
     "frontend/index.html",
     "frontend/sw.js",
     "frontend/voice-listing.js",
+    "run.bat",
+    "scripts/evaluate_ai.py",
     "scripts/evaluate_voice_ai.py",
     "scripts/setup_voice_models.py",
     "scripts/voice_runtime_smoke.py",
+    "tests/test_listings.py",
     "tests/test_phase3_frontend.js",
+    "tests/test_phase4.py",
     "tests/test_phase6.py",
     "tests/test_phase6_frontend.js"
   ],
@@ -43,13 +49,20 @@
       "compact_transcript": "/10/2d62c7b09d/2/transcript.jsonl",
       "content_hash": "/10/2d62c7b09d/2/content_hash.txt",
       "prompt": "/10/2d62c7b09d/2/prompt.txt"
+    },
+    {
+      "metadata": "/10/2d62c7b09d/3/metadata.json",
+      "transcript": "/10/2d62c7b09d/3/full.jsonl",
+      "compact_transcript": "/10/2d62c7b09d/3/transcript.jsonl",
+      "content_hash": "/10/2d62c7b09d/3/content_hash.txt",
+      "prompt": "/10/2d62c7b09d/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 372263,
+    "input_tokens": 503907,
     "cache_creation_tokens": 0,
-    "cache_read_tokens": 7864704,
-    "output_tokens": 98766,
-    "api_call_count": 96
+    "cache_read_tokens": 10322176,
+    "output_tokens": 126782,
+    "api_call_count": 127
   }
 }

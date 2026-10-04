@@ -1,0 +1,684 @@
+Audit the YoloWisata frontend for form accessibility problems.
+
+Chrome DevTools currently reports:
+
+"Incorrect use of <label for=FORM_ELEMENT>"
+"The label's `for` attribute doesn't match any element `id`."
+
+IMPORTANT CONTEXT:
+Chrome extensions are also injecting unrelated scripts such as:
+- contentScript.js
+- redirectionChainSiteScript.js
+- Smart Unit Converter content-script.js
+- chrome.runtime.lastError / message port errors
+
+IGNORE those browser-extension errors completely.
+Do not attempt to fix them in the project.
+
+Your task is ONLY to audit YoloWisata's own frontend code.
+
+Inspect:
+- frontend/index.html
+- frontend/app.js
+- frontend/voice-listing.js
+- any other frontend HTML or JavaScript that creates form elements dynamically
+
+For every YoloWisata <label for="...">:
+
+1. Verify that its `for` value exactly matches the `id` of its intended:
+   - input
+   - select
+   - textarea
+   - or other labelable form control
+
+2. If the intended form control has no id, add a unique stable id.
+
+3. If the label has the wrong `for`, correct it.
+
+4. Check dynamically generated forms and HTML templates in JavaScript as well.
+
+5. Check that no duplicate ids are introduced.
+
+6. Do not remove labels just to silence DevTools.
+
+7. Preserve:
+   - existing classes
+   - name attributes
+   - data-* attributes
+   - event listeners
+   - JavaScript selectors
+   - styling
+   - localization behavior
+   - form behavior
+
+8. If existing JavaScript depends on an id that needs to change, update all corresponding selectors safely.
+
+9. Do NOT redesign the UI.
+
+10. Do NOT modify:
+   - backend/
+   - FastAPI routes
+   - Whisper/STT
+   - Qwen/listing AI
+   - service worker behavior
+   - localStorage/persistence
+   - Supabase logic
+
+11. Do not modify or add workarounds for browser-extension scripts.
+
+After making the fixes:
+
+- Search the entire frontend for every `<label` with a `for` attribute.
+- Verify that every `for` references an existing unique id.
+- Search JavaScript template strings that generate labels/forms too.
+- Report exactly which files were modified.
+- Report the mismatched label/id pairs that were corrected.
+- Keep the changes as small as possible.
+
+---
+
+Fix the YoloWisata voice proposal frontend handling.
+
+IMPORTANT:
+Only modify frontend/voice-listing.js.
+Do not modify app.js, backend files, service worker, persistence, sync logic,
+Whisper, Qwen, FastAPI routes, or the recent accessibility fixes.
+
+Current behavior:
+
+The backend endpoint POST /api/voice/proposal can correctly return HTTP 200
+with a payload containing:
+
+error: "invalid_model_output"
+
+This is an intentional safe backend response when the local AI output fails
+strict validation.
+
+However voiceExtract() currently does:
+
+if(result.error==='invalid_model_output'||!result.listing)
+    throw new Error('Invalid proposal');
+
+That causes the frontend to show the generic
+"Processing unavailable" message and the proposal form does not appear,
+even though the HTTP request succeeded.
+
+Please fix this contract mismatch.
+
+Requirements:
+
+1. Preserve the existing successful extraction behavior.
+
+2. If HTTP 200 returns a valid `listing` object with:
+   error === "invalid_model_output"
+
+   do NOT treat this as a network/server failure.
+
+3. Show the Review and edit proposal form anyway.
+
+4. Populate the form with whatever safe listing values the backend returned.
+   Null scalars and empty arrays should remain blank.
+
+5. Set d.ready = true and d.stale = false.
+
+6. Show a clear bilingual status explaining that the AI could not safely
+   extract structured information and the user should review the transcript
+   or fill the fields manually.
+
+   Suggested English:
+   "The AI could not safely extract all fields. Review the transcript and fill in anything missing."
+
+7. Mark returned/missing fields for review where appropriate, but never
+   invent values.
+
+8. Keep requires_confirmation behavior and the human confirmation workflow.
+
+9. Improve voiceRequest error handling slightly:
+   - If an HTTP request fails, try to read the backend JSON `detail`
+   - preserve a useful error message
+   - do not expose stack traces to the user
+
+10. Keep the existing 180 second timeout.
+
+11. Preserve ALL recent accessibility changes:
+   - voice-label-* IDs
+   - aria-labelledby on chip groups
+   - duration custom-input label behavior
+   - activities and availability label behavior
+
+12. Do not remove or rename any existing data-a, data-voice-field,
+    data-voice-other, IDs, classes, or persistence behavior unless absolutely
+    required.
+
+13. Do not change the /api/sync polling behavior in app.js in this change.
+
+14. Add/adjust tests if appropriate for BOTH cases:
+    A. successful small_ai proposal
+    B. HTTP 200 + error="invalid_model_output"
+
+For case B, verify that:
+- the proposal form becomes visible
+- safe/empty fields are rendered
+- the transcript is preserved
+- the user can manually edit fields
+- Confirm & save remains human-controlled
+
+Report exactly what changed and which tests passed.
+
+---
+
+Implement Supabase persistence and clear sync feedback for YoloWisata voice listings.
+
+You are working with the current repository state.
+
+FILES IN SCOPE:
+- backend/main.py
+- frontend/voice-listing.js
+- frontend/app.js
+- relevant tests only
+
+Do NOT modify:
+- backend/listing_ai.py
+- backend/voice.py
+- Whisper/STT
+- Qwen
+- TTS
+- service worker
+- postcards behavior
+- messages behavior
+- bookings behavior
+- visitor insights behavior
+
+CURRENT BEHAVIOR
+
+frontend/voice-listing.js voiceConfirm():
+
+1. validates the confirmed structured listing
+2. writes it to:
+   S.listings[b.id]
+   S.lts[b.id]
+   S.lsync[b.id]
+3. writes localStorage
+4. sets:
+   "Saved locally. Will sync when connection returns."
+5. calls render()
+
+frontend/app.js already places listings in the existing outbox as:
+
+{
+  id: <business id>,
+  L: <saved listing>,
+  ts: <timestamp>
+}
+
+and sends:
+
+POST /api/listings
+
+The current app.js sync success behavior already contains:
+
+if(kind==="listings")
+    S.lsync[rec.id]="Synced. Guests can find it now.";
+
+However backend/main.py currently has no specific POST /api/listings route.
+
+Therefore POST /api/listings falls through to:
+
+@app.post("/api/{kind}")
+
+and only writes to the legacy data/store.json compatibility store.
+
+GOAL
+
+Preserve local-first saving, but make /api/listings persist the confirmed
+voice listing to the Supabase `experiences` table.
+
+==================================================
+SUPABASE REAL DATA
+==================================================
+
+Business:
+
+id:
+5bfa2070-2285-48c8-8844-5f25e105532a
+
+name:
+Noor Coffee Farm
+
+Existing active experience:
+
+{
+  "id": "a56f1f69-63e3-448f-8c72-6af222acd95c",
+  "business_id": "5bfa2070-2285-48c8-8844-5f25e105532a",
+  "title": "Coffee Farm & Roasting Walk",
+  "description": "Walk through Noor's coffee farm, learn how coffee is grown and roasted, and hear the story of the family farm.",
+  "price": "150000.00",
+  "currency": "IDR",
+  "duration_minutes": 90,
+  "capacity": 8,
+  "availability": {
+    "days": [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday"
+    ],
+    "start_times": [
+      "09:00",
+      "14:00"
+    ]
+  },
+  "activities": [
+    "farm_walk",
+    "coffee_roasting",
+    "local_story"
+  ],
+  "experience_dna": {},
+  "is_active": true,
+  "revision": 1
+}
+
+experiences columns include:
+
+id uuid
+business_id uuid
+title text NOT NULL
+description text nullable
+price numeric nullable
+currency text NOT NULL
+duration_minutes integer nullable
+capacity integer nullable
+availability jsonb NOT NULL
+activities jsonb NOT NULL
+experience_dna jsonb
+is_active boolean NOT NULL
+revision integer NOT NULL
+
+==================================================
+BACKEND
+==================================================
+
+1. Add a dedicated:
+
+@app.post("/api/listings")
+
+route BEFORE the generic:
+
+@app.post("/api/{kind}")
+
+route.
+
+The generic compatibility endpoint must remain.
+
+2. The dedicated /api/listings endpoint accepts the CURRENT frontend payload:
+
+{
+  "id": "<business id or noor>",
+  "L": {
+    "name": "...",
+    "description": "...",
+    "price": "...",
+    "duration": "...",
+    "activities": "...",
+    "availability": "...",
+    "structured": {
+      "business_name": "...",
+      "experience_title": "...",
+      "description": "...",
+      "price": 123,
+      "currency": "IDR",
+      "duration_minutes": 90,
+      "activities": [...],
+      "availability": [...]
+    },
+    "transcript": "...",
+    "language": "...",
+    "confirmed_at": "..."
+  },
+  "ts": 123456789
+}
+
+Use L.structured as the authoritative persistence source.
+
+Do NOT parse presentation strings such as L.price, L.duration,
+L.activities or L.availability when structured data exists.
+
+3. Resolve rec.id using the existing business_uuid() helper.
+
+It already supports:
+- real Supabase UUID values
+- demo alias "noor"
+
+Do not add fuzzy name matching.
+
+4. Validate the structured listing.
+
+Required:
+- experience_title must be a nonempty string
+
+Optional:
+- description: string/null
+- price: null or nonnegative numeric value
+- currency: null or uppercase 3-letter code
+- duration_minutes: null or positive integer
+- activities: array of strings
+- availability: array of valid day strings
+
+Accepted days:
+monday
+tuesday
+wednesday
+thursday
+friday
+saturday
+sunday
+every_day
+
+If every_day is supplied, normalize it to all seven explicit weekday names
+before writing Supabase.
+
+Do not mix every_day with individual days.
+
+5. Query active experiences for the resolved business.
+
+ZERO active experiences:
+- create a new experience
+
+ONE active experience:
+- update that experience
+
+MORE THAN ONE active experience:
+- HTTP 409
+- do not guess which one to edit
+
+6. UPDATE behavior.
+
+The voice listing owns only:
+
+title
+description
+price
+currency
+duration_minutes
+activities
+availability.days
+revision
+
+Preserve the existing database values for:
+
+id
+business_id
+capacity
+availability.start_times
+experience_dna
+is_active
+and all other columns not controlled by this form
+
+For availability:
+
+existing:
+{
+  "days": [...],
+  "start_times": ["09:00", "14:00"]
+}
+
+new structured availability:
+["monday", "friday"]
+
+result:
+{
+  "days": ["monday", "friday"],
+  "start_times": ["09:00", "14:00"]
+}
+
+Do NOT erase start_times.
+
+7. Missing OPTIONAL structured fields must not accidentally erase good
+database information during UPDATE.
+
+Distinguish:
+- omitted / unavailable information
+- values explicitly confirmed by the user
+
+If the current frontend always sends every structured key, inspect its
+actual semantics carefully.
+
+For null fields that mean "not stated", preserve the existing Supabase
+value on UPDATE rather than overwriting it with null.
+
+For arrays:
+- an explicitly confirmed empty activities array may replace activities
+- an explicitly confirmed empty availability array may replace days
+only if that is clearly the current UI behavior
+
+Document the chosen behavior.
+
+8. Revision.
+
+For a real update:
+revision = existing revision + 1
+
+Do not increment revision for an idempotent retry of the exact same
+frontend save operation.
+
+The frontend already supplies rec.ts.
+
+Use the legacy listing mirror timestamp or another safe deterministic
+mechanism so retrying the SAME saved listing does not increment revision
+again.
+
+Example:
+
+same rec.id + same rec.ts sent twice
+
+must NOT result in:
+revision 1 -> 2 -> 3
+
+It should only produce one actual database update.
+
+A later save with a newer ts may increment it again.
+
+9. INSERT behavior.
+
+For zero active experiences create:
+
+business_id
+title
+description when provided
+price when provided
+currency when provided
+duration_minutes when provided
+activities
+availability = {
+  "days": [...],
+  "start_times": []
+}
+is_active = true
+revision = 1
+
+Use database/default values where appropriate.
+
+Do not invent user data.
+
+10. Supabase is the source of truth for this operation.
+
+Write Supabase successfully before updating the legacy compatibility mirror.
+
+After a successful database write, also mirror the original legacy listing
+record into data/store.json -> listings so the existing /api/sync behavior
+continues to work.
+
+If the compatibility mirror write fails AFTER Supabase succeeds:
+- log it safely
+- do not claim the Supabase write failed
+
+11. Return:
+
+{
+  "ok": true,
+  "action": "updated",
+  "experience": {...}
+}
+
+or:
+
+{
+  "ok": true,
+  "action": "created",
+  "experience": {...}
+}
+
+An idempotent repeat may return:
+
+{
+  "ok": true,
+  "action": "unchanged",
+  "experience": {...}
+}
+
+12. Never expose Supabase credentials or raw internal exception text.
+
+Map expected database validation/reference errors to safe 400/409 responses.
+
+==================================================
+FRONTEND USER FEEDBACK
+==================================================
+
+The current voiceConfirm() successfully saves locally, but after saving it
+sets d.ready=false and re-renders, so the action can feel like nothing
+happened.
+
+Improve this without redesigning the screen.
+
+13. Preserve local-first behavior.
+
+Immediately after local save, clearly show feedback such as:
+
+"Listing saved on this device. Syncing…"
+
+If offline:
+
+"Listing saved on this device. Waiting to sync."
+
+14. When app.js receives successful POST /api/listings:
+
+Keep/update:
+
+S.lsync[rec.id] = "Synced. Guests can find it now."
+
+Also show a clear toast while the owner is on the listing screen:
+
+English:
+"Listing saved and synced with YoloWisata."
+
+Indonesian equivalent.
+
+Do not show this toast until the POST actually succeeds.
+
+15. For temporary/network/5xx listing sync failure:
+
+Do NOT delete the local listing.
+Do NOT mark it acknowledged.
+Allow the existing outbox to retry.
+
+Set a useful state such as:
+
+"Saved on this device. Server sync will retry."
+
+16. For permanent 4xx listing failure:
+
+The current generic sync code marks 4xx records acknowledged.
+
+For listings specifically, make the permanent failure visible:
+
+"Saved on this device, but server sync needs attention."
+
+Do not silently swallow it.
+
+Avoid an infinite retry loop for permanent malformed data.
+
+17. Preserve the existing outbox architecture.
+
+Do not create a second independent listing synchronization system.
+
+18. Preserve:
+- all accessibility fixes in voice-listing.js
+- aria-labelledby
+- label/id fixes
+- transcript preservation
+- invalid_model_output manual-edit behavior
+- confirmation requirement
+- localStorage behavior
+
+19. Replace the outdated text currently shown in voice-listing.js:
+
+"Saving uses the existing listing store and server sync.
+Supabase experience writes are not integrated."
+
+After this implementation it is no longer true.
+
+Replace it with accurate local-first messaging.
+
+==================================================
+IMPORTANT CURRENT LIMITATION
+==================================================
+
+20. Do NOT pretend that arbitrary newly registered custom businesses
+already exist in Supabase.
+
+Current business_uuid() only supports:
+- a real Supabase UUID
+- "noor"
+
+The current frontend can create local custom business IDs such as "c...".
+
+If /api/listings receives a custom local business id that has not been
+migrated to Supabase:
+
+- reject it safely
+- keep its listing local
+- show the sync-needs-attention state
+- do NOT create or fuzzy-match a Supabase business here
+
+Business registration -> Supabase is a separate migration task.
+
+==================================================
+TESTS
+==================================================
+
+Add/update tests covering:
+
+1. Noor update succeeds
+2. existing experience id stays unchanged
+3. capacity stays 8
+4. experience_dna stays unchanged
+5. is_active stays unchanged
+6. availability.start_times remains ["09:00","14:00"]
+7. availability.days updates
+8. activities update
+9. title updates
+10. revision increments exactly once
+11. same id + same ts retry does NOT increment revision twice
+12. newer ts may create a new revision
+13. null omitted/not-stated fields preserve existing DB values on update
+14. zero active experiences creates a new one
+15. multiple active experiences returns 409
+16. invalid custom business alias fails safely
+17. local listing survives failed server sync
+18. successful POST updates S.lsync
+19. successful POST produces visible owner feedback
+20. network/5xx failure remains retryable
+21. permanent 4xx listing failure becomes visible
+22. accessibility behavior remains intact
+23. invalid_model_output proposal still opens editable form
+
+Run existing relevant suites too.
+
+Report:
+- exact files changed
+- exact behavior changed
+- tests run
+- pass/fail counts
+- any remaining migration limitations

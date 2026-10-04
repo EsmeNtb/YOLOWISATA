@@ -1,0 +1,135 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "102d62c7b09d",
+  "session_id": "01a105fe-5ea4-70f3-ae9b-c54f4b3f8d47",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-04T09:23:52.2015131Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [
+    ".gitignore",
+    "backend/main.py",
+    "backend/requirements.txt",
+    "backend/voice.py",
+    "data/processed/evaluation_results.json",
+    "docs/VOICE_AI.md",
+    "frontend/app.css",
+    "frontend/app.js",
+    "frontend/index.html",
+    "frontend/sw.js",
+    "frontend/voice-listing.js",
+    "run.bat",
+    "scripts/evaluate_ai.py",
+    "tests/test_listings.py",
+    "tests/test_phase3_frontend.js",
+    "tests/test_phase4.py",
+    "tests/test_phase6_frontend.js"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "527de7a41585",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 131644,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 2457472,
+    "output_tokens": 28016,
+    "api_call_count": 31
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-04T09:23:51.9823667Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 3402,
+    "human_removed": 3283,
+    "total_committed": 371,
+    "total_lines_changed": 6685,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 8154,
+      "user_lines_removed": 4325,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".gitignore": 18,
+        "backend/listing_ai.py": 320,
+        "backend/main.py": 1092,
+        "backend/requirements.txt": 5,
+        "backend/voice.py": 63,
+        "data/processed/evaluation_results.json": 379,
+        "data/processed/voice_ai_evaluation.json": 906,
+        "data/processed/voice_ai_evaluation_grammar.json": 906,
+        "data/processed/voice_ai_evaluation_initial.json": 848,
+        "data/processed/voice_model_evidence.json": 16,
+        "data/processed/voice_runtime_smoke.json": 17,
+        "docs/VOICE_AI.md": 156,
+        "frontend/app.css": 314,
+        "frontend/app.js": 741,
+        "frontend/data/content.json": 927,
+        "frontend/index.html": 40,
+        "frontend/sw.js": 17,
+        "frontend/voice-listing.js": 114,
+        "run.bat": 58,
+        "scripts/evaluate_ai.py": 169,
+        "scripts/evaluate_voice_ai.py": 61,
+        "scripts/listing_evaluation.py": 239,
+        "scripts/setup_voice_models.py": 46,
+        "scripts/voice_runtime_smoke.py": 58,
+        "tests/test_phase3_frontend.js": 256,
+        "tests/test_phase6.py": 220,
+        "tests/test_phase6_frontend.js": 168
+      },
+      "user_removed_per_file": {
+        ".gitignore": 15,
+        "backend/main.py": 1060,
+        "backend/requirements.txt": 2,
+        "backend/voice.py": 1,
+        "data/processed/evaluation_results.json": 322,
+        "docs/VOICE_AI.md": 227,
+        "frontend/app.css": 296,
+        "frontend/app.js": 762,
+        "frontend/data/content.json": 927,
+        "frontend/index.html": 39,
+        "frontend/sw.js": 17,
+        "run.bat": 6,
+        "scripts/evaluate_ai.py": 396,
+        "tests/test_phase3_frontend.js": 255
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 927,
+      "user_lines_removed": 927,
+      "agent_lines_added": 7228,
+      "agent_lines_removed": 3398,
+      "user_added_per_file": {
+        "frontend/data/content.json": 927
+      },
+      "user_removed_per_file": {
+        "frontend/data/content.json": 927
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 8,
+      "user_lines_removed": 4,
+      "agent_lines_added": 8155,
+      "agent_lines_removed": 4325,
+      "user_added_per_file": {
+        "frontend/voice-listing.js": 8
+      },
+      "user_removed_per_file": {
+        "frontend/voice-listing.js": 4
+      }
+    }
+  ]
+}
