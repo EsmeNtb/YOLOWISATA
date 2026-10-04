@@ -3,11 +3,18 @@
   "checkpoint_id": "e363268e34d6",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "backend/main.py",
+    "docs/OFFLINE_PHASE5.md",
     "frontend/app.js",
-    "frontend/sw.js"
+    "frontend/index.html",
+    "frontend/offline-db.js",
+    "frontend/sw.js",
+    "tests/test_phase3_frontend.js",
+    "tests/test_phase5.py",
+    "tests/test_phase5_frontend.js",
+    "tests/test_phase5_offline_db.js"
   ],
   "sessions": [
     {
@@ -16,13 +23,20 @@
       "compact_transcript": "/e3/63268e34d6/0/transcript.jsonl",
       "content_hash": "/e3/63268e34d6/0/content_hash.txt",
       "prompt": "/e3/63268e34d6/0/prompt.txt"
+    },
+    {
+      "metadata": "/e3/63268e34d6/1/metadata.json",
+      "transcript": "/e3/63268e34d6/1/full.jsonl",
+      "compact_transcript": "/e3/63268e34d6/1/transcript.jsonl",
+      "content_hash": "/e3/63268e34d6/1/content_hash.txt",
+      "prompt": "/e3/63268e34d6/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 134020,
+    "input_tokens": 234728,
     "cache_creation_tokens": 0,
-    "cache_read_tokens": 2705792,
-    "output_tokens": 39130,
-    "api_call_count": 32
+    "cache_read_tokens": 4237056,
+    "output_tokens": 60539,
+    "api_call_count": 54
   }
 }

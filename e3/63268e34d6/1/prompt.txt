@@ -1,0 +1,489 @@
+You are working inside the YoloWisata repository on the current `main` branch.
+
+This is PHASE 5: REAL OFFLINE INTEGRATION.
+
+The repository is currently clean and already contains the preparation for this phase:
+
+- docs/OFFLINE_PHASE5.md
+- frontend/offline-db.js
+
+The offline architecture and IndexedDB helper were intentionally prepared before this implementation.
+
+Your task is to integrate that prepared offline persistence layer into the existing frontend application safely.
+
+This is a production implementation task, not another planning/documentation task.
+
+============================================================
+PRIMARY GOAL
+============================================================
+
+Make the postcard workflow genuinely usable offline.
+
+The required demo flow is:
+
+1. User is online and loads the app.
+2. User goes offline / airplane mode.
+3. User creates a postcard.
+4. The postcard appears immediately in the UI.
+5. The postcard is persisted in IndexedDB.
+6. The sync operation is persisted in the IndexedDB outbox.
+7. User reloads the page while still offline.
+8. The postcard is still visible.
+9. User reconnects.
+10. The app automatically synchronizes the pending postcard using:
+
+   POST /api/postcards
+
+11. Retries MUST reuse the SAME postcard/client UUID.
+12. The server must not receive duplicate postcards.
+13. After successful sync, the local postcard is marked synced.
+14. The corresponding outbox operation is cleared or marked completed according to the existing offline-db contract.
+15. The final UI contains one postcard, not a duplicated local/server pair.
+
+Core principle:
+
+"Connectivity affects synchronization, not usability."
+
+============================================================
+IMPORTANT SAFETY CONSTRAINTS
+============================================================
+
+Do NOT redesign the application.
+
+Do NOT rewrite frontend/app.js from scratch.
+
+Do NOT modify Supabase schema or migrations.
+
+Do NOT modify backend API contracts unless an actual blocking incompatibility is discovered.
+
+Do NOT modify evaluation datasets.
+
+Do NOT modify:
+- tourism_feedback.json
+- tourism_feedback_challenge.json
+- voice_listing.json
+
+Do NOT implement Voice AI in this phase.
+
+Do NOT implement ElevenLabs.
+
+Do NOT install new frontend frameworks.
+
+Do NOT add npm dependencies.
+
+Use native browser APIs and the existing architecture.
+
+Do NOT commit.
+Do NOT push.
+
+Leave all changes uncommitted for review.
+
+============================================================
+STEP 1 — INSPECT BEFORE EDITING
+============================================================
+
+First inspect:
+
+- docs/OFFLINE_PHASE5.md
+- frontend/offline-db.js
+- frontend/app.js
+- frontend/sw.js
+- frontend/config.js
+- frontend/index.html
+- backend/main.py
+- current POST /api/postcards behavior
+- Phase 2 / Phase 3 / Phase 4 tests
+- existing frontend tests
+
+Understand the CURRENT behavior of:
+
+- postcard creation
+- A.send
+- outbox()
+- flush()
+- pull()
+- setOnline()
+- boot()
+- online/offline event listeners
+- Experience DNA refresh/fallback
+- demo reset
+- existing state structures
+
+Then implement the smallest safe integration.
+
+Do not replace existing working Phase 2/3/4 functionality.
+
+============================================================
+STEP 2 — USE THE EXISTING INDEXEDDB HELPER
+============================================================
+
+Use frontend/offline-db.js.
+
+Do NOT duplicate its IndexedDB logic inside app.js.
+
+Reuse the existing helper API where appropriate, including functions such as:
+
+- openOfflineDB()
+- saveLocalPostcard()
+- getLocalPostcards()
+- getLocalPostcard()
+- enqueueOperation()
+- getPendingOperations()
+- updateOperation()
+- markOperationSynced()
+- markOperationFailed()
+- removeOperation()
+- clearOfflineData()
+
+If the helper requires a very small correction for integration, make the smallest possible change and explain why.
+
+Do not redesign it unless it is actually broken.
+
+============================================================
+STEP 3 — LOCAL-FIRST POSTCARD CREATION
+============================================================
+
+When the user creates a postcard:
+
+Generate ONE stable UUID at creation time.
+
+That SAME UUID must be:
+
+- the local postcard ID
+- the entity_id in the outbox operation
+- included in the POST /api/postcards payload
+- reused on every retry
+
+NEVER generate a new UUID during synchronization.
+
+The postcard should be persisted locally BEFORE attempting the network request.
+
+Expected conceptual sequence:
+
+create postcard
+→ assign stable UUID
+→ save postcard to IndexedDB with pending state
+→ enqueue postcard.create operation
+→ update in-memory state/UI immediately
+→ if online, attempt flush
+→ if offline, stop there successfully
+
+The user must not receive an error merely because there is no connection.
+
+Offline creation is a successful local action.
+
+============================================================
+STEP 4 — PERSISTENT OUTBOX
+============================================================
+
+Implement a real persistent outbox using the existing IndexedDB store.
+
+Use the documented lifecycle:
+
+pending
+syncing
+synced
+failed_permanent
+
+For postcard.create operations:
+
+SUCCESS / 2xx:
+- mark postcard synced
+- remove or complete the outbox operation according to helper design
+- retain the local postcard
+- later server pull must reconcile it by ID without duplication
+
+NETWORK FAILURE:
+- keep operation retryable
+- return status to pending
+- increment attempts if supported
+- record useful last_error
+- do not lose postcard
+
+HTTP 5xx:
+- retryable
+- keep pending
+- increment attempts
+- record last_error
+
+HTTP 4xx:
+- permanent failure
+- mark failed_permanent
+- DO NOT automatically retry forever
+- keep the postcard locally so the user does not lose their content
+- expose enough state for the UI to show that synchronization failed
+
+Do not treat every fetch error as a permanent failure.
+
+============================================================
+STEP 5 — FLUSH / SYNCHRONIZATION
+============================================================
+
+Implement a real flush() around the persistent IndexedDB outbox.
+
+Requirements:
+
+- read pending operations from IndexedDB
+- process only supported operation types
+- use the existing POST /api/postcards endpoint
+- preserve payload compatibility with current Phase 2 backend
+- preserve explicit client UUID
+- avoid duplicate simultaneous sends
+- prevent multiple flush() calls from racing
+- retries must remain safe
+- one failed operation must not corrupt other operations
+
+If a flush is already in progress, a second invocation should not start an independent competing drain.
+
+Navigator online status is a hint, not proof that the backend is reachable.
+
+The actual fetch result determines success/failure.
+
+============================================================
+STEP 6 — BOOT / RELOAD SURVIVAL
+============================================================
+
+On application boot:
+
+1. Open IndexedDB.
+2. Load locally persisted postcards.
+3. Hydrate them into the app state BEFORE depending on the network.
+4. Render them so offline reload works.
+5. Detect current connectivity.
+6. If connectivity is available:
+   - attempt pending outbox synchronization
+   - then pull/reconcile server state
+7. If connectivity is unavailable:
+   - remain fully usable with local data
+
+The app must not require a successful backend request to render locally saved postcards.
+
+============================================================
+STEP 7 — SERVER / LOCAL RECONCILIATION
+============================================================
+
+Update pull/reconciliation behavior so local and server postcards do not duplicate.
+
+Use postcard ID as the primary identity.
+
+Rules:
+
+- same ID local + server = ONE logical postcard
+- pending local postcard must remain visible
+- synced server version may replace/merge the local synced representation
+- server pull must not remove unsynchronized local postcards
+- reconnect + pull must not produce two copies of the same postcard
+
+Be conservative with merging.
+
+Do not silently discard local pending content.
+
+============================================================
+STEP 8 — CONNECTIVITY EVENTS
+============================================================
+
+Integrate real browser connectivity events:
+
+window.addEventListener("online", ...)
+window.addEventListener("offline", ...)
+
+On online:
+
+- update connectivity UI/state
+- trigger outbox flush
+- reconcile/pull server state after synchronization when appropriate
+
+On offline:
+
+- update UI/state
+- DO NOT delete anything
+- DO NOT pretend pending operations were sent
+
+Preserve existing demo/status UI where possible.
+
+If current setOnline() contains fake behavior such as marking items sent without a real POST, replace only that fake behavior with real synchronization.
+
+============================================================
+STEP 9 — EXPERIENCE DNA OFFLINE FALLBACK
+============================================================
+
+Do not redesign Experience DNA.
+
+Preserve the Phase 3 behavior:
+
+ONLINE:
+- backend /api/businesses/{business_id}/insights where available
+
+OFFLINE OR FAILED REQUEST:
+- deterministic local Experience DNA fallback
+
+The UI must remain useful while offline.
+
+Do not claim the deterministic fallback is a Small AI model.
+
+============================================================
+STEP 10 — DEMO RESET
+============================================================
+
+Update the existing demo reset path so it also clears Phase 5 offline state.
+
+Reset must clear:
+
+- IndexedDB postcard data
+- IndexedDB outbox operations
+- corresponding in-memory local state where appropriate
+
+Do not accidentally delete Supabase production/demo records through the reset unless that is already explicit existing behavior.
+
+============================================================
+STEP 11 — SERVICE WORKER
+============================================================
+
+Review frontend/sw.js.
+
+Do NOT move the postcard outbox into the service worker.
+
+The application-level IndexedDB outbox remains the source of truth.
+
+The service worker should continue to support cached shell/content behavior.
+
+Do not blindly intercept POST /api requests.
+
+If no change to sw.js is necessary, leave it unchanged.
+
+If its cache version must change because a new frontend JS file becomes part of the cached shell, make the smallest correct version/cache update.
+
+============================================================
+STEP 12 — TESTS
+============================================================
+
+Add targeted Phase 5 tests where practical without introducing new dependencies.
+
+At minimum, verify as much as possible automatically:
+
+1. offline postcard creation persists locally
+2. outbox operation is created
+3. stable UUID is preserved
+4. reload hydration restores local postcard
+5. reconnect sends POST /api/postcards
+6. successful sync clears/completes outbox
+7. network failure remains retryable
+8. HTTP 5xx remains retryable
+9. HTTP 4xx becomes failed_permanent
+10. retries use SAME UUID
+11. server/local reconciliation does not duplicate postcard
+12. demo reset clears offline IndexedDB state
+13. Experience DNA fallback still works when backend is unavailable
+14. existing Phase 2 / Phase 3 / Phase 4 behavior remains intact
+
+If browser IndexedDB cannot be fully unit-tested with the repository's existing test environment, do NOT install a large testing framework just for this.
+
+Instead:
+- test pure integration logic where possible
+- provide a precise manual browser acceptance test for the true IndexedDB/reload/airplane-mode behavior
+
+============================================================
+STEP 13 — MANUAL ACCEPTANCE TEST
+============================================================
+
+Document or report this exact browser test:
+
+A. Start online.
+B. Open YoloWisata.
+C. Confirm app loads.
+D. Enable airplane mode / disable network.
+E. Create a postcard.
+F. Confirm postcard appears immediately.
+G. Confirm it shows pending/offline state.
+H. Reload page while still offline.
+I. Confirm postcard is still present.
+J. Re-enable network.
+K. Confirm automatic sync starts.
+L. Confirm postcard becomes synced.
+M. Reload again.
+N. Confirm only ONE postcard exists.
+O. Verify backend/Supabase contains exactly one row for that UUID.
+P. Trigger demo reset.
+Q. Confirm offline postcard/outbox state is cleared.
+
+============================================================
+STEP 14 — VALIDATION
+============================================================
+
+Run the relevant validation suite.
+
+At minimum:
+
+Python:
+python -m unittest discover -s tests -v
+
+Existing frontend Node tests:
+run all repository frontend tests that currently exist
+
+Syntax:
+node --check frontend/app.js
+node --check frontend/offline-db.js
+node --check frontend/sw.js
+
+Git:
+git diff --check
+git status
+git diff --stat
+
+Do not hide failing tests.
+
+If a failure is pre-existing, demonstrate why.
+
+============================================================
+IMPORTANT IMPLEMENTATION QUALITY RULES
+============================================================
+
+Prefer small, explicit functions.
+
+Avoid giant rewrites.
+
+Do not duplicate IndexedDB code.
+
+Do not swallow synchronization errors silently.
+
+Keep user content even when synchronization fails.
+
+Keep permanent and retryable failures distinct.
+
+Keep stable client IDs.
+
+Keep human-visible sync state truthful.
+
+Do not claim data is synced until the backend actually accepted it.
+
+Do not make the app unusable because the backend is unreachable.
+
+Do not introduce speculative abstractions that the prototype does not need.
+
+============================================================
+FINAL REPORT
+============================================================
+
+When finished, report:
+
+1. Files changed.
+2. Exact postcard creation flow.
+3. IndexedDB hydration behavior.
+4. Outbox lifecycle.
+5. Stable UUID / idempotency behavior.
+6. 4xx vs 5xx/network behavior.
+7. Reconciliation/no-duplicate strategy.
+8. online/offline event behavior.
+9. Experience DNA fallback behavior.
+10. Reset behavior.
+11. Service worker changes, or explicitly state no change was necessary.
+12. Tests added.
+13. Test results.
+14. Manual airplane-mode acceptance procedure.
+15. Known limitations.
+16. git diff --stat.
+
+DO NOT COMMIT.
+DO NOT PUSH.
+
+Stop after implementation, validation, and the final report so the changes can be reviewed manually.
