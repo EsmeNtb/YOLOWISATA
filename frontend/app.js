@@ -14,9 +14,54 @@ function applyContent(c){CARDS=c.swipeCards;GATE=(c.village&&c.village.gate)||GA
  PHR=(c.phrases||[]).map(p=>[p.id,p.en,p.say,p.emoji]);
  BIZ0=c.businesses.map(b=>Object.assign({why:null,chips:[],story:"",L:{},cards:[],qs:[],bookings:[],threads:[],e:(SECTORS[b.sector]||SECTORS.Other)[0],col:"#FFC928",place:""},b,{dna:b.dna||(SECTORS[b.sector]||SECTORS.Other)[1]}));
  BIZ0.forEach(b=>{if(b.pos)POS[b.id]=b.pos})}
-/* Tiny multilingual lexicon tagger: the on-device stand-in for a small language model. The word lists live in content.json under "themes". */
+/* Deterministic multilingual lexicon fallback. The word lists live in content.json under "themes". */
 const tagsOf=(txt,lex)=>{const s=txt.toLowerCase();return Object.keys(lex).filter(k=>lex[k][1].some(w=>s.includes(w)))};
 const T=(id,en)=>S.blang==="en"?en:id;
+const sectorText=k=>T(({All:"Semua",Farm:"Kebun",Craft:"Kerajinan",Food:"Makanan",Guide:"Pemandu",Homestay:"Homestay"})[k]||k,k);
+const dimensionText=k=>T(({hands:"Praktik langsung",nature:"Alam",culture:"Budaya lokal",food:"Wisata kuliner",quiet:"Tempat tenang",crowds:"Tempat ramai"})[k]||DIMS[k],DIMS[k]);
+const SPEECH_LOCALES={id:"id-ID",es:"es-ES",en:"en-US"};
+function speechLanguage(value,fallback="id"){
+ const code=String(value||"").toLowerCase().split(/[-_]/)[0];return SPEECH_LOCALES[code]?code:fallback}
+let speechGeneration=0,ttsController=null,ttsAudio=null,ttsObjectUrl=null;
+function stopCurrentSpeech(){
+ if(ttsController)ttsController.abort();ttsController=null;
+ if(ttsAudio){ttsAudio.pause();ttsAudio=null}
+ if(ttsObjectUrl){URL.revokeObjectURL(ttsObjectUrl);ttsObjectUrl=null}
+ if(typeof speechSynthesis!=="undefined")speechSynthesis.cancel()
+}
+function speakWithBrowser(text,code,rate){
+ if(typeof speechSynthesis==="undefined"||typeof SpeechSynthesisUtterance==="undefined"){toast("This device cannot speak. Read it as: "+text);return}
+ const voices=speechSynthesis.getVoices(),voice=voices.find(v=>String(v.lang||"").toLowerCase().startsWith(code));
+ const u=new SpeechSynthesisUtterance(text);u.lang=SPEECH_LOCALES[code];u.rate=rate;if(voice)u.voice=voice;
+ if(!voice){const name={id:"Indonesian",es:"Spanish",en:"English"}[code];toast(`No ${name} voice on this device, so it may sound off. Read it as: ${text}`)}
+ speechSynthesis.speak(u)
+}
+async function playElevenLabs(text,code,generation,speed){
+ const controller=new AbortController();ttsController=controller;const timeout=setTimeout(()=>controller.abort(),30000);
+ try{
+  const response=await fetch(API+"/api/tts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,language:code,speed}),signal:controller.signal});
+  if(!response.ok)throw new Error("TTS request failed.");
+  const blob=await response.blob();if(generation!==speechGeneration)return;
+  const url=URL.createObjectURL(blob);ttsObjectUrl=url;const audio=new Audio(url);ttsAudio=audio;
+  await new Promise((resolve,reject)=>{
+   audio.addEventListener("ended",resolve,{once:true});
+   audio.addEventListener("error",()=>reject(new Error("TTS playback failed.")),{once:true});
+   Promise.resolve(audio.play()).catch(reject)
+  });
+ }finally{
+  clearTimeout(timeout);
+  if(ttsController===controller)ttsController=null;
+  if(generation===speechGeneration){if(ttsAudio){ttsAudio.pause();ttsAudio=null}if(ttsObjectUrl){URL.revokeObjectURL(ttsObjectUrl);ttsObjectUrl=null}}
+ }
+}
+async function speakText(text,language,rate=1){
+ const code=speechLanguage(language),generation=++speechGeneration;stopCurrentSpeech();
+ if(API&&S.online&&navigator.onLine!==false){
+  try{await playElevenLabs(text,code,generation,rate);return}catch(e){if(generation!==speechGeneration)return}
+ }
+ if(generation!==speechGeneration)return;
+ stopCurrentSpeech();speakWithBrowser(text,code,rate)
+}
 const label=n=>n>=6?["strong",T("Pola kuat","Strong pattern")]:n>=3?["early",T("Sinyal awal","Early signal")]:["thin",T("Bukti belum cukup","Not enough evidence yet")];
 const lab=(k,b)=>k==="host"?T("Mengobrol dengan ","Talking with ")+b.host:T(LID[k]||k,(LOVED[k]||ASKS[k]||[k])[0]);
 const RID=[["per person","per orang"],["About ","Sekitar "],[" hours"," jam"],["Every day","Setiap hari"],[" mornings"," pagi"],["Saturday","Sabtu"],["Sunday","Minggu"],["Monday","Senin"],["Tuesday","Selasa"],["Wednesday","Rabu"],["Thursday","Kamis"],["Friday","Jumat"],[" and "," dan "],["A guided walk","jalan keliling"],["Picking coffee cherries","petik kopi"],["Roasting your own coffee","sangrai kopi sendiri"],["Drinking the coffee","minum kopi"],["Wood carving","mengukir kayu"],["Making your own piece","membuat karya sendiri"],["Market shopping","belanja ke pasar"],["Cooking together","masak bersama"],["Tasting","mencicipi"],["Weaving","menenun"],["Coffee Farm Experience","Wisata Kebun Kopi"],["Coffee Farm","Kebun Kopi"],["Farm Experience","Wisata Kebun"],["Wood Workshop","Bengkel Kayu"],["Workshop","Bengkel"],["Kitchen","Dapur"],["Guided Walk","Jalan Keliling"],["Experience","Wisata"],["A visit in","Kunjungan di"],["Sat ","Sab "],["Sun ","Min "],["Mon ","Sen "],["Tue ","Sel "],["Wed ","Rab "],["Thu ","Kam "],["Fri ","Jum "],[" Oct"," Okt"],[" Dec"," Des"],[" Aug"," Agu"],[" May"," Mei"]];
@@ -59,7 +104,7 @@ function mapSVG(list){const X=v=>v*3.6,Y=v=>v*2.1;
  <path d="M${X(GATE[0])} ${Y(GATE[1])} Q130 150 ${X(38)} ${Y(58)} T${X(70)} ${Y(22)}" fill="none" stroke="#FFF9F0" stroke-width="9" stroke-linecap="round"/>
  ${list.map(b=>`<g><circle cx="${X(pos(b)[0])}" cy="${Y(pos(b)[1])}" r="15" fill="${b.col}" stroke="#FFFFFF" stroke-width="3"/><text x="${X(pos(b)[0])}" y="${Y(pos(b)[1])+6}" text-anchor="middle" font-size="16">${b.e}</text><text x="${X(pos(b)[0])}" y="${Y(pos(b)[1])+30}" text-anchor="middle" font-size="10" font-weight="700" fill="#171717">${esc(b.host)}</text></g>`).join("")}
  <g><circle cx="${X(S.here[0])}" cy="${Y(S.here[1])}" r="13" fill="#FF7043" opacity=".3"/><circle cx="${X(S.here[0])}" cy="${Y(S.here[1])}" r="6" fill="#FF7043" stroke="#FFFFFF" stroke-width="2.5"/><text x="${X(S.here[0])+16}" y="${Y(S.here[1])+4}" font-size="10" font-weight="700" fill="#171717">You</text></g></svg>`}
-const STEPS=[["login","Browse as a guest, or log in","Everyone"],["swipe","Discover your Travel DNA","Guest"],["match","Get matched to local businesses","Guest"],["exp","View Noor’s experience","Guest"],["inbox","Message local businesses across languages","Guest"],["trips","Ask to book a visit","Guest"],["help","Phrase cards for talking face to face","Guest"],["card","Leave a postcard","Guest"],["story","The Story of This Place","Guest"],["b-list","Describe the business by voice","Local business"],["b-msgs","Reply to guests, translated","Local business"],["b-book","Confirm or decline bookings","Local business"],["b-insights","See what visitors remember","Local business"]];
+const STEPS=[["login","Explora como invitado o inicia sesión","Browse as a guest, or log in","Todos","Everyone"],["swipe","Descubre tu DNA de Viaje","Discover your Travel DNA","Invitado","Guest"],["match","Encuentra negocios locales compatibles","Get matched to local businesses","Invitado","Guest"],["exp","Mira la experiencia de Noor","View Noor’s experience","Invitado","Guest"],["inbox","Envía mensajes a negocios en distintos idiomas","Message local businesses across languages","Invitado","Guest"],["trips","Solicita una visita","Ask to book a visit","Invitado","Guest"],["help","Frases para conversar en persona","Phrase cards for talking face to face","Invitado","Guest"],["card","Deja una tarjeta postal","Leave a postcard","Invitado","Guest"],["story","La historia de este lugar","The Story of This Place","Invitado","Guest"],["b-list","Describe tu negocio con voz","Describe the business by voice","Negocio local","Local business"],["b-msgs","Responde a los mensajes traducidos","Reply to guests, translated","Negocio local","Local business"],["b-book","Confirma o rechaza visitas","Confirm or decline bookings","Negocio local","Local business"],["b-insights","Descubre qué recuerdan los visitantes","See what visitors remember","Negocio local","Local business"]];
 
 /* ---------- AI 1: Travel DNA and matching ---------- */
 function computeDNA(){const d={};for(const k in DIMS){let tot=0,yes=0;CARDS.forEach((c,i)=>{if(c.g.includes(k)){tot++;if(S.likes[i])yes++}});d[k]=yes/tot}return d}
@@ -193,115 +238,116 @@ ${mail?`<g><rect x="191" y="478" width="9" height="62" rx="3" fill="#7193D8"/><r
 /* ---------- Screens ---------- */
 const V={};
 V.land=()=>`<div class="splash"><div class="inner"><div class="mascot">${MASCOT.replaceAll("#FF7043","#FFC928").replaceAll('fill="#FFC928" opacity=".9"','fill="#FF7043" opacity=".55"')}</div>
-<h1>Travel local. Stay connected.</h1><p class="tagline">Download the place. Discover the people. <em>Live the moment, even offline.</em></p></div>
-<div class="inner"><button class="btn sun wide" data-a="go" data-s="explore">Start exploring</button>
-<div class="row" style="margin-top:.7rem"><button class="btn" data-a="go" data-s="swipe">Find my Travel DNA</button><button class="btn" data-a="ltab" data-t="biz">I run a business</button></div>
-<p class="small" style="color:var(--ink);text-align:center;margin-top:1rem">No account needed to look around. Built for real local businesses, not just the ones already online.</p></div></div>`;
+<h1>${T("Jelajahi lokal. Tetap terhubung.","Travel local. Stay connected.")}</h1><p class="tagline">${T("Temukan tempatnya. Kenali orangnya.","Download the place. Discover the people.")} <em>${T("Nikmati saat ini, bahkan tanpa internet.","Live the moment, even offline.")}</em></p></div>
+<div class="inner"><button class="btn sun wide" data-a="go" data-s="explore">${T("Mulai menjelajah","Start exploring")}</button>
+<div class="row" style="margin-top:.7rem"><button class="btn" data-a="go" data-s="swipe">${T("Cari DNA Perjalanan saya","Find my Travel DNA")}</button><button class="btn" data-a="ltab" data-t="biz">${T("Saya menjalankan usaha","I run a business")}</button></div>
+<p class="small" style="color:var(--ink);text-align:center;margin-top:1rem">${T("Tidak perlu akun untuk melihat-lihat. Dibuat untuk usaha lokal.","No account needed to look around. Built for real local businesses, not just the ones already online.")}</p></div></div>`;
 
 V.login=()=>{const a=S.acct,biz=ui.ltab==="biz",flags=["🌍","🇮🇩","🇲🇽","🇬🇧","🇺🇸","🇩🇪","🇫🇷","🇯🇵","🇪🇸","🇮🇳","🇰🇷","🇧🇷","🇦🇺"];
- const phonePin=`<div class="row"><div style="flex:3"><label class="f" for="lp">Phone number</label><input class="t" id="lp" inputmode="tel" autocomplete="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="lpin">PIN (4 to 6 digits)</label><input class="t" id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div></div>`;
- return `<div class="pad"><div class="hello">${MASCOT}<div><h1 style="font-size:1.7rem">Your account</h1><p class="sub">${a?"Logged in as "+esc(a.phone)+".":"You are browsing as a guest. That is all you need."}</p></div></div>
- <div class="tabs2"><button class="${biz?"":"on"}" data-a="ltab" data-t="guest">🧳 Guest</button><button class="${biz?"on":""}" data-a="ltab" data-t="biz">🏡 Local business</button></div>
+ const phonePin=`<div class="row"><div style="flex:3"><label class="f" for="lp">${T("Nomor telepon","Phone number")}</label><input class="t" id="lp" inputmode="tel" autocomplete="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="lpin">${T("PIN (4 sampai 6 digit)","PIN (4 to 6 digits)")}</label><input class="t" id="lpin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"></div></div>`;
+ return `<div class="pad"><div class="hello">${MASCOT}<div><h1 style="font-size:1.7rem">${T("Akun Anda","Your account")}</h1><p class="sub">${a?T("Masuk sebagai ","Logged in as ")+esc(a.phone)+".":T("Anda menjelajah sebagai tamu. Itu saja yang diperlukan.","You are browsing as a guest. That is all you need.")}</p></div></div>
+ <div class="tabs2"><button class="${biz?"":"on"}" data-a="ltab" data-t="guest">🧳 ${T("Tamu","Guest")}</button><button class="${biz?"on":""}" data-a="ltab" data-t="biz">🏡 ${T("Usaha lokal","Local business")}</button></div>
  ${biz?`
- <div class="box"><h3>Log in to your business</h3><p class="sub">Use the phone number and PIN you registered with.</p>${phonePin}
- <button class="btn wide" style="margin-top:.9rem" data-a="blogin">Log in</button></div>
- <details class="box" ${ui.regOpen?"open":""}><summary data-a="regopen"><span><b>New here? Register your business</b><br><span class="small">Any sector is welcome: farm, workshop, kitchen, homestay, guide and more</span></span></summary>
- <label class="f" for="bn">Your first name</label><input class="t" id="bn" maxlength="24" placeholder="For example Rina">
- <div style="margin-top:.6rem">${Object.keys(SECTORS).map(k=>`<button class="chip pick ${ui.newSector===k?"on":""}" data-a="nsec" data-s="${k}">${SECTORS[k][0]} ${k}</button>`).join("")}</div>
- <div class="row"><div style="flex:3"><label class="f" for="rp">Phone number</label><input class="t" id="rp" inputmode="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="rpin">Choose a PIN</label><input class="t" id="rpin" type="password" inputmode="numeric" maxlength="6"></div></div>
- <button class="btn sun wide" style="margin-top:.9rem" data-a="register">Register and describe it by voice</button>
- ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected, so the phone number and PIN are optional and this business lives on this device only.</p>`}</details>
- <details class="box"><summary><b>Try a sample business</b> <span class="small">no login needed</span></summary>
- ${all().map(b=>`<button class="bz" data-a="asbiz" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${b.sector}</span></span></button>`).join("")}</details>`
+ <div class="box"><h3>${T("Masuk ke usaha Anda","Log in to your business")}</h3><p class="sub">${T("Gunakan nomor telepon dan PIN yang Anda daftarkan.","Use the phone number and PIN you registered with.")}</p>${phonePin}
+ <button class="btn wide" style="margin-top:.9rem" data-a="blogin">${T("Masuk","Log in")}</button></div>
+ <details class="box" ${ui.regOpen?"open":""}><summary data-a="regopen"><span><b>${T("Baru di sini? Daftarkan usaha Anda","New here? Register your business")}</b><br><span class="small">${T("Semua jenis usaha diterima: kebun, bengkel, dapur, homestay, pemandu, dan lainnya.","Any sector is welcome: farm, workshop, kitchen, homestay, guide and more")}</span></span></summary>
+ <label class="f" for="bn">${T("Nama depan Anda","Your first name")}</label><input class="t" id="bn" maxlength="24" placeholder="${T("Contoh: Rina","For example Rina")}">
+ <div style="margin-top:.6rem">${Object.keys(SECTORS).map(k=>`<button class="chip pick ${ui.newSector===k?"on":""}" data-a="nsec" data-s="${k}">${SECTORS[k][0]} ${sectorText(k)}</button>`).join("")}</div>
+ <div class="row"><div style="flex:3"><label class="f" for="rp">${T("Nomor telepon","Phone number")}</label><input class="t" id="rp" inputmode="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="rpin">${T("Pilih PIN","Choose a PIN")}</label><input class="t" id="rpin" type="password" inputmode="numeric" maxlength="6"></div></div>
+ <button class="btn sun wide" style="margin-top:.9rem" data-a="register">${T("Daftar dan jelaskan usaha dengan suara","Register and describe it by voice")}</button>
+ ${API?"":`<p class="small" style="margin-top:.5rem">${T("Nomor telepon dan PIN opsional tanpa server; usaha ini hanya tersimpan di perangkat ini.","No server is connected, so the phone number and PIN are optional and this business lives on this device only.")}</p>`}</details>
+ <details class="box"><summary><b>${T("Coba usaha contoh","Try a sample business")}</b> <span class="small">${T("tanpa login","no login needed")}</span></summary>
+ ${all().map(b=>`<button class="bz" data-a="asbiz" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${sectorText(b.sector)}</span></span></button>`).join("")}</details>`
  :`
- <div class="box sel"><h3>Welcome 👋</h3><p class="sub">No sign-up needed. Add a nickname if you like.</p>
- <div class="row"><div style="flex:2"><label class="f" for="gn">Nickname (optional)</label><input class="t" id="gn" maxlength="20" value="${esc(S.guest.n)}"></div>
- <div style="flex:1"><label class="f" for="gf">From</label><select class="t" id="gf">${flags.map(x=>`<option ${x===S.guest.f?"selected":""}>${x}</option>`).join("")}</select></div></div>
- <button class="btn wide" style="margin-top:.9rem" data-a="asguest">Keep exploring</button></div>
- ${a&&a.kind==="guest"?`<div class="box"><h3>Logged in</h3><p class="sub">Your visits and chats follow you to any device where you log in with ${esc(a.phone)}.</p><button class="btn alt wide" style="margin-top:.8rem" data-a="logout">Log out</button></div>`
- :`<details class="box"><summary><span><b>Log in or Sign up</b><br><span class="small">Keep your chats and visits on any device</span></span></summary>
- <p class="sub" style="margin-top:.7rem">Enter your phone number and a PIN.<br>New number? We’ll create your account.</p>${phonePin}
- <button class="btn alt wide" style="margin-top:.9rem" data-a="glogin">Continue</button>
- ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected right now, so accounts are switched off. Everything you do is still kept on this device.</p>`}</details>`}`}
- <p class="small" style="margin-top:1.2rem;display:flex;gap:1rem;flex-wrap:wrap"><button style="text-decoration:underline;font-weight:700" data-a="go" data-s="ai">How YoloWisata works</button><button style="text-decoration:underline" data-a="reset">Clear everything on this device</button></p>
+ <div class="box sel"><h3>${T("Selamat datang 👋","Welcome 👋")}</h3><p class="sub">${T("Tidak perlu mendaftar. Tambahkan nama panggilan jika mau.","No sign-up needed. Add a nickname if you like.")}</p>
+ <div class="row"><div style="flex:2"><label class="f" for="gn">${T("Nama panggilan (opsional)","Nickname (optional)")}</label><input class="t" id="gn" maxlength="20" value="${esc(S.guest.n)}"></div>
+ <div style="flex:1"><label class="f" for="gf">${T("Asal","From")}</label><select class="t" id="gf">${flags.map(x=>`<option ${x===S.guest.f?"selected":""}>${x}</option>`).join("")}</select></div></div>
+ <button class="btn wide" style="margin-top:.9rem" data-a="asguest">${T("Lanjut menjelajah","Keep exploring")}</button></div>
+ ${a&&a.kind==="guest"?`<div class="box"><h3>${T("Sudah masuk","Logged in")}</h3><p class="sub">${T("Kunjungan dan pesan Anda tersedia di perangkat mana pun saat masuk dengan ","Your visits and chats follow you to any device where you log in with ")}${esc(a.phone)}.</p><button class="btn alt wide" style="margin-top:.8rem" data-a="logout">${T("Keluar","Log out")}</button></div>`
+ :`<details class="box"><summary><span><b>${T("Masuk atau daftar","Log in or Sign up")}</b><br><span class="small">${T("Bawa pesan dan kunjungan ke perangkat mana pun","Keep your chats and visits on any device")}</span></span></summary>
+ <p class="sub" style="margin-top:.7rem">${T("Masukkan nomor telepon dan PIN.<br>Nomor baru? Akun akan dibuat.","Enter your phone number and a PIN.<br>New number? We’ll create your account.")}</p>${phonePin}
+ <button class="btn alt wide" style="margin-top:.9rem" data-a="glogin">${T("Lanjutkan","Continue")}</button>
+ ${API?"":`<p class="small" style="margin-top:.5rem">${T("Tanpa server, akun tidak aktif. Semua aktivitas tetap tersimpan di perangkat ini.","No server is connected right now, so accounts are switched off. Everything you do is still kept on this device.")}</p>`}</details>`}`}
+ <p class="small" style="margin-top:1.2rem;display:flex;gap:1rem;flex-wrap:wrap"><button style="text-decoration:underline;font-weight:700" data-a="go" data-s="ai">${T("Cara kerja YoloWisata","How YoloWisata works")}</button><button style="text-decoration:underline" data-a="reset">${T("Hapus semua dari perangkat ini","Clear everything on this device")}</button></p>
  </div>`};
 
 V.explore=()=>{const cats=[["All","✨"]].concat(Object.keys(SECTORS).slice(0,5).map(k=>[k,SECTORS[k][0]]));
  let list=all().filter(b=>S.sector==="All"||b.sector===S.sector).map(b=>({b,m:S.dna?matchOf(b).score:null,d:kmTo(b)}));
  if(S.dna)list.sort((x,y)=>y.m-x.m);else if(S.here)list.sort((x,y)=>x.d-y.d);
- return `<div class="pad"><div class="hello">${MASCOT}<div><p class="small">Hi${S.guest.n?" "+esc(S.guest.n):""} 👋</p><h1 style="font-size:1.7rem">Find someone local</h1></div></div>
- ${S.dna?"":`<button class="box" style="width:100%;text-align:left;background:var(--yellow);border:0" data-a="go" data-s="swipe"><b>🧬 Find your Travel DNA</b><br><span class="small" style="color:var(--ink)">Ten swipes, and this list sorts itself for you.</span></button>`}
- ${S.here?`<div class="savebar on"><span style="font-size:1.5rem">📍</span><div><b>Showing what is near you</b><div class="small">Your position comes from the phone’s GPS, which works with no internet.</div></div></div><div class="map">${mapSVG(list.map(x=>x.b))}</div>`
- :`<button class="savebar" data-a="loc"><span style="font-size:1.5rem">📍</span><div><b>Use my location</b><div class="small">See how far each place is. Optional, and never shared with anyone.</div></div></button>`}
- <div class="cats">${cats.map(([k,e])=>`<button class="cat ${S.sector===k?"on":""}" data-a="sector" data-s="${k}"><span>${e}</span>${k}</button>`).join("")}</div>
- <div class="places">${list.map(({b,m,d})=>`<button class="pcard" data-a="view" data-id="${b.id}"><div class="art" style="background:${b.col}">${b.e}</div><div class="body"><b>${esc(b.name)}</b><div class="small">${b.sector} · ${esc(b.place)}</div>
- ${m!==null?`<span class="tag early">${m}% match</span>`:""}${d?`<span class="tag blue">${d} km away</span>`:""}${S.saved[b.id]?`<span class="tag strong">Saved offline</span>`:""}</div></button>`).join("")||`<div class="box"><b>Nobody here yet</b><p class="sub">No ${S.sector.toLowerCase()} business has joined in this village so far.</p></div>`}</div>
- <p class="small" style="margin-top:.9rem">Run something yourself? <button style="text-decoration:underline;font-weight:700" data-a="ltab" data-t="biz" data-reg="1">Add your business</button></p></div>`};
+ return `<div class="pad"><div class="hello">${MASCOT}<div><p class="small">${T("Hai","Hi")}${S.guest.n?" "+esc(S.guest.n):""} 👋</p><h1 style="font-size:1.7rem">${T("Temukan orang lokal","Find someone local")}</h1></div></div>
+ ${S.dna?"":`<button class="box" style="width:100%;text-align:left;background:var(--yellow);border:0" data-a="go" data-s="swipe"><b>🧬 ${T("Cari DNA Perjalanan Anda","Find your Travel DNA")}</b><br><span class="small" style="color:var(--ink)">${T("Sepuluh pilihan, dan daftar ini akan menyesuaikan.","Ten swipes, and this list sorts itself for you.")}</span></button>`}
+ ${S.here?`<div class="savebar on"><span style="font-size:1.5rem">📍</span><div><b>${T("Menampilkan tempat di dekat Anda","Showing what is near you")}</b><div class="small">${T("Lokasi berasal dari GPS ponsel dan tetap berfungsi tanpa internet.","Your position comes from the phone’s GPS, which works with no internet.")}</div></div></div><div class="map">${mapSVG(list.map(x=>x.b))}</div>`
+ :`<button class="savebar" data-a="loc"><span style="font-size:1.5rem">📍</span><div><b>${T("Gunakan lokasi saya","Use my location")}</b><div class="small">${T("Lihat jarak setiap tempat. Opsional dan tidak dibagikan.","See how far each place is. Optional, and never shared with anyone.")}</div></div></button>`}
+ <div class="cats">${cats.map(([k,e])=>`<button class="cat ${S.sector===k?"on":""}" data-a="sector" data-s="${k}"><span>${e}</span>${sectorText(k)}</button>`).join("")}</div>
+ <div class="places">${list.map(({b,m,d})=>`<button class="pcard" data-a="view" data-id="${b.id}"><div class="art" style="background:${b.col}">${b.e}</div><div class="body"><b>${esc(b.name)}</b><div class="small">${sectorText(b.sector)} · ${esc(b.place)}</div>
+ ${m!==null?`<span class="tag early">${m}% ${T("cocok","match")}</span>`:""}${d?`<span class="tag blue">${d} ${T("km dari Anda","km away")}</span>`:""}${S.saved[b.id]?`<span class="tag strong">${T("Tersimpan offline","Saved offline")}</span>`:""}</div></button>`).join("")||`<div class="box"><b>${T("Belum ada tempat di sini","Nobody here yet")}</b><p class="sub">${T("Belum ada usaha "+sectorText(S.sector).toLowerCase()+" di desa ini.","No "+S.sector.toLowerCase()+" business has joined in this village so far.")}</p></div>`}</div>
+ <p class="small" style="margin-top:.9rem">${T("Punya usaha?","Run something yourself?")} <button style="text-decoration:underline;font-weight:700" data-a="ltab" data-t="biz" data-reg="1">${T("Tambahkan usaha Anda","Add your business")}</button></p></div>`};
 
-V.help=()=>{const n=PHR.filter((_,i)=>S.learned[i]).length,all8=n===PHR.length;
- return `<div class="pad"><div class="hello ${all8?"cheer":""}">${MASCOT}<div><h1 style="font-size:1.6rem">${all8?"Kamu hebat!":"Say it in Indonesian"}</h1><p class="sub">${all8?"You can say all "+n+". You sound local already.":"Listen, repeat, then try it on a real person."}</p></div></div>
- <div class="box"><b style="display:flex;justify-content:space-between"><span>Phrases you can say</span><span>${n} of ${PHR.length}</span></b><div class="track" style="margin-top:.4rem"><i style="width:${n/PHR.length*100}%;background:var(--green)"></i></div></div>
- <div class="phrases">${PHR.map(([id,en,pr,e],i)=>`<div class="phc ${S.learned[i]?"got":""}"><button class="flip" data-a="flip" aria-label="Phrase card: ${en}. Tap to flip."><span class="in"><span class="face" style="background:${["#FFF2C6","#DCF4E7","#FFE4D9","#D6E8FA"][i%4]}"><span class="emo">${e}</span><span class="say" lang="id">${id}</span><span class="pron">${pr}</span><span class="hint">Tap to see English</span></span><span class="face bk"><span class="hint">In English</span><span class="say">${en}</span><span class="hint">Tap to flip back</span></span></span></button>
- <div class="acts"><button data-a="hear" data-i="${i}" data-r="0.95">🔊 Hear it</button><button data-a="hear" data-i="${i}" data-r="0.55">🐢 Slow</button><button class="${S.learned[i]?"on":""}" data-a="learn" data-i="${i}">${S.learned[i]?"⭐ Got it":"☆ Got it?"}</button></div></div>`).join("")}</div>
- <p class="small" style="margin-top:1.2rem">The cards and the spelled-out sounds are stored on the phone and work with no signal. The voice uses your phone’s own speech, so it needs an Indonesian voice installed.</p>
- <button class="btn alt wide" style="margin-top:.8rem" data-a="go" data-s="inbox">Need more? Message the host</button></div>`};
+V.help=()=>{const n=PHR.filter((_,i)=>S.learned[i]).length,all8=n===PHR.length,learnId=S.blang==="en";
+ return `<div class="pad"><div class="hello ${all8?"cheer":""}">${MASCOT}<div><h1 style="font-size:1.6rem">${learnId?T("Ucapkan dalam bahasa Indonesia","Say it in Indonesian"):T("Ucapkan dalam bahasa Inggris","Say it in English")}</h1><p class="sub">${all8?T("Kamu hebat! Bisa mengucapkan semuanya.","You did it! You can say all ")+n+T(". Kamu terdengar seperti warga lokal.",". You sound local already."):T("Dengarkan, ulangi, lalu coba ucapkan kepada seseorang.","Listen, repeat, then try it on a real person.")}</p></div></div>
+ <div class="box"><b style="display:flex;justify-content:space-between"><span>${T("Frasa yang bisa diucapkan","Phrases you can say")}</span><span>${n} ${T("dari","of")} ${PHR.length}</span></b><div class="track" style="margin-top:.4rem"><i style="width:${n/PHR.length*100}%;background:var(--green)"></i></div></div>
+ <div class="phrases">${PHR.map(([id,en,pr,e],i)=>{const frontId=learnId,front=frontId?id:en,back=frontId?en:id,frontLang=frontId?"id":"en",frontHint=frontId?T("Ketuk untuk melihat bahasa Inggris","Tap to see English"):T("Ketuk untuk melihat bahasa Indonesia","Tap to see Indonesian"),backHint=frontId?T("Dalam bahasa Inggris","In English"):T("Dalam bahasa Indonesia","In Indonesian");return `<div class="phc ${S.learned[i]?"got":""}"><button class="flip" data-a="flip" data-index="${i}" data-front-lang="${frontLang}" aria-label="${T("Kartu frasa: ","Phrase card: ")}${en}. ${T("Ketuk untuk membalik.","Tap to flip.")}"><span class="in"><span class="face" style="background:${["#FFF2C6","#DCF4E7","#FFE4D9","#D6E8FA"][i%4]}"><span class="emo">${e}</span><span class="say" lang="${frontLang}">${front}</span>${frontId?`<span class="pron">${pr}</span>`:""}<span class="hint">${frontHint}</span></span><span class="face bk"><span class="hint">${backHint}</span><span class="say" lang="${frontId?"en":"id"}">${back}</span>${frontId?"":`<span class="pron">${pr}</span>`}<span class="hint">${T("Ketuk untuk kembali","Tap to flip back")}</span></span></span></button>
+ <div class="acts"><button data-a="hear" data-i="${i}" data-r="1">🔊 ${T("Dengarkan","Hear it")}</button><button data-a="hear" data-i="${i}" data-r="0.8">🐢 ${T("Pelan","Slow")}</button><button class="${S.learned[i]?"on":""}" data-a="learn" data-i="${i}">${S.learned[i]?"⭐ "+T("Bisa","Got it"):"☆ "+T("Sudah bisa?","Got it?")}</button></div></div>`}).join("")}</div>
+ <p class="small" style="margin-top:1.2rem">${learnId?T("Kartu dan panduan pengucapannya tersimpan di ponsel dan berfungsi tanpa sinyal. Suara memakai fitur ponsel dan memerlukan suara bahasa Indonesia yang terpasang.","The cards and the spelled-out sounds are stored on the phone and work with no signal. The voice uses your phone’s own speech, so it needs an Indonesian voice installed."):T("Kartu ini membantu Anda berlatih bahasa Inggris.","These cards help you practice English.")}</p>
+ <button class="btn alt wide" style="margin-top:.8rem" data-a="go" data-s="inbox">${T("Perlu bantuan? Pesan tuan rumah","Need more? Message the host")}</button></div>`};
 
 V.swipe=()=>{if(S.i>=CARDS.length)return V.dna();const c=CARDS[S.i],n=CARDS[S.i+1];
- const card=(c,i,cls)=>`<div class="sw ${cls}" ${cls?"":'id="top"'} style="background:${PAL[i%5]}"><span class="stampy yes">Yes!</span><span class="stampy no">Not for me</span><span class="emo">${c.e}</span><h3>${c.t}</h3><p>${c.d}</p></div>`;
- return `<div class="pad"><h1 style="font-size:1.5rem">Would you enjoy this?</h1><p class="sub">Swipe right for yes, left for no. Ten cards, no forms.</p>
+ const card=(c,i,cls)=>`<div class="sw ${cls}" ${cls?"":'id="top"'} style="background:${PAL[i%5]}"><span class="stampy yes">${T("Ya!","Yes!")}</span><span class="stampy no">${T("Bukan untuk saya","Not for me")}</span><span class="emo">${c.e}</span><h3>${c.t}</h3><p>${c.d}</p></div>`;
+ return `<div class="pad"><h1 style="font-size:1.5rem">${T("Apakah Anda akan menyukainya?","Would you enjoy this?")}</h1><p class="sub">${T("Geser ke kanan untuk ya, ke kiri untuk tidak. Sepuluh kartu, tanpa formulir.","Swipe right for yes, left for no. Ten cards, no forms.")}</p>
  <div class="deck">${n?card(n,S.i+1,"back"):""}${card(c,S.i,"")}</div>
- <div class="swbtns"><button data-a="swipe" data-v="0" aria-label="Not for me">✕</button><button data-a="swipe" data-v="1" aria-label="Yes, I would enjoy this">♥</button></div>
+ <div class="swbtns"><button data-a="swipe" data-v="0" aria-label="${T("Bukan untuk saya","Not for me")}">✕</button><button data-a="swipe" data-v="1" aria-label="${T("Ya, saya akan menyukainya","Yes, I would enjoy this")}">♥</button></div>
  <div class="dots">${CARDS.map((_,i)=>`<i class="${i<S.i?"d":""}"></i>`).join("")}</div></div>`};
 
 V.dna=()=>{if(!S.dna)return V.swipe();const rows=Object.keys(DIMS).map(k=>[k,Math.round(S.dna[k]*100)]).sort((a,b)=>b[1]-a[1]);
- const low=rows.filter(r=>r[1]<=25).map(r=>DIMS[r[0]].toLowerCase());
- return `<div class="pad"><p class="hand">That was quick.</p><h1 style="font-size:1.8rem">Your Travel DNA</h1>
- <div class="box">${rows.map(([k,p],i)=>`<div class="bar-row"><b><span>${DIMS[k]}</span><span>${p}%</span></b><div class="track"><i style="width:${p}%;background:${PAL[i%4]}"></i></div></div>`).join("")}</div>
- ${low.length?`<p class="sub" style="margin-top:.8rem">You tend to skip ${low.join(" and ")}.</p>`:""}
- <p class="small" style="margin-top:.6rem">📥 Kept on this phone. It still works with no signal.</p>
- <div class="row" style="margin-top:1rem"><button class="btn" data-a="go" data-s="match">See my matches</button><button class="btn alt" data-a="redo">Swipe again</button></div></div>`};
+ const low=rows.filter(r=>r[1]<=25).map(r=>dimensionText(r[0]).toLowerCase());
+ return `<div class="pad"><p class="hand">${T("Cepat sekali.","That was quick.")}</p><h1 style="font-size:1.8rem">${T("DNA Perjalanan Anda","Your Travel DNA")}</h1>
+ <div class="box">${rows.map(([k,p],i)=>`<div class="bar-row"><b><span>${dimensionText(k)}</span><span>${p}%</span></b><div class="track"><i style="width:${p}%;background:${PAL[i%4]}"></i></div></div>`).join("")}</div>
+ ${low.length?`<p class="sub" style="margin-top:.8rem">${T("Anda cenderung melewatkan ","You tend to skip ")}${low.join(T(" dan "," and "))}.</p>`:""}
+ <p class="small" style="margin-top:.6rem">${T("📥 Tersimpan di ponsel. Tetap berfungsi tanpa sinyal.","📥 Kept on this phone. It still works with no signal.")}</p>
+ <div class="row" style="margin-top:1rem"><button class="btn" data-a="go" data-s="match">${T("Lihat kecocokan saya","See my matches")}</button><button class="btn alt" data-a="redo">${T("Geser lagi","Swipe again")}</button></div></div>`};
 
 V.match=()=>{if(!S.dna)return V.swipe();const r=all().map(b=>({b,m:matchOf(b)})).sort((x,y)=>y.m.score-x.m.score),{b,m}=r[0],weak=m.score<55;
- return `<div class="pad"><p class="sub">${weak?"We are not sure about any of these":"Your best match nearby"}</p>
- <div class="box" style="margin-top:.5rem;border:0;background:${b.col}"><div class="match-num">${m.score}%</div><p style="font-size:.85rem">match with your Travel DNA</p>
- <h2 style="font-size:1.5rem;margin-top:.6rem">${b.e} ${esc(b.name)}</h2><p>${b.sector} · ${esc(b.place)}</p></div>
- <div class="box">${weak?`<p>Your swipes and these places overlap only a little. Have a look and decide for yourself.</p>`:`<b>Why it fits you</b>`}
- <ul class="why">${m.why.map(w=>`<li>${w}</li>`).join("")}<li>${cardsOf(b).length} travelers left a postcard here</li></ul></div>
- <div class="row" style="margin-top:1rem"><button class="btn" data-a="view" data-id="${b.id}">View experience</button><button class="btn alt" data-a="offline" data-id="${b.id}">${S.saved[b.id]?"Saved offline ✓":"Save offline"}</button></div>
- <label class="f">Also near you</label>${r.slice(1).map(({b,m})=>`<button class="bz" data-a="view" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${b.sector}</span></span><span class="pct">${m.score}%</span></button>`).join("")}
- <p class="small" style="margin-top:.8rem">The score compares your six Travel DNA values with each place’s Experience DNA. It is a suggestion, not a promise.</p></div>`};
+ return `<div class="pad"><p class="sub">${weak?T("Kami belum yakin dengan pilihan mana pun","We are not sure about any of these"):T("Kecocokan terbaik di dekat Anda","Your best match nearby")}</p>
+ <div class="box" style="margin-top:.5rem;border:0;background:${b.col}"><div class="match-num">${m.score}%</div><p style="font-size:.85rem">${T("cocok dengan DNA Perjalanan Anda","match with your Travel DNA")}</p>
+ <h2 style="font-size:1.5rem;margin-top:.6rem">${b.e} ${esc(b.name)}</h2><p>${sectorText(b.sector)} · ${esc(b.place)}</p></div>
+ <div class="box">${weak?`<p>${T("Pilihan Anda hanya sedikit cocok dengan tempat-tempat ini. Lihat dan tentukan sendiri.","Your swipes and these places overlap only a little. Have a look and decide for yourself.")}</p>`:`<b>${T("Alasan tempat ini cocok","Why it fits you")}</b>`}
+ <ul class="why">${m.why.map(w=>`<li>${w}</li>`).join("")}<li>${cardsOf(b).length} ${T("wisatawan meninggalkan kartu pos di sini","travelers left a postcard here")}</li></ul></div>
+ <div class="row" style="margin-top:1rem"><button class="btn" data-a="view" data-id="${b.id}">${T("Lihat pengalaman","View experience")}</button><button class="btn alt" data-a="offline" data-id="${b.id}">${S.saved[b.id]?T("Tersimpan offline ✓","Saved offline ✓"):T("Simpan offline","Save offline")}</button></div>
+ <label class="f">${T("Juga di sekitar Anda","Also near you")}</label>${r.slice(1).map(({b,m})=>`<button class="bz" data-a="view" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${sectorText(b.sector)}</span></span><span class="pct">${m.score}%</span></button>`).join("")}
+ <p class="small" style="margin-top:.8rem">${T("Skor membandingkan enam nilai DNA Perjalanan Anda dengan DNA Pengalaman tiap tempat. Ini saran, bukan janji.","The score compares your six Travel DNA values with each place’s Experience DNA. It is a suggestion, not a promise.")}</p></div>`};
 
 V.exp=()=>{const b=biz(S.biz),L=Lst(b);return `<div class="hero" style="background:${b.col}"><button class="pill back" data-a="go" data-s="explore">‹ All places</button>${b.e}</div>
  <div class="pad" style="padding-top:1rem"><h1 style="font-size:1.6rem">${esc(L.name||b.name)}</h1>
- <p class="sub">${b.sector} · ${esc(b.place)} ${kmTo(b)?"· "+kmTo(b)+" km from you ":""}${S.saved[b.id]?"· 📥 saved on this phone":""}</p>
+ <p class="sub">${sectorText(b.sector)} · ${esc(b.place)} ${kmTo(b)?"· "+kmTo(b)+" "+T("km dari Anda","km from you")+" ":""}${S.saved[b.id]?"· 📥 "+T("tersimpan di ponsel ini","saved on this phone"):""}</p>
  <div style="margin-top:.7rem">${b.chips.map(c=>`<span class="chip">${c}</span>`).join("")}</div>
- <p style="margin-top:.6rem">${esc(b.story||L.description||"This business has not told its story yet.")}</p>
- <div class="facts"><div><span>Duration</span><b>${esc(L.duration||"Ask the host")}</b></div><div><span>Price</span><b>${esc(L.price||"Ask the host")}</b></div>
- <div><span>Languages</span><b>Indonesian, with on-phone translation</b></div><div><span>Open</span><b>${esc(L.availability||"Ask the host")}</b></div></div>
- <div class="box"><b>What you will do</b><p class="sub">${esc(L.activities||"Not listed yet")}</p></div>
- <div class="row" style="margin-top:1rem"><button class="btn" data-a="bookopen">📅 Ask to book</button><button class="btn sun" data-a="go" data-s="chat">💬 Message ${esc(b.host)}</button></div>
- <div class="row" style="margin-top:.6rem"><button class="btn alt" data-a="offline" data-id="${b.id}">${S.saved[b.id]?"Saved offline ✓":"Save offline"}</button><button class="btn alt" data-a="go" data-s="card">✍️ Leave a postcard</button></div>
- <button class="btn warm wide" style="margin-top:.6rem" data-a="go" data-s="story">Visit The Story of This Place</button></div>`};
+ <p style="margin-top:.6rem">${esc(b.story||L.description||T("Usaha ini belum membagikan ceritanya.","This business has not told its story yet."))}</p>
+ <div class="facts"><div><span>${T("Durasi","Duration")}</span><b>${esc(L.duration||T("Tanyakan kepada tuan rumah","Ask the host"))}</b></div><div><span>${T("Harga","Price")}</span><b>${esc(L.price||T("Tanyakan kepada tuan rumah","Ask the host"))}</b></div>
+ <div><span>${T("Bahasa","Languages")}</span><b>${T("Bahasa Indonesia, dengan terjemahan di ponsel","Indonesian, with on-phone translation")}</b></div><div><span>${T("Buka","Open")}</span><b>${esc(L.availability||T("Tanyakan kepada tuan rumah","Ask the host"))}</b></div></div>
+ <div class="box"><b>${T("Yang akan Anda lakukan","What you will do")}</b><p class="sub">${esc(L.activities||T("Belum dicantumkan","Not listed yet"))}</p></div>
+ <div class="row" style="margin-top:1rem"><button class="btn" data-a="bookopen">📅 ${T("Minta kunjungan","Ask to book")}</button><button class="btn sun" data-a="go" data-s="chat">💬 ${T("Pesan","Message")} ${esc(b.host)}</button></div>
+ <div class="row" style="margin-top:.6rem"><button class="btn alt" data-a="offline" data-id="${b.id}">${S.saved[b.id]?T("Tersimpan offline ✓","Saved offline ✓"):T("Simpan offline","Save offline")}</button><button class="btn alt" data-a="go" data-s="card">✍️ ${T("Tinggalkan kartu pos","Leave a postcard")}</button></div>
+ <button class="btn warm wide" style="margin-top:.6rem" data-a="go" data-s="story">${T("Kunjungi Cerita Tempat Ini","Visit The Story of This Place")}</button></div>`};
 
-function chatHTML(b,tid,side){const en=side==="g"||S.blang==="en",ms=thread(b,tid),other=en?"en":"id",lang=side==="g"?"English":T("bahasa Indonesia","English"),bz=side==="b";
+function chatHTML(b,tid,side){const en=side==="g",ms=thread(b,tid),other=en?"en":"id",lang=side==="g"?T("Inggris","English"):T("bahasa Indonesia","Indonesian"),bz=side==="b";
  return ms.map((m,i)=>{if(m.from==="sys")return `<div class="bub sys">${esc(m.t)}</div>`;
-  const me=m.from===side,k=b.id+tid+i,tr=m[other];
-  return `<div class="bub ${me?"me":""}">${esc(me||!tr||S.tr[k]?m.t:tr)}<small>${me?(m.sync==="pending"?(bz?T("📦 Tersimpan di ponsel. Dikirim saat ada sinyal.","📦 Saved on this phone. Will send when connection returns."):"📦 Saved on this phone. Will send when connection returns."):(tr?"":"")):tr?`${bz?T("Diterjemahkan ke "+lang+" di ponsel ini","Translated to English on this phone"):"Translated to "+lang+" on this phone"} · <button data-a="trm" data-k="${k}">${S.tr[k]?(bz?T("terjemahan","translation"):"translation"):(bz?T("teks asli","original"):"original")}</button>`:(other==="en"&&m.id)||(other==="id"&&m.en&&m.from==="b")?"":(bz?T("Kalimat ini belum bisa diterjemahkan. Kalau ragu, tanyakan langsung.","Shown as the guest wrote it. No translation for this sentence yet."):"Shown as written. No translation for this sentence yet. If unsure, ask in person.")}</small></div>`}).join("")||`<div class="bub sys">No messages yet. Say hello.</div>`}
-V.chat=()=>{const b=biz(S.biz);return `<div class="chat"><div class="head"><button class="pill" data-a="go" data-s="inbox">‹ Chats</button><span style="font-size:1.5rem">${b.e}</span><b>${esc(b.host)}</b><span class="small">replies in Indonesian</span></div>
+  const me=m.from===side,k=b.id+tid+i,tr=m[other],translated=!me&&!!tr&&!S.tr[k],shown=me||!tr||S.tr[k]?m.t:tr;
+  const originalLanguage=speechLanguage(m.original_language||m.l,m.from==="b"?"id":"en"),spokenLanguage=translated?speechLanguage(m.translated_language,other):originalLanguage;
+  return `<div class="bub ${me?"me":""}">${esc(shown)} <button data-a="say" data-t="${esc(shown)}" data-lang="${spokenLanguage}" aria-label="Play message aloud">🔊</button><small>${me?(m.sync==="pending"?(bz?T("📦 Tersimpan di ponsel. Dikirim saat ada sinyal.","📦 Saved on this phone. Will send when connection returns."):"📦 Saved on this phone. Will send when connection returns."):(tr?"":"")):tr?`${bz?T("Diterjemahkan ke "+lang+" di ponsel ini","Translated to English on this phone"):"Translated to "+lang+" on this phone"} · <button data-a="trm" data-k="${k}">${S.tr[k]?(bz?T("terjemahan","translation"):"translation"):(bz?T("teks asli","original"):"original")}</button>`:(other==="en"&&m.id)||(other==="id"&&m.en&&m.from==="b")?"":(bz?T("Kalimat ini belum bisa diterjemahkan. Kalau ragu, tanyakan langsung.","Shown as the guest wrote it. No translation for this sentence yet."):"Shown as written. No translation for this sentence yet. If unsure, ask in person.")}</small></div>`}).join("")||`<div class="bub sys">No messages yet. Say hello.</div>`}
+V.chat=()=>{const b=biz(S.biz);return `<div class="chat"><div class="head"><button class="pill" data-a="go" data-s="inbox">‹ ${T("Pesan","Chats")}</button><span style="font-size:1.5rem">${b.e}</span><b>${esc(b.host)}</b><span class="small">${T("responde en bahasa Indonesia","replies in Indonesian")}</span></div>
  <div class="msgs">${chatHTML(b,gt(),"g")}</div>
  <div class="foot"><div>${GQ.map((q,i)=>`<button class="chip pick" data-a="gq" data-i="${i}">${q.t}</button>`).join("")}</div>
- <div class="send"><input class="t" id="cin" placeholder="Write in your own language" maxlength="140"><button class="btn" data-a="gsend">Send</button></div></div></div>`};
+ <div class="send"><input class="t" id="cin" placeholder="${T("Tulis dalam bahasa Anda","Write in your own language")}" maxlength="140"><button class="btn" data-a="gsend">${T("Kirim","Send")}</button></div></div></div>`};
 
-V.inbox=()=>{const row=b=>{const ms=thread(b,gt()),last=ms[ms.length-1];return `<button class="bz" data-a="chatwith" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span style="min-width:0"><b>${esc(b.host)}</b><span class="small" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${last?esc(last.from==="b"?(last.en||last.t):last.t):esc(b.name)}</span></span>${last&&last.from==="b"?`<span class="tag strong" style="margin-left:auto">New reply</span>`:last&&last.sync==="pending"?`<span class="tag early" style="margin-left:auto">Waiting to send</span>`:""}</button>`};
+V.inbox=()=>{const row=b=>{const ms=thread(b,gt()),last=ms[ms.length-1];return `<button class="bz" data-a="chatwith" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span style="min-width:0"><b>${esc(b.host)}</b><span class="small" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${last?esc(last.from==="b"?(last.en||last.t):last.t):esc(b.name)}</span></span>${last&&last.from==="b"?`<span class="tag strong" style="margin-left:auto">${T("Balasan baru","New reply")}</span>`:last&&last.sync==="pending"?`<span class="tag early" style="margin-left:auto">${T("Menunggu untuk dikirim","Waiting to send")}</span>`:""}</button>`};
  const on=all().filter(b=>S.msgs[b.id+":"+gt()]),off=all().filter(b=>!S.msgs[b.id+":"+gt()]);
- return `<div class="pad"><h1 style="font-size:1.7rem">Messages</h1><p class="sub">Talk to the people who run each place. Each of you writes in your own language.</p>
- ${on.length?`<label class="f">Your chats</label><div class="list2">${on.map(row).join("")}</div>`:`<div class="box"><b>No chats yet</b><p class="sub">Pick someone below and say hello.</p></div>`}
- ${off.length?`<label class="f">Start a new chat</label><div class="list2">${off.map(row).join("")}</div>`:""}</div>`};
-V.trips=()=>{const ks=S.bookings.filter(k=>k.gid===S.gid);return `<div class="pad"><h1 style="font-size:1.7rem">Your visits</h1><p class="sub">You ask, the host decides. No one is charged here.</p>
+ return `<div class="pad"><h1 style="font-size:1.7rem">${T("Pesan","Messages")}</h1><p class="sub">${T("Bicara dengan orang yang menjalankan tiap tempat. Kalian menulis dalam bahasa masing-masing.","Talk to the people who run each place. Each of you writes in your own language.")}</p>
+ ${on.length?`<label class="f">${T("Obrolan Anda","Your chats")}</label><div class="list2">${on.map(row).join("")}</div>`:`<div class="box"><b>${T("Belum ada obrolan","No chats yet")}</b><p class="sub">${T("Pilih seseorang di bawah dan sapa mereka.","Pick someone below and say hello.")}</p></div>`}
+ ${off.length?`<label class="f">${T("Mulai obrolan baru","Start a new chat")}</label><div class="list2">${off.map(row).join("")}</div>`:""}</div>`};
+V.trips=()=>{const ks=S.bookings.filter(k=>k.gid===S.gid);return `<div class="pad"><h1 style="font-size:1.7rem">${T("Kunjungan Anda","Your visits")}</h1><p class="sub">${T("Anda mengajukan, tuan rumah memutuskan. Tidak ada pembayaran di sini.","You ask, the host decides. No one is charged here.")}</p>
  ${ks.length?ks.slice().reverse().map(k=>{const b=biz(k.biz);return `<div class="box"><div style="display:flex;gap:.7rem;align-items:center"><span style="font-size:1.8rem">${b.e}</span><div style="flex:1"><b>${esc(b.name)}</b><div class="small">${esc(k.date)} at ${k.time||"09:00"} · ${k.people} ${k.people>1?"people":"person"}</div></div>
- <span class="tag ${k.status==="confirmed"?"strong":k.status==="declined"?"warn":"early"}">${k.status==="confirmed"?"Confirmed":k.status==="declined"?"Declined":"Waiting"}</span></div>
- ${k.off&&k.status==="pending"?`<p class="small" style="margin-top:.5rem">⚠️ ${esc(b.host)} is usually closed that day, so this may be declined.</p>`:""}<p class="small" style="margin-top:.5rem">${k.sync==="pending"?"📦 Saved on this phone. Will send when connection returns.":k.status==="pending"?"Sent. Waiting for "+esc(b.host)+" to confirm.":k.status==="confirmed"?esc(b.host)+" is expecting you.":esc(b.host)+" cannot host you that day. Try another date."}</p></div>`}).join(""):`<div class="box"><b>No visits yet</b><p class="sub">Pick a place and ask to book. It takes two taps.</p></div>`}
- <button class="btn wide" style="margin-top:1rem" data-a="view" data-id="${S.biz}">Ask to book ${esc(biz(S.biz).name)}</button></div>`};
+ <span class="tag ${k.status==="confirmed"?"strong":k.status==="declined"?"warn":"early"}">${k.status==="confirmed"?T("Dikonfirmasi","Confirmed"):k.status==="declined"?T("Ditolak","Declined"):T("Menunggu","Waiting")}</span></div>
+ ${k.off&&k.status==="pending"?`<p class="small" style="margin-top:.5rem">⚠️ ${esc(b.host)} ${T("biasanya tutup pada hari itu, permintaan ini mungkin ditolak.","is usually closed that day, so this may be declined.")}</p>`:""}<p class="small" style="margin-top:.5rem">${k.sync==="failed_permanent"?T("⚠️ Permintaan tidak dapat dikirim. Silakan buat permintaan baru.","⚠️ This booking could not be sent. Please submit a new request."):k.sync==="pending"?T("📦 Tersimpan di ponsel. Akan dikirim saat tersambung.","📦 Saved on this phone. Will send when connection returns."):k.status==="pending"?T("Terkirim. Menunggu konfirmasi dari ","Sent. Waiting for ")+esc(b.host)+".":k.status==="confirmed"?esc(b.host)+" "+T("menantikan kunjungan Anda.","is expecting you."):esc(b.host)+" "+T("tidak dapat menerima kunjungan pada hari itu. Coba tanggal lain.","cannot host you that day. Try another date.")}</p></div>`}).join(""):`<div class="box"><b>${T("Belum ada kunjungan","No visits yet")}</b><p class="sub">${T("Pilih tempat dan ajukan kunjungan. Hanya dua langkah.","Pick a place and ask to book. It takes two taps.")}</p></div>`}
+ <button class="btn wide" style="margin-top:1rem" data-a="view" data-id="${S.biz}">${T("Ajukan kunjungan ke","Ask to book")} ${esc(biz(S.biz).name)}</button></div>`};
 
 const PROMPTS=["What will you remember?","What would you tell the next traveler?","What made this place special?"];
 const first=s=>(s||"").match(/\p{Extended_Pictographic}\uFE0F?/u)?.[0]||"";
@@ -314,31 +360,31 @@ const pcHTML=(c,full)=>{const showEn=c.en&&S.tr[c.id];
  ${c.prompt?`<p class="prompt">${esc(c.prompt)}</p>`:""}
  <div class="stk">${esc(c.s||"")}</div>
  ${c.voice?`<p class="meta">🎙️ Voice note 0:12</p>`:""}
- ${c.status&&c.status!=="sent"?`<p class="meta">📦 Saved on this phone. Will send when connection returns.</p>`:""}</div>`};
+ ${c.status?`<p class="meta" role="status">${c.status==="sent"?"✓ Synced.":c.status==="failed_permanent"?"⚠️ Saved on this phone. Synchronization failed; automatic retries stopped.":c.sync_status==="syncing"?"Sending your saved postcard…":"📦 Saved on this phone. Waiting to sync."}</p>`:""}</div>`};
 const draftCard=()=>{const d=S.draft;return{n:S.guest.n,f:S.guest.f,t:d.t,bg:d.bg,s:d.s.join(""),prompt:PROMPTS[d.p],voice:d.voice,photo:d.photo}};
-V.card=()=>{const d=S.draft,b=biz(S.biz);return `<div class="pad"><button class="pill" style="margin-bottom:.8rem" data-a="go" data-s="exp">‹ Back to ${esc(b.name)}</button><p class="hand">Not a review. A memory.</p><h1 style="font-size:1.6rem">Leave a little piece of your trip</h1><p class="sub">For ${esc(b.name)}</p>
+V.card=()=>{const d=S.draft,b=biz(S.biz);return `<div class="pad"><button class="pill" style="margin-bottom:.8rem" data-a="go" data-s="exp">‹ ${T("Kembali ke","Back to")} ${esc(b.name)}</button><p class="hand">${T("Bukan ulasan. Sebuah kenangan.","Not a review. A memory.")}</p><h1 style="font-size:1.6rem">${T("Tinggalkan sedikit kenangan perjalanan","Leave a little piece of your trip")}</h1><p class="sub">${T("Untuk","For")} ${esc(b.name)}</p>
  <div style="margin-top:.9rem" id="pv">${pcHTML(draftCard())}</div>
- <label class="f">Pick a prompt</label><div>${PROMPTS.map((p,i)=>`<button class="chip pick ${d.p===i?"on":""}" data-a="prompt" data-i="${i}">${p}</button>`).join("")}</div>
- <label class="f" for="msg">Your message, in any language</label><textarea class="t" id="msg" maxlength="160" placeholder="I’ll always remember…">${esc(d.t)}</textarea>
- <label class="f">Postcard</label><div class="bgs">${["sun","field","sky","coral"].map(x=>`<button class="pc ${x} ${d.bg===x?"on":""}" style="min-height:0;padding:0;box-shadow:none" data-a="bg" data-b="${x}" aria-label="${x} background"></button>`).join("")}</div>
- <label class="f">Stickers</label><div class="stks">${["☕","🌿","💛","⭐","☀️","🌧️","🔥","🪵"].map(s=>`<button class="${d.s.includes(s)?"on":""}" data-a="stk" data-s="${s}">${s}</button>`).join("")}</div>
- <div class="row" style="margin-top:.7rem"><button class="btn alt" data-a="voice">${d.voice?"🎙️ Voice note added":"🎙️ Add a voice note"}</button><label class="btn alt" tabindex="0">📷 ${d.photo?"Photo added":"Add a photo"}<input type="file" accept="image/*" id="ph" hidden></label></div>
- <button class="btn warm wide" style="margin-top:1rem" data-a="send">Leave your postcard</button>
- <p class="small" style="margin-top:.6rem">${S.online?"":"You are offline. Your postcard will be kept on this phone and sent later. "}Only your nickname, flag and message are shared with ${esc(b.host)}.</p></div>`};
+ <label class="f">${T("Pilih pertanyaan","Pick a prompt")}</label><div>${PROMPTS.map((p,i)=>`<button class="chip pick ${d.p===i?"on":""}" data-a="prompt" data-i="${i}">${p}</button>`).join("")}</div>
+ <label class="f" for="msg">${T("Pesan Anda, dalam bahasa apa pun","Your message, in any language")}</label><textarea class="t" id="msg" maxlength="160" placeholder="${T("Saya akan selalu mengingat…","I’ll always remember…")}">${esc(d.t)}</textarea>
+ <label class="f">${T("Kartu pos","Postcard")}</label><div class="bgs">${["sun","field","sky","coral"].map(x=>`<button class="pc ${x} ${d.bg===x?"on":""}" style="min-height:0;padding:0;box-shadow:none" data-a="bg" data-b="${x}" aria-label="${T("Latar "+x,x+" background")}"></button>`).join("")}</div>
+ <label class="f">${T("Stiker","Stickers")}</label><div class="stks">${["☕","🌿","💛","⭐","☀️","🌧️","🔥","🪵"].map(s=>`<button class="${d.s.includes(s)?"on":""}" data-a="stk" data-s="${s}">${s}</button>`).join("")}</div>
+ <div class="row" style="margin-top:.7rem"><button class="btn alt" data-a="voice">${d.voice?"🎙️ "+T("Catatan suara ditambahkan","Voice note added"):"🎙️ "+T("Tambahkan catatan suara","Add a voice note")}</button><label class="btn alt" tabindex="0">📷 ${d.photo?T("Foto ditambahkan","Photo added"):T("Tambahkan foto","Add a photo")}<input type="file" accept="image/*" id="ph" hidden></label></div>
+ <button class="btn warm wide" style="margin-top:1rem" data-a="send">${T("Tinggalkan kartu pos","Leave your postcard")}</button>
+ <p class="small" style="margin-top:.6rem">${S.online?"":T("Anda offline. Kartu pos akan disimpan di ponsel dan dikirim nanti. ","You are offline. Your postcard will be kept on this phone and sent later. ")} ${T("Hanya nama panggilan, bendera, dan pesan Anda yang dibagikan kepada ","Only your nickname, flag and message are shared with ")}${esc(b.host)}.</p></div>`};
 V.thanks=()=>{const c=S.mine.filter(m=>m.gid===S.gid&&!m.removed).pop();if(!c)return V.card();return `<div class="pad" style="text-align:center"><div style="text-align:left;transform:rotate(-2deg);margin:.6rem 0 1.2rem">${pcHTML(c)}</div>
- <h1 style="font-size:1.6rem">Thank you.</h1><p class="hand" style="margin:.4rem 0 1rem">Your postcard is now part of this place’s story.</p>
- <button class="btn warm wide" data-a="go" data-s="story">See it in The Story of This Place</button></div>`};
+ <h1 style="font-size:1.6rem">${T("Terima kasih.","Thank you.")}</h1><p class="hand" style="margin:.4rem 0 1rem">${T("Kartu pos Anda kini menjadi bagian dari cerita tempat ini.","Your postcard is now part of this place’s story.")}</p>
+ <button class="btn warm wide" data-a="go" data-s="story">${T("Lihat di Cerita Tempat Ini","See it in The Story of This Place")}</button></div>`};
 
 const SLOTS=[[12,17],[35,14],[60,18],[84,15],[22,31],[47,29],[72,32],[91,38],[8,46],[30,49],[63,47],[85,55],[14,63],[33,69],[72,68],[89,74],[10,83],[28,88],[74,88],[53,40],[20,75],[82,88]];
 const ORBC=["#FFC928","#47C882","#FF7043","#7193D8","#FFFFFF","#FFE9A3"];
 function storyHTML(b,own){const c=cardsOf(b,own),nh=c.filter(isHid).length;
- return `<div class="scene">${farmSVG(true)}<div class="cap"><h1>${own?T("Cerita Tempat Ini","The Story of This Place"):"The Story of This Place"}</h1><p class="hand">${own?T("Ketuk kartu untuk menyembunyikan atau menampilkannya.","Tap a postcard to hide or show it."):c.length?"Moments that stayed here. Tap one.":"No memories yet. Be the first."}</p></div>
+ return `<div class="scene">${farmSVG(true)}<div class="cap"><h1>${T("Cerita Tempat Ini","The Story of This Place")}</h1><p class="hand">${own?T("Ketuk kartu untuk menyembunyikan atau menampilkannya.","Tap a postcard to hide or show it."):c.length?T("Kenangan yang tertinggal di sini. Ketuk salah satu.","Moments that stayed here. Tap one."):T("Belum ada kenangan. Jadilah yang pertama.","No memories yet. Be the first.")}</p></div>
  ${c.map((c,i)=>{const [x,y]=SLOTS[i%SLOTS.length],sz=46+(i*7)%20,mine=!!c.biz;
-  return `<button class="orb ${["","wink","","oh"][i%4]} ${mine?"new":""} ${c.status&&c.status!=="sent"?"pending":""}" data-a="open" data-id="${c.id}" aria-label="Postcard from ${esc(c.n||"a traveler")}${isHid(c)?", hidden":""}" style="left:calc(${x}% - ${sz/2}px);top:calc(${y+9}% - ${sz/2}px);width:${sz}px;height:${sz}px;background:${ORBC[i%ORBC.length]};--d:${4+i%5}s;--dl:-${i*.7}s${isHid(c)?";opacity:.35;outline:2px dashed var(--ink);outline-offset:3px":""}"><span class="of"><i></i></span><span class="ic">${first(c.s)}</span></button>`}).join("")}
+  return `<button class="orb ${["","wink","","oh"][i%4]} ${mine?"new":""} ${c.status&&c.status!=="sent"?"pending":""}" data-a="open" data-id="${c.id}" aria-label="${T("Kartu pos dari ","Postcard from ")}${esc(c.n||T("wisatawan","a traveler"))}${isHid(c)?", "+T("disembunyikan","hidden"):""}" style="left:calc(${x}% - ${sz/2}px);top:calc(${y+9}% - ${sz/2}px);width:${sz}px;height:${sz}px;background:${ORBC[i%ORBC.length]};--d:${4+i%5}s;--dl:-${i*.7}s${isHid(c)?";opacity:.35;outline:2px dashed var(--ink);outline-offset:3px":""}"><span class="of"><i></i></span><span class="ic">${first(c.s)}</span></button>`}).join("")}
  </div><div class="pad" style="padding-top:.9rem">${own?`<p class="sub">${T(`${c.length-nh} kartu pos tampil untuk tamu${nh?`, ${nh} disembunyikan`:""}. Kartu yang disembunyikan tetap dihitung di ringkasan Anda.`,`${c.length-nh} postcards are shown to guests${nh?`, ${nh} hidden`:""}. Hidden postcards still count in your insights.`)}</p>
  <button class="btn alt wide" style="margin-top:.8rem" data-a="go" data-s="b-insights">‹ ${T("Kembali","Back")}</button></div>`
- :`<p class="sub">${c.length} memories left by travelers at ${esc(b.name)}${c.length?", in "+new Set(c.map(x=>x.l)).size+" languages":""}.</p>
- <div class="row" style="margin-top:.8rem"><button class="btn" data-a="go" data-s="card">Leave your postcard</button><button class="btn alt" data-a="go" data-s="exp">Back to ${esc(b.host)}</button></div></div>`}`}
+ :`<p class="sub">${c.length} ${T("kenangan ditinggalkan wisatawan di ","memories left by travelers at ")}${esc(b.name)}${c.length?", "+new Set(c.map(x=>x.l)).size+" "+T("bahasa","languages"):""}.</p>
+ <div class="row" style="margin-top:.8rem"><button class="btn" data-a="go" data-s="card">${T("Tinggalkan kartu pos","Leave your postcard")}</button><button class="btn alt" data-a="go" data-s="exp">${T("Kembali ke","Back to")} ${esc(b.host)}</button></div></div>`}`}
 V.story=()=>storyHTML(biz(S.biz),false);
 V["b-story"]=()=>storyHTML(B(),true);
 
@@ -402,52 +448,52 @@ V["b-journey"]=()=>{const b=B(),A=insightsFor(b),has=!!(S.listings[b.id]||!b.cus
  <p class="small" style="margin-top:.4rem">🌱 ${T("Tanaman tumbuh dari bawah. Tidak perlu belajar grafik.","The plant grows from the bottom. No charts to learn.")}</p></div>`};
 
 V.ai=()=>{const P=t=>`<p style="text-align:justify;hyphens:auto">${t}</p>`,H=t=>`<h2 style="font-size:1.15rem;margin:1.6rem 0 -.2rem">${t}</h2>`,B=(h,t,pale)=>`<div class="box"${pale?' style="background:var(--pale);border:0"':""}><h3>${h}</h3>${P(t)}</div>`;
- return `<div class="pad ai" lang="en"><button class="pill" style="margin-bottom:.9rem" data-a="go" data-s="login">‹ Back</button>
- <h1 style="font-size:1.6rem">How YoloWisata works</h1><p class="sub" style="margin-top:.3rem">A website for travelers and local businesses that keeps working when the internet does not.</p>
- ${B("Works without internet","YoloWisata is a website, so there is nothing to install. After the first visit it opens with no connection. Anything done offline, such as a message, a booking, a postcard or a voice note, is kept on the device and sent when the signal returns.",1)}
- ${H("What the AI does")}
- ${B("1. Matching","Ten swipes become a Travel DNA. Each business has an Experience DNA. The match score compares the two, and a weak match says so.")}
- ${B("2. Voice to listing","An owner describes the business out loud, in their own language. The words become a listing with a name, price, duration, activities and opening days. Anything not heard is marked “Not sure” and is never guessed.")}
- ${B("3. Translation","Guests and owners each write and read in their own language. The original text is always one tap away.")}
- ${B("4. Visitor insights","Postcards, questions and messages are counted by theme. Every finding shows its count, the quotes behind it and a label: Strong pattern, Early signal or Not enough evidence yet.")}
- ${H("Good to know")}
- ${B("People decide","The AI suggests and people decide. It never accepts a booking, changes a price, sends a reply or publishes a listing on its own.")}
- ${B("Any kind of business","A farm, a workshop, a kitchen, a homestay or a guide all use the same screens, and each business uses the app in its own language.")}
- ${B("Location","Sharing a location is optional. It works without internet, and the position stays on the device.")}
- ${H("About this prototype")}
- ${B("What is real and what is simulated","Matching and listing extraction run on the device. Visitor insights come from the server when it is connected, and from the device otherwise. Translation uses a prepared phrase list in place of a translation model, so other sentences are shown as written. The voice recording and the demo village are simulated, and the sample postcards and questions were written by the team.")}</div>`};
+ return `<div class="pad ai" lang="${S.blang}"><button class="pill" style="margin-bottom:.9rem" data-a="go" data-s="login">‹ ${T("Kembali","Back")}</button>
+ <h1 style="font-size:1.6rem">${T("Cara kerja YoloWisata","How YoloWisata works")}</h1><p class="sub" style="margin-top:.3rem">${T("Situs untuk wisatawan dan usaha lokal yang tetap berfungsi tanpa internet.","A website for travelers and local businesses that keeps working when the internet does not.")}</p>
+ ${B(T("Tetap berfungsi tanpa internet","Works without internet"),T("YoloWisata adalah situs web, jadi tidak perlu memasang aplikasi. Setelah kunjungan pertama, situs dapat dibuka tanpa koneksi. Aktivitas offline seperti pesan, kunjungan, kartu pos, atau catatan suara disimpan di perangkat dan dikirim saat tersambung kembali.","YoloWisata is a website, so there is nothing to install. After the first visit it opens with no connection. Anything done offline, such as a message, a booking, a postcard or a voice note, is kept on the device and sent when the signal returns."),1)}
+ ${H(T("Yang dilakukan AI","What the AI does"))}
+ ${B(T("1. Pencocokan","1. Matching"),T("Sepuluh pilihan membentuk DNA Perjalanan. Setiap usaha memiliki DNA Pengalaman. Skor membandingkan keduanya dan menunjukkan jika kecocokannya rendah.","Ten swipes become a Travel DNA. Each business has an Experience DNA. The match score compares the two, and a weak match says so."))}
+ ${B(T("2. Suara menjadi daftar usaha","2. Voice to listing"),T("Pemilik menjelaskan usahanya dengan suara dalam bahasanya sendiri. Informasi menjadi daftar berisi nama, harga, durasi, kegiatan, dan hari buka. Hal yang tidak terdengar ditandai ‘Belum yakin’ dan tidak ditebak.","An owner describes the business out loud, in their own language. The words become a listing with a name, price, duration, activities and opening days. Anything not heard is marked ‘Not sure’ and is never guessed."))}
+ ${B(T("3. Terjemahan","3. Translation"),T("Tamu dan pemilik menulis serta membaca dalam bahasa masing-masing. Teks asli selalu dapat dilihat kembali.","Guests and owners each write and read in their own language. The original text is always one tap away."))}
+ ${B(T("4. Wawasan pengunjung","4. Visitor insights"),T("Kartu pos, pertanyaan, dan pesan dikelompokkan berdasarkan tema. Setiap temuan menampilkan jumlah, kutipan, dan label kekuatan bukti.","Postcards, questions and messages are counted by theme. Every finding shows its count, the quotes behind it and a label: Strong pattern, Early signal or Not enough evidence yet."))}
+ ${H(T("Perlu diketahui","Good to know"))}
+ ${B(T("Keputusan tetap di tangan orang","People decide"),T("AI memberi saran, manusia yang memutuskan. AI tidak menerima kunjungan, mengubah harga, mengirim balasan, atau menerbitkan daftar usaha sendiri.","The AI suggests and people decide. It never accepts a booking, changes a price, sends a reply or publishes a listing on its own."))}
+ ${B(T("Untuk berbagai jenis usaha","Any kind of business"),T("Kebun, bengkel, dapur, homestay, dan pemandu menggunakan layar yang sama; setiap usaha dapat memakai aplikasi dalam bahasanya.","A farm, a workshop, a kitchen, a homestay or a guide all use the same screens, and each business uses the app in its own language."))}
+ ${B(T("Lokasi","Location"),T("Berbagi lokasi bersifat opsional. Fitur ini berfungsi tanpa internet dan posisi tetap di perangkat.","Sharing a location is optional. It works without internet, and the position stays on the device."))}
+ ${H(T("Tentang prototipe ini","About this prototype"))}
+ ${B(T("Yang nyata dan yang disimulasikan","What is real and what is simulated"),T("Pencocokan dan ekstraksi daftar berjalan di perangkat. Wawasan pengunjung berasal dari server saat tersambung, atau dari perangkat saat offline. Terjemahan memakai daftar frasa yang telah disiapkan. Rekaman suara dan desa demo disimulasikan; kartu pos dan pertanyaan contoh ditulis oleh tim.","Matching and listing extraction run on the device. Visitor insights come from the server when it is connected, and from the device otherwise. Translation uses a prepared phrase list in place of a translation model, so other sentences are shown as written. The voice recording and the demo village are simulated, and the sample postcards and questions were written by the team."))}</div>`};
 
 /* ---------- Render ---------- */
-const GNAV=[["explore","🧭","Explore"],["swipe","🧬","Travel DNA"],["inbox","💬","Messages"],["trips","📅","Visits"],["help","🗣️","Phrases"]];
+const GNAV=()=>[["explore","🧭",T("Jelajahi","Explore")],["swipe","🧬",T("DNA Perjalanan","Travel DNA")],["inbox","💬",T("Pesan","Messages")],["trips","📅",T("Kunjungan","Visits")],["help","🗣️",T("Frasa","Phrases")]];
 const BNAV=()=>[["b-list","🎙️",T("Usaha","Listing")],["b-insights","💛",T("Tamu","Visitors")],["b-msgs","💬",T("Pesan","Messages")],["b-book","📅",T("Pesanan","Bookings")],["b-journey","🌱",T("Tumbuh","Growth")]];
 const GROUP={chat:"inbox",dna:"swipe",match:"swipe",exp:"explore",card:"explore",thanks:"explore",story:"explore","b-thread":"b-msgs","b-story":"b-insights"};
-function render(){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]||V.land)();
- $("#net").className="pill net"+(S.online?"":" off");$("#net").textContent=S.online?"● Online":"○ Offline";
- $("#acct").textContent=S.role==="biz"?B().e+" "+B().host:"🧳 "+(S.guest.n||"Guest");
- const nav=s==="land"||s==="login"||s==="ai"?null:S.role==="biz"?BNAV():GNAV,g=GROUP[s]||s;const lg=$("#lang");lg.style.display=S.role==="biz"&&s!=="land"&&s!=="login"?"":"none";lg.textContent=S.blang==="en"?"🌐 ID":"🌐 EN";
+function render(sync=true){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]||V.land)();
+ $("#net").className="pill net"+(S.online?"":" off");$("#net").textContent=S.online?T("● Terhubung","● Online"):T("○ Luring","○ Offline");
+ $("#acct").textContent=S.role==="biz"?B().e+" "+B().host:"🧳 "+(S.guest.n||T("Tamu","Guest"));
+ const nav=s==="land"||s==="login"||s==="ai"?null:S.role==="biz"?BNAV():GNAV(),g=GROUP[s]||s;const langSwitch=$("#lang"),langEn=$("#lang-en"),langId=$("#lang-id");langSwitch.style.display="";langEn.className="lang-choice"+(S.blang==="en"?" on":"");langId.className="lang-choice"+(S.blang==="id"?" on":"");if(langEn.setAttribute)langEn.setAttribute("aria-pressed",String(S.blang==="en"));if(langId.setAttribute)langId.setAttribute("aria-pressed",String(S.blang==="id"));
  $("#nav").innerHTML=nav?`<nav class="nav">${nav.map((n,i)=>`<button class="${n[0]===g?"on":""}" data-a="go" data-s="${n[0]}"><span class="ni" style="--c:${["#FFE4D9","#FFF2C6","#D6E8FA","#DCF4E7","#FFE4D9"][i%5]}" aria-hidden="true">${n[1]}</span>${n[2]}</button>`).join("")}</nav>`:"";
  renderOver();if(s==="swipe")bindSwipe();
- if(s==="chat"||s==="b-thread")$("#view").scrollTop=1e6;save();flush()}
-const stepsHTML=()=>STEPS.map(([k,t,w])=>`<li><button class="${S.screen===k||(k==="swipe"&&S.screen==="dna")||(k==="card"&&S.screen==="thanks")||(k==="b-msgs"&&S.screen==="b-thread")?"on":""}" data-a="go" data-s="${k}"><span>${t}<span class="who">${w}</span></span></button></li>`).join("");
+ if(s==="chat"||s==="b-thread")$("#view").scrollTop=1e6;save();if(sync)flush()}
+const stepsHTML=()=>STEPS.map(([k,id,en,whoId,whoEn])=>`<li><button class="${S.screen===k||(k==="swipe"&&S.screen==="dna")||(k==="card"&&S.screen==="thanks")||(k==="b-msgs"&&S.screen==="b-thread")?"on":""}" data-a="go" data-s="${k}"><span>${T(id,en)}<span class="who">${T(whoId,whoEn)}</span></span></button></li>`).join("");
 function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toast" role="status">${ui.toast}</div>`:"";if(!m){o.innerHTML=t;return}
  let h="";
  if(m.t==="pc"){const own=S.role==="biz",c=cardsOf(B(),own).find(c=>c.id===m.id);if(!c){ui.modal=null;o.innerHTML=t;return}
   const act=own?`<button class="btn ${isHid(c)?"":"warm"} wide" style="margin-top:.6rem" data-a="pchide" data-id="${c.id}">${isHid(c)?T("Tampilkan lagi di Cerita","Show in the Story again"):T("Sembunyikan dari Cerita","Hide from the Story")}</button><p class="small" style="color:var(--ink);margin-top:.4rem;text-align:center">${T("Tamu tidak akan melihatnya. Tidak dihapus, dan tetap dihitung di ringkasan Anda.","Guests will not see it. It is not deleted, and still counts in your insights.")}</p>`
-   :c.gid===S.gid?`<button class="btn alt wide" style="margin-top:.6rem" data-a="pcdel" data-id="${c.id}">${m.sure?"Tap again to remove it for good":"🗑️ Remove my postcard"}</button>`:"";
-  h=`<div class="modal" data-a="close"><div class="in">${pcHTML(c,true)}${act}<button class="btn alt wide" style="margin-top:.6rem" data-a="close">${own?T("Kembali","Back"):"Back to the field"}</button></div></div>`}
- if(m.t==="menu")h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.2rem;margin-bottom:.5rem">The story, step by step</h2><ol class="steps">${stepsHTML()}</ol>
- <div class="row" style="margin-top:.8rem"><button class="btn alt" data-a="go" data-s="ai">How it works</button><button class="btn alt" data-a="reset">Reset demo</button></div></div></div>`;
+   :c.gid===S.gid?`<button class="btn alt wide" style="margin-top:.6rem" data-a="pcdel" data-id="${c.id}">${m.sure?T("Ketuk lagi untuk menghapus permanen","Tap again to remove it for good"):"🗑️ "+T("Hapus kartu pos saya","Remove my postcard")}</button>`:"";
+  h=`<div class="modal" data-a="close"><div class="in">${pcHTML(c,true)}${act}<button class="btn alt wide" style="margin-top:.6rem" data-a="close">${own?T("Kembali","Back"):T("Kembali ke halaman","Back to the field")}</button></div></div>`}
+ if(m.t==="menu")h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.2rem;margin-bottom:.5rem">${T("Cerita langkah demi langkah","The story, step by step")}</h2><ol class="steps">${stepsHTML()}</ol>
+ <div class="row" style="margin-top:.8rem"><button class="btn alt" data-a="go" data-s="ai">${T("Cara kerja","How it works")}</button><button class="btn alt" data-a="reset">${T("Reset demo","Reset demo")}</button></div></div></div>`;
  if(m.t==="evid"){const b=B(),a=insightsFor(b),group=m.group||"asks",ev=(a.source==="backend"?a.evidence[group][m.k]:a.ev[m.k])||[],[c,tx]=insightLabel(a,group,m.k);
   h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><span class="tag ${c}">${esc(tx||T("Bukti belum cukup","Not enough evidence yet"))}</span><h2 style="font-size:1.3rem;margin:.4rem 0">${esc(lab(m.k,b))}</h2><p class="sub">${T(`${ev.length} hal yang benar-benar ditulis tamu.`,`The ${ev.length} thing${ev.length===1?"":"s"} visitors actually wrote.`)} ${c==="thin"?T("Terlalu sedikit untuk bertindak. Tanyakan pada tamu berikutnya.","Too few to act on. Ask your next visitors."):""}</p>
   ${ev.map(e=>{const o=e.backend?null:ownerText(e);return `<div class="quote">“${esc(o||e.t)}”<small>${e.backend?T("Bukti tamu · teks asli","Visitor evidence · original text"):e.n?esc(e.n)+" "+e.f+" · "+T("kartu pos","postcard"):e.f+" · "+T("pertanyaan","question")}${o?" · "+T("diterjemahkan, aslinya: ","translated, original: ")+esc(e.t):""}</small></div>`}).join("")}
   <button class="btn wide" style="margin-top:1rem" data-a="close">${T("Tutup","Close")}</button></div></div>`}
  if(m.t==="book"){const b=biz(S.biz),d=new Date(Date.now()+6*864e5).toISOString().slice(0,10);
-  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><button data-a="close" aria-label="Close" style="float:right;width:38px;height:38px;border-radius:50%;background:var(--white);border:1.5px solid var(--line);font-weight:800;line-height:1;margin:-.2rem -.2rem .4rem .6rem">✕</button><h2 style="font-size:1.3rem">Ask ${esc(b.host)} for a visit</h2><p class="sub">${esc(Lst(b).availability?"Open: "+Lst(b).availability:"Ask about opening days")}. ${esc(b.host)} confirms each request personally.</p>
-  <div class="row"><div style="flex:2"><label class="f" for="bd">Day</label><input class="t" type="date" id="bd" value="${d}"></div><div style="flex:1"><label class="f" for="bp">People</label><select class="t" id="bp">${[1,2,3,4,5,6,7,8].map(n=>`<option ${n===2?"selected":""}>${n}</option>`).join("")}</select></div></div>
+  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><button data-a="close" aria-label="${T("Tutup","Close")}" style="float:right;width:38px;height:38px;border-radius:50%;background:var(--white);border:1.5px solid var(--line);font-weight:800;line-height:1;margin:-.2rem -.2rem .4rem .6rem">✕</button><h2 style="font-size:1.3rem">${T("Minta kunjungan kepada","Ask")} ${esc(b.host)}</h2><p class="sub">${esc(Lst(b).availability?T("Buka: ","Open: ")+Lst(b).availability:T("Tanyakan hari buka","Ask about opening days"))}. ${esc(b.host)} ${T("mengonfirmasi setiap permintaan secara langsung.","confirms each request personally.")}</p>
+  <div class="row"><div style="flex:2"><label class="f" for="bd">${T("Hari","Day")}</label><input class="t" type="date" id="bd" value="${d}"></div><div style="flex:1"><label class="f" for="bp">${T("Orang","People")}</label><select class="t" id="bp">${[1,2,3,4,5,6,7,8].map(n=>`<option ${n===2?"selected":""}>${n}</option>`).join("")}</select></div></div>
   <div id="bwarn">${closedNote(b,d)}</div>
-  <label class="f">Time</label><div id="bt">${SLOTS_T.map(h=>`<button class="chip pick ${(ui.time||"09:00")===h?"on":""}" data-a="btime" data-h="${h}">${h}</button>`).join("")}</div>
-  <div style="display:flex;align-items:center;gap:.6rem;margin-top:.3rem"><label class="small" for="bti">or another time</label><input class="t" type="time" id="bti" step="900" style="width:auto" value="${ui.time&&!SLOTS_T.includes(ui.time)?ui.time:""}"></div>
-  <button class="btn wide" style="margin-top:1rem" data-a="book">Send request</button><p class="small" style="margin-top:.5rem">${S.online?"No payment in this demo.":"You are offline. The request is kept on this phone and sent later."}</p></div></div>`}
+  <label class="f">${T("Waktu","Time")}</label><div id="bt">${SLOTS_T.map(h=>`<button class="chip pick ${(ui.time||"09:00")===h?"on":""}" data-a="btime" data-h="${h}">${h}</button>`).join("")}</div>
+  <div style="display:flex;align-items:center;gap:.6rem;margin-top:.3rem"><label class="small" for="bti">${T("atau waktu lain","or another time")}</label><input class="t" type="time" id="bti" step="900" style="width:auto" value="${ui.time&&!SLOTS_T.includes(ui.time)?ui.time:""}"></div>
+  <button class="btn wide" style="margin-top:1rem" data-a="book">${T("Kirim permintaan","Send request")}</button><p class="small" style="margin-top:.5rem">${S.online?T("Tidak ada pembayaran di demo ini.","No payment in this demo."):T("Anda offline. Permintaan disimpan di ponsel dan dikirim nanti.","You are offline. The request is kept on this phone and sent later.")}</p></div></div>`}
  o.innerHTML=h+t}
 let tt;function toast(t){ui.toast=t;renderOver();clearTimeout(tt);tt=setTimeout(()=>{ui.toast="";renderOver()},3600)}
 function go(s){if(s.startsWith("b-"))S.role="biz";else if(s!=="login"&&s!=="ai"&&s!=="land")S.role="guest";S.screen=s;ui.modal=null;refreshInsights(true);render();if(s!=="chat"&&s!=="b-thread")$("#view").scrollTop=0}
@@ -459,42 +505,153 @@ function bindSwipe(){const el=$("#top");if(!el)return;let x0=null,dx=0;
  el.onpointermove=e=>{if(x0===null)return;dx=e.clientX-x0;el.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;el.querySelector(".yes").style.opacity=Math.max(0,dx/80);el.querySelector(".no").style.opacity=Math.max(0,-dx/80)};
  el.onpointerup=el.onpointercancel=()=>{if(x0===null)return;x0=null;if(Math.abs(dx)>80){const v=dx>0;el.style.transition="transform .2s";el.style.transform=`translateX(${v?500:-500}px) rotate(${v?25:-25}deg)`;setTimeout(()=>swipe(v),170)}else{el.style.transition="transform .2s";el.style.transform="";el.querySelectorAll(".stampy").forEach(s=>s.style.opacity=0)}dx=0}}
 const st=()=>S.online?"sent":"pending";
-function setOnline(on){if(S.online===on)return;S.online=on;insightCache.clear();if(on){let n=0;
-  S.mine.forEach(m=>{if(m.status!=="sent"){m.status="sent";n++}});S.bookings.forEach(k=>{if(k.sync==="pending"){k.sync="sent";n++}});
-  for(const k in S.msgs)S.msgs[k].forEach(m=>{if(m.sync==="pending"){m.sync="sent";n++}});
-  for(const k in S.lsync)if(S.lsync[k].startsWith("Saved locally")){S.lsync[k]="Synced. Guests can find it now.";n++}
-  render();toast(n?"Back online. Sent "+n+" saved item"+(n>1?"s":"")+".":"Back online. Nothing was waiting.")}
- else{render();toast("Offline. Everything you do is saved on this phone and sent later.")}}
+function setOnline(on){S.online=on;insightCache.clear();if(!bootReady)return;render(false);
+ toast(on?"Back online. Checking for saved items to sync.":"Offline. Postcards are saved on this phone and sent later.");
+ if(on)return synchronize()}
 function push(b,tid,m){const k=b.id+":"+tid;(S.msgs[k]=S.msgs[k]||[]).push(Object.assign({sync:st(),mid:newId(),ts:Date.now(),own:S.gid},m.from==="g"?{who:S.guest.n||"Guest",f:S.guest.f}:{},m))}
 
 /* ---------- Sync with the backend. Only runs when config.js sets an API address; without it everything stays on this device. ---------- */
 const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h};
-const api=(path,method,body)=>fetch(API+path,{method:method||"GET",headers:body?{"Content-Type":"application/json"}:{},body:body?JSON.stringify(body):undefined}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()});
+async function api(path,method,body){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+ try{const r=await fetch(API+path,{method:method||"GET",headers:body?{"Content-Type":"application/json"}:{},body:body?JSON.stringify(body):undefined,signal:controller.signal});
+  if(!r.ok)throw Object.assign(new Error("HTTP "+r.status),{status:r.status});
+  return path==="/api/postcards"&&method==="POST"?null:await r.json();
+ }finally{clearTimeout(timer)}
+}
 const inflight={};
+const offlineDB=window.YOLO_OFFLINE_DB;
+let offlineReady=false,bootReady=false,creatingPostcard=null,flushPromise=null,pullPromise=null,syncPromise=null,resetting=false;
+const postcardOperation=c=>({id:"postcard.create:"+c.id,type:"postcard.create",entity_id:c.id,payload:{...c},status:"pending",attempts:0,last_error:null,created_at:c.created_at});
+const postcardView=c=>({...c,status:c.sync_status==="synced"?"sent":c.sync_status==="failed_permanent"?"failed_permanent":"pending"});
+function mergePostcards(local,remote){
+ const byId=new Map(local.map(c=>[c.id,c]));
+ for(const r of remote){const existing=byId.get(r.id);
+  if(!existing||existing.status==="sent")byId.set(r.id,{...existing,...r,sync_status:"synced",status:"sent",last_error:null});
+ }
+ return [...byId.values()];
+}
+function offlineError(e){console.error("Offline persistence:",e);toast("Could not save offline data. Your draft is kept here; check browser storage and try again.")}
+async function hydratePostcards(){
+ const db=await offlineDB.openOfflineDB();db.close();
+ const persisted=await offlineDB.getLocalPostcards(),ids=new Set(persisted.map(c=>c.id));
+ // Import the previous localStorage cache once, preserving its original retry ids.
+ for(const c of S.mine){if(ids.has(c.id))continue;
+  const pending=c.gid===S.gid&&!S.acked["postcards/"+c.id];
+  const record={...c,sync_status:pending?"pending":"synced",created_at:c.created_at||new Date(c.ts||Date.now()).toISOString()};
+  persisted.push(await offlineDB.saveLocalPostcard(record,pending?postcardOperation(record):null));ids.add(c.id);
+ }
+ S.mine=persisted.map(postcardView);offlineReady=true;save();
+}
+async function createPostcard(){
+ keep();const d=S.draft;if(!d.t.trim()){toast("Write a few words first. One sentence is enough.");return}
+ try{
+  if(!offlineReady)throw new Error("Offline storage is unavailable.");
+  const c={id:window.crypto.randomUUID(),gid:S.gid,ts:Date.now(),biz:S.biz,business_id:S.biz,n:S.guest.n||"A traveler",f:S.guest.f,l:"Original language",t:d.t.trim(),bg:d.bg,s:d.s.join(""),prompt:PROMPTS[d.p],voice:d.voice,photo:d.photo,loc:S.guest.f==="🇮🇩"?1:0,consent_for_analysis:false,status:"pending",sync_status:"pending",created_at:new Date().toISOString()};
+  await offlineDB.saveLocalPostcard(c,postcardOperation(c));
+  S.mine.push(c);S.draft=fresh().draft;go("thanks");
+ }catch(e){save();offlineError(e)}
+}
+async function setPostcardSync(id,sync_status,last_error=null){
+ const c=await offlineDB.getLocalPostcard(id);if(!c)throw new Error("Missing local postcard "+id);
+ const next=postcardView({...c,sync_status,last_error});
+ await offlineDB.saveLocalPostcard(next);
+ const index=S.mine.findIndex(m=>m.id===id);if(index<0)S.mine.push(next);else S.mine[index]=next;
+ save();const active=document.activeElement;
+ if(!active||!/INPUT|TEXTAREA|SELECT/.test(active.tagName||""))render(false);
+}
+async function flushPostcards(){
+ if(!offlineReady)return;
+ const operations=await offlineDB.getPendingOperations();
+ operations.sort((a,b)=>a.created_at.localeCompare(b.created_at));
+ for(const op of operations){
+  if(!S.online||navigator.onLine===false||resetting)break;
+  if(op.type!=="postcard.create")continue;
+  try{
+   await offlineDB.updateOperation({...op,status:"syncing"});
+   await setPostcardSync(op.entity_id,"syncing");
+   let failure=null;
+   try{await api("/api/postcards","POST",op.payload)}catch(e){failure=e}
+   if(failure){
+    const permanent=failure.status>=400&&failure.status<500;
+    await offlineDB.markOperationFailed(op.id,failure,permanent);
+    await setPostcardSync(op.entity_id,permanent?"failed_permanent":"pending",failure.message);
+    console.warn("Postcard sync",op.entity_id,failure.message);
+   }else{
+    // Persist acceptance before clearing retry state; interrupted sends safely reuse the id.
+    await setPostcardSync(op.entity_id,"synced");
+    await offlineDB.removeOperation(op.id);
+   }
+  }catch(e){offlineError(e)}
+ }
+}
 function outbox(){const o=[];
- S.mine.forEach(m=>{if(m.status==="sent"&&(m.gid===S.gid||m.modBy===S.gid))o.push(["postcards",m.id+(m.removed?":r":"")+(m.hidden?":h":m.modBy?":s":""),m.removed?Object.assign({},m,{t:"(removed)"}):m])});
- for(const k in S.msgs)S.msgs[k].forEach(m=>{if(m.mid&&m.from!=="sys"&&m.sync!=="pending"&&m.own===S.gid)o.push(["messages",m.mid,Object.assign({},m,{id:m.mid,thread:k})])});
- S.bookings.forEach(k=>{if(k.sync!=="pending")o.push(["bookings",k.id+":"+k.status,k])});
- for(const id in S.bstat)o.push(["bookingstatus",id+":"+S.bstat[id],{id,status:S.bstat[id],ts:S.bts[id]||0}]);
- for(const id in S.listings)if(!(S.lsync[id]||"").startsWith("Saved locally"))o.push(["listings",id+":"+hash(JSON.stringify(S.listings[id])),{id,L:S.listings[id],ts:S.lts[id]||0}]);
+ S.mine.forEach(m=>{if(m.status==="sent"&&(m.removed||m.modBy===S.gid)&& (m.gid===S.gid||m.modBy===S.gid))o.push(["postcards",m.id+(m.removed?":r":"")+(m.hidden?":h":m.modBy?":s":""),m.removed?Object.assign({},m,{t:"(removed)"}):m])});
+ for(const k in S.msgs)S.msgs[k].forEach(m=>{if(m.mid&&m.from!=="sys"&&m.own===S.gid)o.push(["messages",m.mid,Object.assign({},m,{id:m.mid,thread:k,sync:"sent"})])});
+ S.bookings.forEach(k=>{const key="bookings/"+k.id+":"+k.status;if(k.local_pending||(!k.server_record&&!S.acked[key]))o.push(["bookings",k.id+":"+k.status,{...k,sync:"sent"}])});
+ for(const id in S.listings)o.push(["listings",id+":"+hash(JSON.stringify(S.listings[id])),{id,L:S.listings[id],ts:S.lts[id]||0}]);
  S.custom.forEach(b=>o.push(["businesses",b.id+":"+hash(b.name+b.story),b]));
  return o}
-function flush(){if(!API||!S.online)return;outbox().forEach(([kind,key,rec])=>{const k=kind+"/"+key;if(S.acked[k]||inflight[k])return;inflight[k]=1;
- api("/api/"+kind,"POST",rec).then(()=>{S.acked[k]=1;delete inflight[k];save()}).catch(()=>{delete inflight[k]})})}
-function pull(){if(!API||!S.online)return;api("/api/sync").then(d=>{let ch=false;const vals=k=>Object.values(d[k]||{});
+function flush(){
+ if(flushPromise)return flushPromise;
+ if(!API||!S.online||navigator.onLine===false||resetting)return Promise.resolve();
+  const drain=async()=>{
+  if(resetting)return;
+  await flushPostcards();
+  let changed=false;
+  await Promise.all(outbox().map(async([kind,key,rec])=>{const k=kind+"/"+key;if(S.acked[k]||inflight[k]||resetting)return;inflight[k]=1;
+   try{await api("/api/"+kind,"POST",rec);S.acked[k]=1;
+    if(kind==="messages"){const m=(S.msgs[rec.thread]||[]).find(m=>m.mid===rec.mid);if(m)m.sync="sent"}
+    if(kind==="bookings"){const b=S.bookings.find(b=>b.id===rec.id);if(b){b.sync="sent";b.local_pending=false}}
+    if(kind==="listings")S.lsync[rec.id]="Synced. Guests can find it now.";
+    changed=true;save();
+  }catch(e){console.warn("Sync",kind,e.message);if(e.status>=400&&e.status<500){S.acked[k]=1;if(kind==="bookings"){const b=S.bookings.find(b=>b.id===rec.id);if(b){b.sync="failed_permanent";b.local_pending=false}}changed=true;save()}}finally{delete inflight[k]}
+  }));
+  const active=document.activeElement;
+  if(changed&&!ui.modal&&!(active&&/INPUT|TEXTAREA|SELECT/.test(active.tagName||"")))render(false);
+ };
+ // Web Locks also serialize drains across tabs where the browser supports them.
+ flushPromise=(navigator.locks?navigator.locks.request("yolowisata-postcards",drain):drain())
+  .catch(offlineError).finally(()=>{flushPromise=null});
+ return flushPromise;
+}
+function synchronize(){
+ if(syncPromise)return syncPromise;
+ syncPromise=(async()=>{await flush();await pull();await refreshInsights()})().finally(()=>{syncPromise=null});
+ return syncPromise;
+}
+function pull(){if(pullPromise)return pullPromise;if(!API||!S.online||navigator.onLine===false||resetting)return Promise.resolve();
+ pullPromise=api("/api/sync").then(async d=>{if(resetting)return;let ch=false;const vals=k=>Object.values(d[k]||{});
  vals("businesses").forEach(r=>{const c=S.custom.find(b=>b.id===r.id);if(BIZ0.some(b=>b.id===r.id))return;if(!c){S.custom.push(r);ch=true}else if(c.name!==r.name||c.story!==r.story){c.name=r.name;c.story=r.story;ch=true}});
- vals("postcards").forEach(r=>{const m=S.mine.find(m=>m.id===r.id);if(!m){S.mine.push(Object.assign({},r,{status:"sent"}));ch=true}else if((r.ts||0)>(m.ts||0)){Object.assign(m,r,{status:"sent"});ch=true}});
+ const merged=mergePostcards(S.mine,vals("postcards"));
+ for(const c of merged){const previous=S.mine.find(m=>m.id===c.id);
+  if(JSON.stringify(previous)===JSON.stringify(c))continue;
+  if(offlineReady)await offlineDB.saveLocalPostcard(c);
+  const index=S.mine.findIndex(m=>m.id===c.id);
+  if(index<0)S.mine.push(c);else if(S.mine[index]===previous)S.mine[index]=c;
+  ch=true;
+ }
  vals("messages").forEach(r=>{const a=S.msgs[r.thread]=S.msgs[r.thread]||[];if(!a.some(m=>m.mid===r.mid)){a.push(r);a.sort((x,y)=>(x.ts||0)-(y.ts||0));ch=true}});
- vals("bookings").forEach(r=>{const k=S.bookings.find(k=>k.id===r.id);if(!k){S.bookings.push(r);ch=true}else if((r.ts||0)>(k.ts||0)){Object.assign(k,r);ch=true}});
+ vals("bookings").forEach(r=>{const k=S.bookings.find(k=>k.id===r.id);if(!k){S.bookings.push({...r,sync:"sent",local_pending:false,server_record:true});ch=true}else{if(!k.server_record){k.server_record=true;ch=true}if((r.ts||0)>=(k.ts||0)){Object.assign(k,r,{sync:"sent",local_pending:false,server_record:true});ch=true}}});
  vals("bookingstatus").forEach(r=>{if((r.ts||0)>(S.bts[r.id]||0)){S.bstat[r.id]=r.status;S.bts[r.id]=r.ts;ch=true}});
  vals("listings").forEach(r=>{if((r.ts||0)>(S.lts[r.id]||0)){S.listings[r.id]=r.L;S.lts[r.id]=r.ts;ch=true}});
- if(ch){save();const a=document.activeElement;if(!ui.modal&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName||"")))render()}}).catch(()=>{})}
+ if(ch){save();const a=document.activeElement;if(!ui.modal&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName||"")))render(false)}}).catch(e=>console.warn("Pull",e.message)).finally(()=>{pullPromise=null});return pullPromise}
+async function resetDemo(){
+ if(resetting)return;resetting=true;
+ try{
+  await creatingPostcard;await flushPromise;await pullPromise;
+  if(offlineDB)await offlineDB.clearOfflineData();
+  S=fresh();S.online=navigator.onLine!==false;insightCache.clear();noorInsightId=null;
+  ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};
+  render(false);toast("Cleared. This device is back to a fresh start.");
+ }catch(e){offlineError(e)}finally{resetting=false}
+}
 const A={
  go:el=>go(el.dataset.s), swipe:el=>swipe(+el.dataset.v),
  redo:()=>{S.i=0;S.likes=[];S.dna=null;go("swipe")},
  net:()=>setOnline(!S.online),
  close:(el,e)=>{if(e.target===el||el.tagName==="BUTTON"){ui.modal=null;renderOver()}},
- reset:()=>{S=fresh();insightCache.clear();noorInsightId=null;ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};render();toast("Cleared. This device is back to a fresh start.")},
+ reset:resetDemo,
  asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go("explore");toast("Saved.")},
  regopen:()=>{ui.regOpen=!ui.regOpen},   /* remember it, so picking a sector does not fold the form shut */
  ltab:el=>{ui.ltab=el.dataset.t;if(el.dataset.reg)ui.regOpen=true;go("login")},
@@ -516,10 +673,9 @@ const A={
    api("/api/login","POST",{kind:"biz",phone,pin,bizId:id}).then(()=>{S.acct={kind:"biz",phone};save()}).catch(e=>toast(/401|409/.test(e.message)?"This number already has a business. Log in instead.":"Could not save the login. The business is kept on this device."))}
   S.myBiz=id;ui.transcript="";go("b-list");toast("Welcome, "+n+". Now tell guests what you offer.")},
  flip:el=>el.classList.toggle("on"),
- hear:el=>{const t=PHR[+el.dataset.i];try{const vs=speechSynthesis.getVoices(),v=vs.find(v=>v.lang.toLowerCase().startsWith("id")),u=new SpeechSynthesisUtterance(t[0]);u.lang="id-ID";u.rate=+el.dataset.r;if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u);
-   if(vs.length&&!v)toast("No Indonesian voice on this device, so it may sound off. Read it as: "+t[2])}catch(e){toast("This device cannot speak. Read it as: "+t[2])}},
+ hear:el=>{const [id,en]=PHR[+el.dataset.i],flip=el.closest?.(".phc")?.querySelector(".flip"),frontLang=flip?.dataset.frontLang||(S.blang==="en"?"id":"en"),flipped=!!flip?.classList.contains("on"),language=flipped?(frontLang==="id"?"en":"id"):frontLang;return speakText(language==="id"?id:en,language,Number(el.dataset.r)||1)},
  learn:el=>{const i=el.dataset.i;S.learned[i]=!S.learned[i];render();if(PHR.every((_,j)=>S.learned[j]))toast("⭐ All "+PHR.length+" phrases. Go and try them on someone!")},
- lang:()=>{S.blang=S.blang==="en"?"id":"en";render()},
+ lang:el=>{const next=el&&el.dataset.lang;if(next!=="en"&&next!=="id")return;S.blang=next;render()},
  loc:()=>{const done=m=>{S.here=GATE;render();toast(m)};
   try{if(!navigator.geolocation)return done("This browser cannot share location. Starting from the village gate.");toast("Finding you…");
    navigator.geolocation.getCurrentPosition(p=>done("Found you, within about "+Math.round(p.coords.accuracy)+" m. Ondera is a demo village, so your pin starts at the village gate."),()=>done("Location is blocked here. Starting from the village gate instead."),{timeout:6000})}
@@ -538,14 +694,12 @@ const A={
  bookopen:()=>{ui.modal={t:"book"};renderOver()},
  book:()=>{const d=$("#bd").value,b=biz(S.biz);if(!d){toast("Pick a day first.");return}
   const nice=new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,off:offDay(b,d)?1:0,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
- bdec:el=>{const id=el.dataset.id,k=S.bookings.find(k=>k.id===id);if(k){k.status=el.dataset.v;k.ts=Date.now()}else{S.bstat[id]=el.dataset.v;S.bts[id]=Date.now()}render();toast(T((el.dataset.v==="confirmed"?"Diterima.":"Ditolak.")+(S.online?" Tamu sudah bisa melihatnya.":" Tersimpan di ponsel. Dikirim saat ada sinyal."),(el.dataset.v==="confirmed"?"Confirmed.":"Declined.")+(S.online?" The guest can see it now.":" Saved locally. Will sync when connection returns.")))},
+  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,off:offDay(b,d)?1:0,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st(),local_pending:true});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
+ bdec:el=>{const id=el.dataset.id,k=S.bookings.find(k=>k.id===id);if(k){k.status=el.dataset.v;k.ts=Date.now();k.local_pending=true;k.sync="pending"}else{S.bstat[id]=el.dataset.v;S.bts[id]=Date.now()}render();toast(T((el.dataset.v==="confirmed"?"Diterima.":"Ditolak.")+(S.online?(k?" Tamu sudah bisa melihatnya.":" Demo only; not sent to the server."):" Tersimpan di ponsel."),(el.dataset.v==="confirmed"?"Confirmed.":"Declined.")+(S.online?(k?" The guest can see it now.":" Demo only; not sent to the server."):" Saved locally.")))},
  prompt:el=>{S.draft.p=+el.dataset.i;keep();render()}, bg:el=>{S.draft.bg=el.dataset.b;keep();render()},
  stk:el=>{const s=el.dataset.s,a=S.draft.s;a.includes(s)?a.splice(a.indexOf(s),1):a.length<4&&a.push(s);keep();render()},
  voice:()=>{S.draft.voice=!S.draft.voice;keep();render();if(S.draft.voice)toast("Voice note attached (simulated in this prototype).")},
- send:()=>{keep();const d=S.draft;if(!d.t.trim()){toast("Write a few words first. One sentence is enough.");return}
-  S.mine.push({id:"m"+newId(),gid:S.gid,ts:Date.now(),biz:S.biz,n:S.guest.n||"A traveler",f:S.guest.f,l:"Original language",t:d.t.trim(),bg:d.bg,s:d.s.join(""),prompt:PROMPTS[d.p],voice:d.voice,photo:d.photo,loc:S.guest.f==="🇮🇩"?1:0,status:st()});
-  S.draft=fresh().draft;go("thanks")},
+ send:()=>{if(resetting)return;if(!creatingPostcard)creatingPostcard=createPostcard().finally(()=>{creatingPostcard=null});return creatingPostcard},
  open:el=>{ui.modal={t:"pc",id:el.dataset.id};renderOver()},
  pcdel:el=>{const c=S.mine.find(m=>m.id===el.dataset.id&&m.gid===S.gid);if(!c)return;if(!ui.modal.sure){ui.modal.sure=1;renderOver();return}
   c.removed=true;c.t="";c.photo="";c.ts=Date.now();ui.modal=null;render();toast("Your postcard was removed.")},
@@ -569,7 +723,7 @@ const A={
   ui.transcript="";ui.edit=false;render();toast(T(S.online?"Terkirim. Tamu sudah bisa menemukannya.":"Tersimpan di ponsel. Dikirim saat ada sinyal.",S.lsync[b.id]))},
  idea:el=>{S.idea[B().id]=el.dataset.v;render()},
  evid:el=>{ui.modal={t:"evid",k:el.dataset.k,group:el.dataset.group||"asks"};renderOver()},
- say:el=>{const t=el.dataset.t;try{const u=new SpeechSynthesisUtterance(t);u.lang="id-ID";speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}toast("🔊 “"+t+"”")}
+ say:el=>{const t=el.dataset.t;toast("🔊 “"+t+"”");return speakText(t,el.dataset.lang||"id",Number(el.dataset.r)||1)}
 };
 function keep(){const m=$("#msg");if(m)S.draft.t=m.value}
 function grab(){const t=$("#trn");if(t)ui.transcript=t.value;ui.over=ui.over||{};document.querySelectorAll("#flds input").forEach(i=>{if(i.value.trim())ui.over[i.dataset.k]=i.value.trim();else delete ui.over[i.dataset.k]})}
@@ -578,7 +732,7 @@ const DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturda
 /* true when the listing names its open days and the chosen date is not one of them; unknown opening days never warn */
 function offDay(b,d){const av=(Lst(b).availability||"");if(!d||/every day/i.test(av))return false;const open=DAYN.filter(n=>av.includes(n));if(!open.length)return false;return !open.includes(DAYN[new Date(d+"T12:00").getDay()])}
 function closedNote(b,d){if(!offDay(b,d))return"";const day=DAYN[new Date(d+"T12:00").getDay()];
- return `<div role="status" style="background:#FFE4D9;border:1.5px solid var(--orange);border-radius:16px;padding:.7rem .8rem;margin-top:.8rem"><b>⚠️ ${esc(b.host)} is usually closed on ${day}s.</b><p class="small" style="color:var(--ink);margin-top:.2rem">Open: ${esc(Lst(b).availability)}. You can still send the request, but it may be declined. It is best to ask first.</p><button class="btn alt" style="margin-top:.5rem;min-height:40px;padding:.4rem .9rem" data-a="go" data-s="chat">💬 Message ${esc(b.host)} first</button></div>`}
+ return `<div role="status" style="background:#FFE4D9;border:1.5px solid var(--orange);border-radius:16px;padding:.7rem .8rem;margin-top:.8rem"><b>⚠️ ${esc(b.host)} ${T("biasanya tutup pada hari "+day+".","is usually closed on "+day+".")}</b><p class="small" style="color:var(--ink);margin-top:.2rem">${T("Buka: ","Open: ")}${esc(Lst(b).availability)}. ${T("Anda tetap dapat mengirim permintaan, tetapi mungkin ditolak. Sebaiknya tanyakan dahulu.","You can still send the request, but it may be declined. It is best to ask first.")}</p><button class="btn alt" style="margin-top:.5rem;min-height:40px;padding:.4rem .9rem" data-a="go" data-s="chat">💬 ${T("Pesan ","Message ")}${esc(b.host)} ${T("terlebih dahulu","first")}</button></div>`}
 const SLOTS_T=["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00"];
 document.addEventListener("input",e=>{const id=e.target.id;
  if(id==="bd"){const w=$("#bwarn");if(w)w.innerHTML=closedNote(biz(S.biz),e.target.value)}
@@ -590,15 +744,19 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ui.modal){ui.modal=
  if(e.key==="Enter"&&e.target.id==="cin"){S.screen==="chat"?A.gsend():A.bsend()}
  if(S.screen==="swipe"&&!ui.modal){if(e.key==="ArrowRight")swipe(1);if(e.key==="ArrowLeft")swipe(0)}});
 window.addEventListener("offline",()=>setOnline(false));window.addEventListener("online",()=>setOnline(true));
-async function boot(){let c=window.YOLO_CONTENT;
- if(!c&&API){try{c=await api("/api/content")}catch(e){}}
+async function boot(){let c=window.YOLO_CONTENT,storageError=null;
+ const hydration=offlineDB?hydratePostcards().catch(e=>{storageError=e}):null;
+ // Cached shell content and IndexedDB are enough to render before backend requests.
+ if(!c&&window.caches){try{const cached=await window.caches.match("/data/content.json");if(cached)c=await cached.json()}catch(e){}}
  if(!c){try{c=await (await fetch("/data/content.json")).json()}catch(e){}}
+ if(!c&&API&&navigator.onLine!==false){try{c=await api("/api/content")}catch(e){}}
  if(!c){$("#view").innerHTML='<div class="pad"><h1 style="font-size:1.5rem">YoloWisata could not load its content</h1><p class="sub">Open it once with a connection. After that it works offline.</p></div>';return}
  applyContent(c);
- if(navigator.onLine===false)S.online=false;
- render();
+ if(hydration)await hydration;
+ S.online=navigator.onLine!==false;
+ bootReady=true;render(false);if(storageError)offlineError(storageError);
  if(API){
-   pull();
-   setInterval(()=>{pull();flush();refreshInsights()},8000)
+   synchronize();
+   setInterval(()=>{synchronize();refreshInsights()},8000)
  }}
 boot();

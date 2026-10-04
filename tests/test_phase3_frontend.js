@@ -244,7 +244,7 @@ test('fallback stays usable while retrying a failed request, then yields to back
 test('service worker keeps API requests on the network and serves the cached shell offline',async()=>{
  const events={},cached={offline:true};
  const context=vm.createContext({
-  self:{addEventListener:(name,fn)=>events[name]=fn},URL,
+  self:{addEventListener:(name,fn)=>events[name]=fn},URL,location:{origin:'https://app.test'},
   caches:{match:async key=>{assert.equal(key,'/index.html');return cached}},
   fetch:async()=>{throw new Error('offline')}
  });

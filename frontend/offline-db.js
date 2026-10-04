@@ -39,7 +39,18 @@
 
   function getStore(db, storeName, mode = "readonly") {
     const tx = db.transaction(storeName, mode);
+    tx.addEventListener("complete", () => db.close());
+    tx.addEventListener("abort", () => db.close());
     return tx.objectStore(storeName);
+  }
+
+  // Request success is not durable success: a transaction can still abort.
+  function committed(tx, value) {
+    return new Promise((resolve, reject) => {
+      tx.addEventListener("complete", () => resolve(value));
+      tx.addEventListener("abort", () => reject(tx.error || new Error("Offline transaction aborted.")));
+      tx.addEventListener("error", () => reject(tx.error || new Error("Offline transaction failed.")));
+    });
   }
 
   function readAll(store) {
@@ -59,34 +70,38 @@
   }
 
   function writeOne(store, value) {
-    return new Promise((resolve, reject) => {
-      const request = store.put(value);
-      request.onsuccess = () => resolve(value);
-      request.onerror = () => reject(request.error || new Error("Failed to write item."));
-    });
+    store.put(value);
+    return committed(store.transaction, value);
   }
 
   function deleteOne(store, key) {
-    return new Promise((resolve, reject) => {
-      const request = store.delete(key);
-      request.onsuccess = () => resolve(true);
-      request.onerror = () => reject(request.error || new Error("Failed to delete item."));
-    });
+    store.delete(key);
+    return committed(store.transaction, true);
   }
 
-  async function saveLocalPostcard(postcard) {
+  async function saveLocalPostcard(postcard, operation = null) {
     if (!postcard || !postcard.id) {
       throw new Error("A postcard requires an id.");
     }
 
+    if (operation && (!operation.id || operation.type !== "postcard.create" ||
+        operation.entity_id !== postcard.id || operation.payload?.id !== postcard.id)) {
+      throw new Error("Postcard operation must use the same postcard id.");
+    }
     const db = await openOfflineDB();
-    const store = getStore(db, "postcards", "readwrite");
     const record = {
       ...postcard,
       sync_status: postcard.sync_status || "pending",
       created_at: postcard.created_at || new Date().toISOString()
     };
-    return writeOne(store, record);
+    if (!operation) return writeOne(getStore(db, "postcards", "readwrite"), record);
+    // Creation must never leave a saved postcard without its durable retry record.
+    const tx = db.transaction(["postcards", "outbox"], "readwrite");
+    tx.addEventListener("complete", () => db.close());
+    tx.addEventListener("abort", () => db.close());
+    tx.objectStore("postcards").put(record);
+    tx.objectStore("outbox").put(operationRecord(operation));
+    return committed(tx, record);
   }
 
   async function getLocalPostcards() {
@@ -108,15 +123,17 @@
 
     const db = await openOfflineDB();
     const store = getStore(db, "outbox", "readwrite");
-    const record = {
+    return writeOne(store, operationRecord(operation));
+  }
+
+  function operationRecord(operation) {
+    return {
       ...operation,
       status: operation.status || "pending",
       attempts: Number(operation.attempts || 0),
       created_at: operation.created_at || new Date().toISOString(),
       last_error: operation.last_error || null
     };
-
-    return writeOne(store, record);
   }
 
   async function getPendingOperations() {
@@ -179,17 +196,12 @@
 
   async function clearOfflineData() {
     const db = await openOfflineDB();
-
-    for (const storeName of ["postcards", "outbox"]) {
-      const store = getStore(db, storeName, "readwrite");
-      await new Promise((resolve, reject) => {
-        const request = store.clear();
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error || new Error("Failed to clear store: " + storeName));
-      });
-    }
-
-    return true;
+    const tx = db.transaction(["postcards", "outbox"], "readwrite");
+    tx.addEventListener("complete", () => db.close());
+    tx.addEventListener("abort", () => db.close());
+    tx.objectStore("postcards").clear();
+    tx.objectStore("outbox").clear();
+    return committed(tx, true);
   }
 
   const api = {

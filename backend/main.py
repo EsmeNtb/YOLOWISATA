@@ -22,9 +22,10 @@ import secrets
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 from uuid import NAMESPACE_URL, UUID, uuid5
 
-from pydantic import BaseModel, Field, StrictBool, ValidationError
+from pydantic import BaseModel, Field, StrictBool, StrictFloat, ValidationError
 
 from fastapi import (
     FastAPI,
@@ -35,11 +36,11 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from backend.database import supabase
-from backend import phase4
+from backend import phase4, voice as voice_module
 
 
 try:
@@ -869,6 +870,26 @@ async def create_booking(req: Request):
 @app.post("/api/bookingstatus")
 async def update_booking_status(req: Request):
     return phase4_write("bookingstatus", await phase4_record(req))
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(max_length=1000)
+    language: Literal["id", "es", "en"]
+    speed: StrictFloat = Field(default=1.0, ge=0.7, le=1.2)
+
+
+@app.post("/api/tts")
+async def text_to_speech(req: TTSRequest):
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(400, "Text must not be blank.")
+    try:
+        audio = await voice_module.synthesize_speech(text, req.language, req.speed)
+    except voice_module.TTSNotConfigured:
+        raise HTTPException(503, "Speech synthesis is not configured.") from None
+    except Exception:
+        raise HTTPException(502, "Speech synthesis is temporarily unavailable.") from None
+    return Response(content=audio, media_type="audio/mpeg")
 
 
 # ============================================================

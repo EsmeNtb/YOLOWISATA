@@ -46,6 +46,10 @@ p{margin:0}
 .logo{font-weight:800;font-size:1.05rem;margin-right:auto;display:flex;align-items:center;gap:.35rem;letter-spacing:-.02em}
 .logo i{width:18px;height:18px;border-radius:50%;background:var(--yellow);box-shadow:inset -5px -4px 0 var(--orange)}
 .pill{font-size:.76rem;font-weight:700;padding:.3rem .6rem;border-radius:99px;background:var(--white);border:1.5px solid var(--line);white-space:nowrap}
+.lang-switch{display:flex;flex:0 0 auto;align-items:center;gap:2px;padding:2px;border:1.5px solid var(--line);border-radius:99px;background:var(--white);box-shadow:0 2px 0 rgba(23,23,23,.06)}
+.lang-choice{display:inline-flex;align-items:center;justify-content:center;width:27px;height:26px;padding:0;border:1.5px solid transparent;border-radius:99px;background:transparent;font-size:.68rem;font-weight:700;line-height:1;transition:background .12s,border-color .12s}
+.lang-choice:hover{background:var(--cream);border-color:var(--line)}
+.lang-choice[aria-pressed="true"],.lang-choice.on{background:var(--yellow);border-color:var(--yellow);font-weight:800}
 .net{background:var(--green);border-color:var(--green)}.net.off{background:var(--orange);border-color:var(--orange)}
 #view{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
 .pad{padding:1.2rem 1.1rem 2rem}

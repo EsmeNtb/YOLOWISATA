@@ -46,10 +46,8 @@ test('actual guest and owner actions keep the same thread and original/translate
  assert.equal(owner.t,'Bisa');assert.equal(owner.en,'Yes');
 });
 
-test('static demo booking decisions still produce the legacy bookingstatus payload',()=>{
+test('static demo booking decisions stay local instead of posting an invalid backend id',()=>{
  const a=app();a.run('S.role="biz";A.bdec({dataset:{id:"noor-b1",v:"confirmed"}})');
- const [kind,key,payload]=a.outbox()[0];
- assert.equal(kind,'bookingstatus');assert.equal(key,'noor-b1:confirmed');
- assert.equal(payload.id,'noor-b1');assert.equal(payload.status,'confirmed');
- assert.equal(typeof payload.ts,'number');
+ assert.equal(a.run('S.bstat["noor-b1"]'),'confirmed');
+ assert.equal(a.outbox().some(([kind])=>kind==='bookingstatus'||kind==='bookings'),false);
 });

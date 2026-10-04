@@ -1,5 +1,10 @@
 # Phase 5 offline persistence and synchronization preparation
 
+**Implementation status:** Phase 5 is now integrated. Sections 1–8 below preserve
+the original preparation brief; section 9 records the implemented behavior,
+validation scope, and browser acceptance procedure. Where the brief suggests
+pulling before flushing, the implementation flushes first, then reconciles.
+
 This document is the architecture brief for the next implementation step. It intentionally does not change production behavior. It only describes the minimal, safe offline persistence layer and the exact integration points that later code will use.
 
 ## 1. Phase 5 goal
@@ -555,3 +560,146 @@ The future Phase 5 implementation should be very small:
 - service worker stays GET-only so POST requests reach the real network.
 
 This keeps the app usable offline while still respecting the current architecture and the existing product rules.
+
+---
+
+## 9. Implemented integration and acceptance
+
+### Runtime behavior
+
+- `index.html` loads `offline-db.js` before `app.js`. No dependencies were added.
+- Creation generates one `crypto.randomUUID()`. The local id, outbox `entity_id`,
+  and payload id are identical. The legacy-compatible payload retains `biz`, `t`,
+  `n`, `s`, `photo`, and the original timestamp; consent is not inferred.
+- `saveLocalPostcard(postcard, operation)` adds an optional, backward-compatible
+  argument to the prepared helper. Creation stores both records in one IndexedDB
+  transaction, preventing a crash between saving content and enqueueing it.
+  Writes/deletes now resolve on transaction completion, not request success.
+  Connections close on transaction completion/abort. Reset clears both stores
+  in one transaction. The database schema/version remains unchanged.
+- After commit, the app adds the postcard to `S.mine` and shows the thank-you
+  screen without waiting for network access. Storage failure retains the draft
+  and shows an error; connectivity failure does not make creation fail.
+- Boot starts IndexedDB hydration immediately, uses cached shell content where
+  available, and renders local postcards before synchronization. Previous
+  localStorage postcards are imported once. Existing historical ids are retained
+  to preserve their backend idempotency; newly created postcards use UUIDs.
+- `flush()` reads only the persistent postcard queue. The legacy `outbox()` no
+  longer serializes postcards; messages/bookings/listings keep their existing
+  API paths and are eligible after reconnect without being falsely marked sent.
+- `pending` becomes `syncing` before POST. A 2xx marks the local postcard `synced`
+  (legacy UI `status: sent`) and removes the operation. Network errors, timeouts,
+  and 5xx return it to `pending`; 4xx becomes `failed_permanent`. Each failed
+  attempt increments `attempts` and saves `last_error`. Unsupported operation
+  types are untouched. Interrupted `syncing` operations are retryable on reload.
+- A shared flush promise prevents competing drains in a tab; native Web Locks
+  serialize drains between supporting tabs. Requests time out after 10 seconds.
+  Retries always use the original saved payload. Backend Phase 2 idempotent
+  upsert remains unchanged and produces one row for repeated UUID submissions.
+- Online events trigger flush, then `/api/sync` reconciliation. Offline events
+  update connectivity without modifying content or acknowledging operations.
+  The existing eight-second polling retries while the application is open.
+- Reconciliation uses postcard id. Pending and permanently failed local content
+  wins over remote copies. Synced copies may merge server fields; absent remote
+  records never delete local content. Pulled postcards are also saved locally.
+- Experience DNA preserves Phase 3 backend insights and deterministic local
+  fallback. Local pending postcards retain the existing “waiting to sync” count;
+  the fallback continues analyzing accepted postcards and existing demo content.
+  It is not a Small AI model.
+- Reset waits for active creation/flush/pull, clears both IndexedDB stores, then
+  resets in-memory/localStorage state. It does not delete backend records. A later
+  online pull can legitimately restore accepted server postcards as cached data.
+- The service worker cache is `yolowisata-v14`, with `/offline-db.js` added to the
+  shell. Its GET-only behavior and API bypass remain unchanged. No worker outbox.
+
+### Automated validation
+
+Run from the repository root:
+
+```text
+python -m unittest discover -s tests -v
+node --test tests/test_phase3_frontend.js tests/test_phase4_frontend.js tests/test_phase5_frontend.js tests/test_phase5_offline_db.js
+node --check frontend/app.js
+node --check frontend/offline-db.js
+node --check frontend/sw.js
+git diff --check
+git status
+git diff --stat
+```
+
+The Phase 5 app tests execute real UI actions in the existing Node VM/DOM-stub
+style, with a persistent helper-contract double across simulated reloads. They
+cover creation, payload ordering/UUIDs, reconnect, all failure classes, interrupted
+sends, concurrent flushes, no duplicate reconciliation, storage failures, reset,
+fallback, and shell caching. The helper tests execute the real helper with
+controlled transaction events to verify commit/abort boundaries and atomic store
+selection. These are not a substitute for browser IndexedDB acceptance.
+
+The Python test sends the same explicit UUID through the real Phase 2 route
+three times using the existing fake Supabase client and verifies one row plus
+one `/api/sync` mirror entry. No tests write live Supabase records.
+
+Baseline issue found before implementation: the Phase 3 worker test failed with
+`location is not defined`. Its VM fixture now supplies the browser location.
+Windows sandbox restrictions also blocked Node child processes and Python
+temporary-directory access; run those suites with the permitted test execution
+permissions. The existing Starlette/httpx deprecation warning is unchanged.
+
+### Manual browser acceptance (not executed by the Node/Python suites)
+
+Use HTTPS or localhost, an IndexedDB-enabled browser, and a configured backend
+with the seeded Noor business and exactly one active experience. FastAPI supplies
+same-origin API configuration; static-only `config.js` with `api: ""` intentionally
+does not synchronize. Use one app tab for this reset test.
+
+A. Start online.
+B. Open YoloWisata.
+C. Confirm the app loads. Wait for `navigator.serviceWorker.ready` and confirm
+   Cache Storage contains the v14 shell, including `offline-db.js` and content.
+D. Enable airplane mode / disable network (not just the app's demo toggle).
+E. Create a postcard for Noor with a unique message.
+F. Confirm the postcard appears immediately on the thank-you screen/Story view.
+G. Confirm it shows “Saved on this phone. Waiting to sync.” In DevTools →
+   Application → IndexedDB → `yolowisata-offline`, inspect `postcards` and `outbox`.
+   Record the UUID and confirm local id = entity_id = payload.id, status pending.
+H. Reload the page while still offline.
+I. Confirm the same postcard and operation are still present. Open Story if
+   necessary; confirm the message and UUID have not changed.
+J. Re-enable network.
+K. Confirm automatic sync starts: Network shows `POST /api/postcards` with that
+   exact UUID. If the browser does not emit an online event, allow the next poll.
+L. Confirm the postcard becomes “Synced”, its IndexedDB `sync_status` is `synced`,
+   and its operation is removed from `outbox`.
+M. Reload again.
+N. Confirm only ONE postcard with this UUID exists in the UI and local store.
+O. Verify backend/Supabase contains exactly one row for the UUID, for example
+   with a read-only query: `select count(*) from postcards where id = '<UUID>';`.
+P. Trigger Reset demo. To observe clearing without a subsequent server pull,
+   disable network after step O and before resetting. This does not delete the
+   server row verified in O.
+Q. Confirm both IndexedDB stores are empty, local postcard state is empty, and
+   an offline reload does not resurrect it. Reconnection may cache server rows
+   again; this is reconciliation, not a failed reset or duplicate server write.
+
+Also test backend unavailability with browser connectivity still online: the
+card must stay pending. Simulate a 503 and then recovery; compare the UUID on
+each attempt. Simulate a 400; verify `failed_permanent`, retained content, and no
+retry after polling/reload. Switch to Experience DNA while offline or while its
+backend request fails and confirm the on-device fallback remains available.
+
+### Limits
+
+- Actual airplane mode, browser storage durability, and a live Supabase row count
+  require the manual test above; they are not claimed by the simulated tests.
+- First offline use requires a previously cached shell. Browser storage can be
+  unavailable, full, or cleared by the user/browser; failures are visible and
+  no network write starts before local persistence succeeds.
+- Permanent failures retain content and diagnostics but this phase adds no
+  editing/requeue UI. Businesses without a valid existing backend mapping or
+  active experience remain local with a permanent synchronization failure.
+- Automatic retry requires the app open. There is no service-worker background
+  synchronization. Without Web Locks, serialization is per tab; server UUID
+  idempotency still protects retries from creating duplicate rows.
+- Messages/bookings remain on their existing localStorage synchronization path.
+  Multi-tab reset coordination and account migration of already queued postcard
+  payloads are outside this postcard integration.

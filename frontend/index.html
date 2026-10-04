@@ -20,7 +20,10 @@
       <button class="logo" data-a="go" data-s="land" aria-label="YoloWisata home"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 14c27 0 46 19 46 45 0 29-21 49-46 49S14 88 14 59C14 33 33 14 60 14z" fill="#FF7043"/><circle cx="38" cy="70" r="7" fill="#FFC928" opacity=".9"/><circle cx="82" cy="70" r="7" fill="#FFC928" opacity=".9"/><path d="M40 58q6 7 12 0M68 58q6 7 12 0M50 74q10 10 20 0" fill="none" stroke="#171717" stroke-width="4" stroke-linecap="round"/></svg>YoloWisata</button>
       <button class="pill net" id="net" data-a="net" aria-live="polite"></button>
       <button class="pill" id="acct" data-a="go" data-s="login"></button>
-      <button class="pill" id="lang" data-a="lang" aria-label="Switch language"></button>
+      <div class="lang-switch" id="lang" role="group" aria-label="Interface language">
+        <button id="lang-en" class="lang-choice" type="button" data-a="lang" data-lang="en" aria-pressed="false">EN</button>
+        <button id="lang-id" class="lang-choice" type="button" data-a="lang" data-lang="id" aria-pressed="true">ID</button>
+      </div>
     </header>
     <div id="view"></div>
     <div id="nav"></div>
@@ -29,6 +32,7 @@
 </div>
 <noscript>YoloWisata needs JavaScript turned on.</noscript>
 <script src="./config.js"></script>
+<script src="./offline-db.js"></script>
 <script src="./app.js"></script>
 <script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));</script>
 </body>
