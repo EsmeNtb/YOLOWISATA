@@ -1,0 +1,683 @@
+You are working inside the YoloWisata repository on the current clean `main` branch.
+
+This is PHASE 6: ACCESSIBLE AI / VOICE LISTING.
+
+The previous milestone is complete and committed.
+
+Current verified state includes:
+- Supabase persistence
+- postcards/messages/bookings
+- real IndexedDB offline postcard persistence
+- persistent outbox + reconnect sync
+- deterministic Experience DNA fallback
+- multilingual evaluation datasets
+- deterministic AI baseline
+- ElevenLabs online TTS
+- Web Speech offline/failure fallback
+- EN / ES / ID speech routing
+- EN / ID interface localization
+
+The repository already contains:
+- docs/VOICE_AI.md
+- data/evaluation/voice_listing.json
+- scripts/evaluate_ai.py
+- backend/ai.py
+- backend/voice.py
+- backend/main.py
+
+This phase must implement REAL accessible AI value.
+
+Do NOT create another planning-only document.
+Implement the feature.
+
+Do NOT commit.
+Do NOT push.
+
+============================================================
+PRIMARY USER STORY
+============================================================
+
+A small tourism business owner should be able to describe their offering naturally by voice.
+
+Example:
+
+"My family runs a coffee farm. Visitors can roast coffee with us.
+The tour takes about ninety minutes and costs one hundred fifty
+thousand rupiah."
+
+YoloWisata should:
+
+audio
+→ speech-to-text
+→ visible/editable transcript
+→ Small AI structured extraction
+→ structured listing proposal
+→ missing / uncertain fields
+→ human reviews and edits
+→ human explicitly confirms
+→ only then save
+
+Core principle:
+
+AI PROPOSES.
+THE HUMAN DECIDES.
+
+Never auto-publish AI-generated information.
+
+============================================================
+CRITICAL HONESTY / OFFLINE BOUNDARY
+============================================================
+
+Do NOT claim that Voice AI is guaranteed to run offline on the phone.
+
+The verified core offline application remains:
+- cached PWA
+- IndexedDB
+- postcard outbox
+- deterministic Experience DNA fallback
+
+For this phase:
+
+Browser audio capture:
+→ may work without network
+
+Local STT / Small AI:
+→ may run locally on the Python host / edge device if configured
+→ device feasibility must be MEASURED
+→ do not claim on-phone offline capability unless actually demonstrated
+
+ElevenLabs:
+→ remains online-only optional TTS
+
+If Voice AI cannot run because the processing backend/model is unavailable:
+→ app remains usable
+→ user must be able to type/edit information manually
+→ no core app failure
+
+============================================================
+STEP 1 — INSPECT BEFORE EDITING
+============================================================
+
+Inspect:
+
+- docs/VOICE_AI.md
+- backend/main.py
+- backend/ai.py
+- backend/voice.py
+- backend/requirements.txt
+- frontend/app.js
+- frontend/index.html
+- frontend/app.css
+- frontend/sw.js
+- data/evaluation/voice_listing.json
+- data/processed/evaluation_results.json
+- scripts/evaluate_ai.py
+- existing tests
+
+Also inspect the current legacy `/api/voice` behavior.
+
+Do not break an existing route blindly.
+
+If `/api/voice` is currently simulated/legacy, either upgrade it while preserving
+compatibility or introduce the smallest explicit endpoint that avoids breaking
+existing clients.
+
+============================================================
+STEP 2 — STRUCTURED LISTING SCHEMA
+============================================================
+
+Use the exact evaluation schema already represented by:
+
+data/evaluation/voice_listing.json
+
+Do not invent a second incompatible schema.
+
+The structured proposal is expected to include fields equivalent to:
+
+- business_name
+- experience_title
+- description
+- price
+- currency
+- duration_minutes
+- activities
+- availability
+
+Inspect the dataset and current backend naming before finalizing the contract.
+
+Output must ALSO expose:
+
+- missing_fields
+- uncertain_fields
+
+Missing information must remain missing.
+
+Examples:
+
+User never says a price
+→ price = null
+→ currency = null unless independently stated
+→ "price" appears in missing_fields
+
+User says:
+"around an hour, maybe a little longer"
+
+→ duration may be extracted conservatively if appropriate
+→ duration should be identified as uncertain when confidence is not sufficient
+
+DO NOT invent:
+- prices
+- currencies
+- business names
+- schedules
+- capacities
+- activities
+- descriptions
+- locations
+
+============================================================
+STEP 3 — LOCAL MULTILINGUAL STT
+============================================================
+
+Implement real speech-to-text for:
+
+- English (`en`)
+- Spanish (`es`)
+- Bahasa Indonesia (`id`)
+
+Preferred approach from the existing Voice AI architecture:
+
+faster-whisper
+
+Use an appropriately small multilingual Whisper model such as base/small,
+after checking the existing documentation and runtime constraints.
+
+Prefer CPU-friendly inference.
+
+Do not introduce a cloud STT dependency.
+
+Do not use OpenAI API for STT.
+
+Keep model selection configurable instead of hardcoding heavyweight assumptions.
+
+The STT layer should return at minimum:
+
+{
+  "transcript": "...",
+  "language": "id|es|en",
+  "model": "...",
+  "processing_ms": ...
+}
+
+Do not report accuracy/WER unless actually measured.
+
+============================================================
+STEP 4 — SMALL AI STRUCTURED EXTRACTOR
+============================================================
+
+Implement a REAL Small AI extractor.
+
+Primary target:
+quantized multilingual instruct model around 1.5B–3B parameters.
+
+Do NOT make a 7B/8B model the default.
+
+Prefer a Qwen-family multilingual instruct model in the target size range,
+using a quantized GGUF / llama.cpp-compatible runtime if practical.
+
+Before documenting a specific model as the final choice:
+- verify exact model identity
+- verify license
+- verify parameter count
+- measure actual model file size
+- measure runtime characteristics
+
+Do not claim device feasibility from model size alone.
+
+If a model must be downloaded:
+- do NOT commit model weights
+- keep model files outside Git
+- update .gitignore where necessary
+- do not download a model larger than the agreed Small AI target without stopping/reporting
+
+Do not use a hosted/cloud LLM.
+
+============================================================
+STEP 5 — EXTRACTION CONTRACT
+============================================================
+
+Build a deterministic wrapper around model inference.
+
+The Small AI should receive:
+
+- transcript
+- source language
+- explicit listing schema
+- strict non-hallucination instructions
+
+Require structured JSON output.
+
+Conceptual output:
+
+{
+  "transcript": "...",
+  "language": "id",
+  "extractor": {
+    "model": "...",
+    "quantization": "...",
+    "model_size_bytes": ...
+  },
+  "listing": {
+    "business_name": null,
+    "experience_title": "...",
+    "description": "...",
+    "price": 150000,
+    "currency": "IDR",
+    "duration_minutes": 90,
+    "activities": ["..."],
+    "availability": null
+  },
+  "missing_fields": [
+    "business_name",
+    "availability"
+  ],
+  "uncertain_fields": []
+}
+
+Exact field representation must follow existing evaluation expectations.
+
+============================================================
+STEP 6 — VALIDATION AFTER MODEL OUTPUT
+============================================================
+
+Never trust raw model JSON directly.
+
+Add a validation/normalization layer.
+
+Requirements:
+
+- reject invalid JSON
+- reject unexpected field types
+- constrain currency format
+- constrain numeric price/duration
+- normalize obvious safe formats
+- preserve null for unsupported/missing fields
+- reject extra unsupported fields where practical
+- never convert model speculation into confirmed facts
+
+If the model response is invalid:
+→ do NOT publish partial garbage
+→ return a safe extraction failure
+→ preserve transcript
+→ allow manual editing
+
+============================================================
+STEP 7 — DETERMINISTIC FALLBACK
+============================================================
+
+Preserve the current regex/deterministic listing extraction.
+
+It is NOT the final AI implementation.
+
+It should remain available as:
+
+- fallback when Small AI is unavailable
+- baseline for evaluation
+- resilience mechanism
+
+Make the response clearly indicate which extractor produced the result:
+
+small_ai
+or
+deterministic_fallback
+
+Do not describe deterministic regexes as a Small AI model.
+
+============================================================
+STEP 8 — BACKEND API
+============================================================
+
+Implement the smallest coherent backend contract.
+
+Prefer extending the existing FastAPI structure in backend/main.py.
+
+Do NOT invent backend/api.py.
+
+A combined endpoint is acceptable if it fits the repository, for example:
+
+POST /api/voice
+
+multipart/form-data:
+- audio
+- language
+- optional sector/context
+
+Response:
+- transcript
+- recognized language
+- STT model info
+- extractor type/model info
+- structured listing
+- missing_fields
+- uncertain_fields
+
+If separating transcription and extraction creates a cleaner implementation,
+a small explicit API is acceptable, but avoid unnecessary endpoint sprawl.
+
+Also support a TEXT-ONLY extraction path internally or through a small endpoint
+so the frozen `voice_listing.json` transcripts can be evaluated without audio.
+
+============================================================
+STEP 9 — FRONTEND ACCESSIBLE FLOW
+============================================================
+
+Implement a minimal accessible Voice Listing UI.
+
+Do not redesign the entire application.
+
+The business owner flow should include:
+
+Record
+→ Stop
+→ Processing
+→ Transcript
+→ Structured Proposal
+→ Review/Edit
+→ Confirm
+
+Important:
+
+The transcript must be visible.
+
+The transcript must be editable before extraction/re-extraction where practical.
+
+The structured fields must be editable.
+
+Missing fields must be visibly marked.
+
+Uncertain fields must be visibly marked.
+
+Do NOT save automatically.
+
+Provide an explicit human action such as:
+
+"Confirm & save"
+
+If microphone access is unavailable or processing fails:
+→ show a clear message
+→ allow manual text/transcript entry
+→ preserve usability
+
+Do not make Voice a single point of failure.
+
+============================================================
+STEP 10 — HUMAN-IN-THE-LOOP SAVE
+============================================================
+
+AI output remains a proposal.
+
+Only after explicit user confirmation may the structured listing enter the
+existing save/persistence flow.
+
+Before confirmation:
+→ no Supabase listing mutation
+
+After confirmation:
+→ use the existing listing/business persistence behavior where possible
+→ do not create a second unrelated database model
+
+If safe persistence integration is unclear, prioritize the complete
+record → extract → review/edit workflow and report the persistence limitation.
+
+Never silently auto-publish.
+
+============================================================
+STEP 11 — EVALUATE AGAINST FROZEN voice_listing.json
+============================================================
+
+This is CRITICAL.
+
+The deterministic baseline is approximately:
+
+55 / 144 fields correct
+38.2% overall field accuracy
+0 hallucinations
+
+Do NOT modify:
+
+data/evaluation/voice_listing.json
+
+It is frozen evaluation data.
+
+Run the new Small AI extractor against the exact same transcript cases.
+
+Use the SAME semantic normalization/evaluation logic currently used by
+scripts/evaluate_ai.py unless there is a clear evaluator bug.
+
+Do NOT change expected answers after seeing model output.
+
+Report at minimum:
+
+- correct fields
+- total evaluated fields
+- overall field accuracy
+- missing predictions
+- hallucinations
+- per-field accuracy
+
+Store baseline and Small AI results separately.
+
+Conceptually:
+
+listing_extraction_baseline
+listing_extraction_small_ai
+
+Do not overwrite or hide the deterministic baseline.
+
+============================================================
+STEP 12 — MODEL EVIDENCE
+============================================================
+
+Record measured facts.
+
+For the final selected extractor, capture:
+
+- exact model name
+- model source
+- license
+- parameter count
+- quantization
+- actual model file size
+- STT model
+- test machine OS
+- CPU
+- RAM if safely obtainable
+- whether GPU was used
+- average extraction latency on voice_listing.json
+- approximate per-case latency distribution if easy
+- evaluation accuracy
+- hallucination count
+
+Do not invent values.
+
+If hardware data cannot be determined safely, state "not measured".
+
+Update docs/VOICE_AI.md with measured reality, not marketing claims.
+
+============================================================
+STEP 13 — STT MANUAL ACCEPTANCE
+============================================================
+
+Because voice_listing.json contains transcripts rather than audio,
+do NOT claim automated STT accuracy from that dataset.
+
+Perform or document manual speech acceptance for short examples in:
+
+English
+Spanish
+Bahasa Indonesia
+
+For each:
+
+1. record natural speech
+2. transcribe
+3. show transcript
+4. inspect language
+5. run extraction
+6. inspect structured proposal
+7. edit one field
+8. confirm/save only after review
+
+Do not invent a WER metric.
+
+============================================================
+STEP 14 — OFFLINE / FAILURE BEHAVIOR
+============================================================
+
+Verify:
+
+- core app remains usable without Voice AI
+- microphone denial does not crash the app
+- STT model unavailable does not crash the app
+- Small AI unavailable can use deterministic fallback
+- invalid model output does not lose transcript
+- offline/unreachable processing exposes honest status
+- TTS remains independent:
+  online ElevenLabs
+  offline/failure Web Speech
+
+Do not alter the already-working Phase 5 postcard outbox.
+
+============================================================
+STEP 15 — DEPENDENCIES
+============================================================
+
+Only add dependencies actually used.
+
+Likely candidates include:
+- faster-whisper
+- a llama.cpp-compatible Python runtime
+
+Avoid unnecessary frameworks.
+
+Document platform-specific setup if Windows requires it.
+
+Do not add OpenAI API dependencies for this phase.
+
+Do not commit downloaded model weights.
+
+============================================================
+STEP 16 — TESTS
+============================================================
+
+Add focused tests for:
+
+Backend:
+- supported languages EN / ES / ID
+- transcript handling
+- valid structured output
+- missing-field behavior
+- invalid JSON
+- invalid field types
+- model unavailable fallback
+- no hallucinated default values
+- explicit extractor metadata
+
+Frontend:
+- microphone denial
+- manual transcript fallback
+- transcript is reviewable/editable
+- AI proposal is reviewable/editable
+- missing/uncertain indicators
+- no save before confirmation
+- explicit confirmation
+- processing failure preserves transcript
+- existing TTS still works
+- existing offline postcard flow still works
+
+Evaluation:
+- deterministic baseline unchanged
+- Small AI evaluated independently
+- frozen dataset unchanged
+
+============================================================
+STEP 17 — REGRESSION VALIDATION
+============================================================
+
+Run ALL existing test suites.
+
+At minimum:
+
+python -m unittest discover -s tests -v
+
+all frontend Node tests
+
+node --check frontend/app.js
+node --check frontend/offline-db.js
+node --check frontend/sw.js
+
+python scripts/evaluate_ai.py
+
+git diff --check
+git status
+git diff --stat
+
+Do not hide failures.
+
+Do not weaken existing tests merely to make the suite green.
+
+============================================================
+SUCCESS CRITERIA
+============================================================
+
+This phase is successful only if we can truthfully demonstrate:
+
+1. real multilingual STT exists
+2. a real <= approximately 3B Small AI extractor exists
+3. transcript is shown to the human
+4. structured listing is proposed
+5. missing/uncertain information is visible
+6. no auto-publish occurs
+7. human can edit before confirmation
+8. deterministic fallback remains available
+9. frozen voice_listing evaluation is run
+10. Small AI results are reported separately from baseline
+11. model size/license/runtime evidence is documented
+12. existing Phase 2/3/4/5 behavior still passes tests
+
+Accuracy improvement is desirable, but DO NOT manipulate the evaluation set
+to obtain a better score.
+
+An honest disappointing score is preferable to a misleading benchmark.
+
+============================================================
+FINAL REPORT
+============================================================
+
+When finished, report:
+
+1. exact STT implementation/model
+2. exact Small AI model
+3. quantization and actual model size
+4. files changed
+5. API contract
+6. frontend user flow
+7. missing/uncertain-field design
+8. human confirmation behavior
+9. fallback behavior
+10. deterministic baseline metrics
+11. Small AI metrics
+12. per-field results
+13. hallucination count
+14. measured inference latency
+15. hardware/runtime tested
+16. model/data licenses
+17. automatic test results
+18. manual EN/ES/ID speech test status
+19. known limitations
+20. git diff --stat
+
+DO NOT COMMIT.
+DO NOT PUSH.
+
+Stop after implementation, evaluation, validation, and final report.
