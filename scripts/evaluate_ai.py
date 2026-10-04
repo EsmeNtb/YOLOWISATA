@@ -2,7 +2,6 @@ import json
 import os
 import sys
 from datetime import datetime
-import re
 
 # Insert backend to sys.path so we can import ai
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -23,65 +22,74 @@ for category in ["loved", "asks"]:
     if category in content.get("themes", {}):
         themes_lex.update(content["themes"][category])
 
-# A. EXPERIENCE DNA BASELINE
-feedback_data = load_json(os.path.join(eval_dir, 'tourism_feedback.json'))
+def evaluate_experience_dna(dataset_filename):
+    data = load_json(os.path.join(eval_dir, dataset_filename))
+    label_stats = {}
+    all_tp, all_fp, all_fn = 0, 0, 0
+    missed_examples = []
 
-label_stats = {}
-all_tp, all_fp, all_fn = 0, 0, 0
-for ex in feedback_data:
-    expected = set(ex.get("labels", []))
-    predicted = set(ai._tags(ex["text"], themes_lex))
+    for ex in data:
+        expected = set(ex.get("labels", []))
+        predicted = set(ai._tags(ex["text"], themes_lex))
 
-    all_labels = expected.union(predicted)
-    for lbl in all_labels:
-        if lbl not in label_stats:
-            label_stats[lbl] = {"tp": 0, "fp": 0, "fn": 0}
+        # Track examples with missed labels for human review (where expected is not empty and predicted misses some)
+        if expected and not expected.issubset(predicted):
+            missed_examples.append({"id": ex["id"], "text": ex["text"], "expected": list(expected), "predicted": list(predicted)})
 
-        if lbl in expected and lbl in predicted:
-            label_stats[lbl]["tp"] += 1
-            all_tp += 1
-        elif lbl in predicted and lbl not in expected:
-            label_stats[lbl]["fp"] += 1
-            all_fp += 1
-        elif lbl in expected and lbl not in predicted:
-            label_stats[lbl]["fn"] += 1
-            all_fn += 1
+        all_labels = expected.union(predicted)
+        for lbl in all_labels:
+            if lbl not in label_stats:
+                label_stats[lbl] = {"tp": 0, "fp": 0, "fn": 0}
 
-macro_prec, macro_rec, macro_f1 = 0.0, 0.0, 0.0
-valid_labels = 0
-for lbl, stats in label_stats.items():
-    tp, fp, fn = stats["tp"], stats["fp"], stats["fn"]
-    prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    rec = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
-    stats["precision"] = prec
-    stats["recall"] = rec
-    stats["f1"] = f1
-    macro_prec += prec
-    macro_rec += rec
-    macro_f1 += f1
-    valid_labels += 1
+            if lbl in expected and lbl in predicted:
+                label_stats[lbl]["tp"] += 1
+                all_tp += 1
+            elif lbl in predicted and lbl not in expected:
+                label_stats[lbl]["fp"] += 1
+                all_fp += 1
+            elif lbl in expected and lbl not in predicted:
+                label_stats[lbl]["fn"] += 1
+                all_fn += 1
 
-if valid_labels > 0:
-    macro_prec /= valid_labels
-    macro_rec /= valid_labels
-    macro_f1 /= valid_labels
+    macro_prec, macro_rec, macro_f1 = 0.0, 0.0, 0.0
+    valid_labels = 0
+    for lbl, stats in label_stats.items():
+        tp, fp, fn = stats["tp"], stats["fp"], stats["fn"]
+        prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        rec = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
+        stats["precision"] = prec
+        stats["recall"] = rec
+        stats["f1"] = f1
+        macro_prec += prec
+        macro_rec += rec
+        macro_f1 += f1
+        valid_labels += 1
 
-micro_prec = all_tp / (all_tp + all_fp) if (all_tp + all_fp) > 0 else 0.0
-micro_rec = all_tp / (all_tp + all_fn) if (all_tp + all_fn) > 0 else 0.0
-micro_f1 = 2 * micro_prec * micro_rec / (micro_prec + micro_rec) if (micro_prec + micro_rec) > 0 else 0.0
+    if valid_labels > 0:
+        macro_prec /= valid_labels
+        macro_rec /= valid_labels
+        macro_f1 /= valid_labels
 
-dna_metrics = {
-    "per_label": label_stats,
-    "macro_precision": macro_prec,
-    "macro_recall": macro_rec,
-    "macro_f1": macro_f1,
-    "micro_f1": micro_f1,
-}
+    micro_prec = all_tp / (all_tp + all_fp) if (all_tp + all_fp) > 0 else 0.0
+    micro_rec = all_tp / (all_tp + all_fn) if (all_tp + all_fn) > 0 else 0.0
+    micro_f1 = 2 * micro_prec * micro_rec / (micro_prec + micro_rec) if (micro_prec + micro_rec) > 0 else 0.0
+
+    return {
+        "dataset_size": len(data),
+        "per_label": label_stats,
+        "macro_precision": macro_prec,
+        "macro_recall": macro_rec,
+        "macro_f1": macro_f1,
+        "micro_f1": micro_f1,
+        "missed_examples": missed_examples
+    }
+
+dna_metrics_standard = evaluate_experience_dna('tourism_feedback.json')
+dna_metrics_challenge = evaluate_experience_dna('tourism_feedback_challenge.json')
 
 # B. VOICE/LISTING TEXT EXTRACTION BASELINE
 voice_data = load_json(os.path.join(eval_dir, 'voice_listing.json'))
-
 act_map = {
     "farm_walk": "A guided walk",
     "coffee_picking": "Picking coffee cherries",
@@ -120,7 +128,6 @@ for ex in voice_data:
     field_stats[field]["evaluated"] += 1
     total_fields_evaluated += 1
     if e_val:
-        # e.g., expected "Noor's Coffee Farm", got "Noor’s Coffee Farm Experience"
         normalized_e = e_val.lower().replace("'", "").replace("’", "")
         normalized_p = p_val.lower().replace("'", "").replace("’", "") if p_val else ""
         if p_val and normalized_e in normalized_p:
@@ -140,7 +147,7 @@ for ex in voice_data:
     # 2. experience_title
     field = "experience_title"
     e_val = exp.get(field)
-    p_val = ext.get("name") # backend doesn't output separate title, it bundles it
+    p_val = ext.get("name")
     field_stats[field]["evaluated"] += 1
     total_fields_evaluated += 1
     if e_val:
@@ -153,8 +160,6 @@ for ex in voice_data:
             field_stats[field]["missing"] += 1
             missing_predictions += 1
     else:
-        # since it's bundled in name, we only hallucinate if expected is None but we got a title-like string?
-        # for simplicity, if expected is None and it output a name, it's a hallucination for the title too.
         if p_val:
             field_stats[field]["hallucinated"] += 1
             hallucinations += 1
@@ -345,12 +350,21 @@ results = {
     "generated_timestamp": datetime.utcnow().isoformat() + "Z",
     "baseline_implementation": "Deterministic regex and keyword matching (backend.ai v0.2)",
     "dataset_counts": {
-        "tourism_feedback": len(feedback_data),
+        "tourism_feedback": dna_metrics_standard["dataset_size"],
+        "tourism_feedback_challenge": dna_metrics_challenge["dataset_size"],
         "voice_listing": len(voice_data),
         "intent_test": len(intent_data),
         "translation_test": len(trans_data)
     },
-    "experience_dna_metrics": dna_metrics,
+    "experience_dna_standard": {
+        "macro_f1": dna_metrics_standard["macro_f1"],
+        "micro_f1": dna_metrics_standard["micro_f1"],
+    },
+    "experience_dna_challenge": {
+        "macro_f1": dna_metrics_challenge["macro_f1"],
+        "micro_f1": dna_metrics_challenge["micro_f1"],
+        "missed_examples": dna_metrics_challenge["missed_examples"]
+    },
     "listing_extraction_metrics": extraction_metrics,
     "intent_status": intent_status,
     "translation_status": trans_status,
@@ -372,8 +386,8 @@ print("============================================================")
 print("YoloWisata AI Evaluation Baseline")
 print("============================================================")
 print(f"Implementation: {results['baseline_implementation']}")
-print(f"Experience DNA Macro F1: {dna_metrics['macro_f1']:.2f}")
-print(f"Experience DNA Micro F1: {dna_metrics['micro_f1']:.2f}")
+print(f"Experience DNA (Standard) Macro F1: {dna_metrics_standard['macro_f1']:.2f} | Micro F1: {dna_metrics_standard['micro_f1']:.2f}")
+print(f"Experience DNA (Challenge) Macro F1: {dna_metrics_challenge['macro_f1']:.2f} | Micro F1: {dna_metrics_challenge['micro_f1']:.2f}")
 print(f"Listing Extraction Accuracy: {extraction_metrics['overall_accuracy']:.1%} ({total_fields_correct}/{total_fields_evaluated})")
 print(f"Listing Extraction Hallucinations: {hallucinations}")
 print(f"Intent Classification: {intent_status['status']}")

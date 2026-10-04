@@ -1,123 +1,243 @@
 {
-  "generated_timestamp": "2026-10-04T01:23:25.768703Z",
+  "generated_timestamp": "2026-10-04T02:45:49.220926Z",
   "baseline_implementation": "Deterministic regex and keyword matching (backend.ai v0.2)",
   "dataset_counts": {
     "tourism_feedback": 45,
+    "tourism_feedback_challenge": 30,
     "voice_listing": 18,
     "intent_test": 30,
     "translation_test": 24
   },
-  "experience_dna_metrics": {
-    "per_label": {
-      "roast": {
-        "tp": 4,
-        "fp": 1,
-        "fn": 1,
-        "precision": 0.8,
-        "recall": 0.8,
-        "f1": 0.8000000000000002
-      },
-      "directions": {
-        "tp": 3,
-        "fp": 0,
-        "fn": 3,
-        "precision": 1.0,
-        "recall": 0.5,
-        "f1": 0.6666666666666666
-      },
-      "host": {
-        "tp": 7,
-        "fp": 1,
-        "fn": 0,
-        "precision": 0.875,
-        "recall": 1.0,
-        "f1": 0.9333333333333333
-      },
-      "walk": {
-        "tp": 4,
-        "fp": 0,
-        "fn": 1,
-        "precision": 1.0,
-        "recall": 0.8,
-        "f1": 0.888888888888889
-      },
-      "view": {
-        "tp": 4,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
-      },
-      "beans": {
-        "tp": 3,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
-      },
-      "tasting": {
-        "tp": 4,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
-      },
-      "food": {
-        "tp": 5,
-        "fp": 0,
-        "fn": 1,
-        "precision": 1.0,
-        "recall": 0.8333333333333334,
-        "f1": 0.9090909090909091
-      },
-      "process": {
-        "tp": 2,
-        "fp": 0,
-        "fn": 1,
-        "precision": 1.0,
-        "recall": 0.6666666666666666,
-        "f1": 0.8
-      },
-      "stay": {
-        "tp": 2,
-        "fp": 0,
-        "fn": 1,
-        "precision": 1.0,
-        "recall": 0.6666666666666666,
-        "f1": 0.8
-      },
-      "carve": {
-        "tp": 3,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
-      },
-      "ship": {
-        "tp": 3,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
-      },
-      "cook": {
-        "tp": 3,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0
-      }
-    },
-    "macro_precision": 0.9750000000000001,
-    "macro_recall": 0.8666666666666666,
-    "macro_f1": 0.9075369075369076,
+  "experience_dna_standard": {
+    "macro_f1": 0.9075369075369075,
     "micro_f1": 0.9038461538461537
+  },
+  "experience_dna_challenge": {
+    "macro_f1": 0.025641025641025644,
+    "micro_f1": 0.05,
+    "missed_examples": [
+      {
+        "id": "challenge_en_001",
+        "text": "Watching the beans change color as they heated over the fire was the highlight.",
+        "expected": [
+          "roast"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_002",
+        "text": "The navigation app took us to the wrong spot, but the owner was very welcoming when we finally arrived.",
+        "expected": [
+          "host",
+          "directions"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_003",
+        "text": "Strolling through the fields and looking out over the valley was breathtaking.",
+        "expected": [
+          "view",
+          "walk"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_004",
+        "text": "Can we purchase some of the produce to take back home? Sampling the different cups was great.",
+        "expected": [
+          "beans",
+          "tasting"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_005",
+        "text": "Is a bite to eat part of the package?",
+        "expected": [
+          "food"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_007",
+        "text": "Could you explain the steps from picking the berry to drying it?",
+        "expected": [
+          "process"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_008",
+        "text": "Do you have rooms available for the evening? Also, can you post the wooden pieces to my address?",
+        "expected": [
+          "ship",
+          "carve",
+          "stay"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_009",
+        "text": "Preparing the meal in the kitchen together was such a lovely experience.",
+        "expected": [
+          "host",
+          "cook"
+        ],
+        "predicted": [
+          "food"
+        ]
+      },
+      {
+        "id": "challenge_es_001",
+        "text": "Dorar los granos al fuego junto a la dueña fue un momento inolvidable.",
+        "expected": [
+          "host",
+          "roast"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_002",
+        "text": "Nos desorientamos bastante para dar con el lugar, falta señalización.",
+        "expected": [
+          "directions"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_003",
+        "text": "El recorrido por el terreno fue relajante, y la panorámica espectacular.",
+        "expected": [
+          "view",
+          "walk"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_004",
+        "text": "¿Podemos adquirir unas bolsas del producto para llevarnos a nuestro país?",
+        "expected": [
+          "beans"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_005",
+        "text": "¿Ofrecen algo de cenar o almorzar durante la visita?",
+        "expected": [
+          "food"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_006",
+        "text": "Me encantaría saborear distintas infusiones si es posible.",
+        "expected": [
+          "tasting"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_007",
+        "text": "Darle forma al tronco fue muy divertido. ¿Hacen despachos a otras ciudades?",
+        "expected": [
+          "carve",
+          "ship"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_008",
+        "text": "¿Tienen habitaciones para pasar la noche allí?",
+        "expected": [
+          "stay"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_009",
+        "text": "Me gustaría entender mejor las etapas de fermentación y secado.",
+        "expected": [
+          "process"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_001",
+        "text": "Menggoreng biji kopinya di atas wajan tanah liat sungguh pengalaman langka.",
+        "expected": [
+          "roast"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_002",
+        "text": "Titik di peta digital ternyata salah sehingga kami sempat nyasar cukup jauh.",
+        "expected": [
+          "directions"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_003",
+        "text": "Menyusuri jalan setapak di ladang bersama pemiliknya sangat berkesan.",
+        "expected": [
+          "host",
+          "walk"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_004",
+        "text": "Bisa borong beberapa bungkus hasil kebun ini untuk oleh-oleh?",
+        "expected": [
+          "beans"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_005",
+        "text": "Apakah disediakan hidangan pengganjal perut untuk para tamu?",
+        "expected": [
+          "food"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_006",
+        "text": "Lanskap dari atas bukit sungguh memukau, apalagi udaranya sejuk.",
+        "expected": [
+          "view"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_007",
+        "text": "Saya ingin mencoba tegukan dari berbagai jenis seduhan yang lain.",
+        "expected": [
+          "tasting"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_008",
+        "text": "Meracik bumbu di dapur untuk hidangan siang sangat seru.",
+        "expected": [
+          "food",
+          "cook"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_009",
+        "text": "Tolong jelaskan lagi tahapan pengolahannya dari pemetikan sampai penjemuran.",
+        "expected": [
+          "process"
+        ],
+        "predicted": []
+      }
+    ]
   },
   "listing_extraction_metrics": {
     "correct_fields": 55,
