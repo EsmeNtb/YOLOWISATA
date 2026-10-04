@@ -131,12 +131,12 @@ textarea.t{min-height:84px;resize:vertical}
 .scene .cap h1{font-size:1.5rem}
 .orb{position:absolute;border-radius:50%;display:grid;place-items:center;animation:drift var(--d,6s) ease-in-out var(--dl,0s) infinite alternate;box-shadow:inset -5px -6px 0 rgba(23,23,23,.12),0 6px 0 -1px rgba(23,23,23,.1);transition:scale .15s}
 .orb:hover,.orb:focus-visible{scale:1.12}.orb:active{scale:.92}
-.orb .face{width:56%;height:34%;position:relative}
-.orb .face::before,.orb .face::after{content:"";position:absolute;top:0;width:16%;aspect-ratio:1;border-radius:50%;background:var(--ink)}
-.orb .face::before{left:14%}.orb .face::after{right:14%}
-.orb .face i{position:absolute;left:32%;right:32%;bottom:0;height:42%;border:2.5px solid var(--ink);border-top:0;border-radius:0 0 99px 99px}
-.orb.wink .face::after{height:2.5px;aspect-ratio:auto;top:14%;border-radius:2px}
-.orb.oh .face i{left:40%;right:40%;height:36%;border:0;background:var(--ink);border-radius:50%}
+.orb .of{width:56%;height:34%;position:relative}
+.orb .of::before,.orb .of::after{content:"";position:absolute;top:0;width:16%;aspect-ratio:1;border-radius:50%;background:var(--ink)}
+.orb .of::before{left:14%}.orb .of::after{right:14%}
+.orb .of i{position:absolute;left:32%;right:32%;bottom:0;height:42%;border:2.5px solid var(--ink);border-top:0;border-radius:0 0 99px 99px}
+.orb.wink .of::after{height:2.5px;aspect-ratio:auto;top:14%;border-radius:2px}
+.orb.oh .of i{left:40%;right:40%;height:36%;border:0;background:var(--ink);border-radius:50%}
 .orb .ic{position:absolute;right:-6px;top:-8px;font-size:1rem}
 .orb.new{animation:drift 5s ease-in-out infinite alternate,glow 1.6s ease-in-out infinite alternate}
 .orb.pending{outline:2px dashed var(--ink);outline-offset:3px}
@@ -277,3 +277,10 @@ details.box summary{cursor:pointer;list-style:none;display:flex;justify-content:
 details.box summary::-webkit-details-marker{display:none}
 details.box summary::after{content:"＋";font-weight:800}
 details.box[open] summary::after{content:"－"}
+
+/* --- The Story of This Place on wide screens: keep it a tall mural so the whole field and mailbox show --- */
+@media(min-width:760px){.scene{max-width:560px;height:640px;margin:1.2rem auto 0;border-radius:28px;border:1.5px solid var(--line);box-shadow:0 4px 0 var(--line)}}
+
+/* inputs and buttons inside fold-out boxes were sized without their padding and spilled out on the right */
+*,*::before,*::after{box-sizing:border-box}
+details.box summary{align-items:flex-start}
