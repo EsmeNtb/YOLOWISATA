@@ -111,6 +111,45 @@ function computeDNA(){const d={};for(const k in DIMS){let tot=0,yes=0;CARDS.forE
 function matchOf(b){const d=S.dna||computeDNA();let diff=0;for(const k in DIMS)diff+=Math.abs(d[k]-b.dna[k]);
  const w=b.why||WHYG;return{score:Math.round((1-diff/6)*100),why:Object.keys(w).filter(k=>d[k]>=.5&&b.dna[k]>=.5).map(k=>w[k])}}
 
+/* Local day planner: explicit listing values only; no travel-time or opening-time guesses. */
+function planDuration(L){
+ if(L.structured){const n=L.structured.duration_minutes;return Number.isSafeInteger(n)&&n>0?{minutes:n,approximate:false}:null}
+ const text=String(L.duration||'').trim(),approximate=/^(about|sekitar)\s/i.test(text),value=text.replace(/^(about|sekitar)\s+/i,'');
+ const single=/^(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|jam|minutes?|mins?|min|m|menit)$/i.exec(value);
+ const pair=/^(\d+)\s*(?:hours?|hrs?|h|jam)\s*(\d+)\s*(?:minutes?|mins?|min|m|menit)$/i.exec(value);
+ const minutes=single?Number(single[1])*(/^(hours?|hrs?|h|jam)$/i.test(single[2])?60:1):pair&&Number(pair[2])<60?Number(pair[1])*60+Number(pair[2]):null;
+ return Number.isSafeInteger(minutes)&&minutes>0?{minutes,approximate}:null;
+}
+const planCents=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&Number.isSafeInteger(Math.round(n*100))&&Math.abs(n*100-Math.round(n*100))<.000001?Math.round(n*100):null;
+function planPrice(L){
+ if(L.structured){const cents=planCents(L.structured.price),currency=L.structured.currency;return cents!==null&&/^[A-Z]{3}$/.test(currency||'')?{cents,currency}:null}
+ const text=String(L.price||'').trim().replace(/\s+(?:per person|per orang)$/i,'');
+ // Rp uses Indonesian thousands separators; ISO codes use plain decimals or comma groups.
+ const rupiah=/^Rp\s*(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{1,2}))?$/i.exec(text);
+ const iso=/^([A-Z]{3})\s+(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?$/.exec(text);
+ const currency=rupiah?'IDR':iso?.[1],amount=rupiah?Number(rupiah[1].replaceAll('.','')+'.'+(rupiah[2]||'0')):iso?Number(iso[2].replaceAll(',','')+'.'+(iso[3]||'0')):null;
+ const cents=planCents(amount);return currency&&cents!==null?{currency,cents}:null;
+}
+function planCurrency(){const current=all().find(b=>b.id===S.biz);return (current?planPrice(Lst(current))?.currency:null)||all().map(b=>planPrice(Lst(b))?.currency).find(Boolean)||null}
+function planDay(minutes,budget=null,currency=planCurrency()){
+ const result={items:[],minutes:0,approximate:false,totals:{},unknownPrices:0,needsDNA:!S.dna};
+ if(!S.dna)return result;
+ if(![120,240,360,480].includes(minutes)||budget!==null&&(planCents(budget)===null||!currency))return {...result,invalid:true};
+ let remaining=budget===null?null:planCents(budget);const seen=new Set();
+ const candidates=all().map((b,index)=>{const L=Lst(b);return {b,L,index,duration:planDuration(L),price:planPrice(L),score:matchOf(b).score}}).sort((a,b)=>b.score-a.score||a.index-b.index);
+ for(const item of candidates){
+  if(result.items.length===3)break;
+  if(seen.has(item.b.id)||!item.duration||!Number.isFinite(item.score)||result.minutes+item.duration.minutes>minutes)continue;
+  if(remaining!==null&&item.price&&(item.price.currency!==currency||item.price.cents>remaining))continue;
+  seen.add(item.b.id);result.items.push(item);result.minutes+=item.duration.minutes;result.approximate||=item.duration.approximate;
+  if(item.price){result.totals[item.price.currency]=(result.totals[item.price.currency]||0)+item.price.cents;if(remaining!==null)remaining-=item.price.cents}else result.unknownPrices++;
+ }
+ return result;
+}
+const planMoney=(cents,currency)=>currency+' '+(cents/100).toLocaleString(S.blang==='en'?'en-US':'id-ID',{maximumFractionDigits:2});
+const planTime=n=>[Math.floor(n/60)?Math.floor(n/60)+T(' jam','h'):'',n%60?(n%60)+T(' menit','min'):''].filter(Boolean).join(' ');
+const planEntry=()=>`<button class="btn alt wide" style="margin-top:.7rem" data-a="go" data-s="plan">✨ ${T('Rencanakan hari saya','Plan my day')}</button>`;
+
 /* ---------- AI 4: Experience DNA from postcards, questions and guest messages ---------- */
 function analyse(b){const hw=b.host.toLowerCase().split(" ").pop(),LV=Object.assign({},LOVED,LOVED.host?{host:[LOVED.host[0],LOVED.host[1].concat(hw)]}:{});const cards=b.cards.concat(S.mine.filter(m=>m.biz===b.id&&m.status==="sent"&&!m.removed));
  let qs=b.qs.slice(),waiting=S.mine.filter(m=>m.biz===b.id&&m.status!=="sent"&&!m.removed).length;
@@ -276,6 +315,7 @@ V.explore=()=>{const cats=[["All","✨"]].concat(Object.keys(SECTORS).slice(0,5)
  if(S.dna)list.sort((x,y)=>y.m-x.m);else if(S.here)list.sort((x,y)=>x.d-y.d);
  return `<div class="pad"><div class="hello">${MASCOT}<div><p class="small">${T("Hai","Hi")}${S.guest.n?" "+esc(S.guest.n):""} 👋</p><h1 style="font-size:1.7rem">${T("Temukan orang lokal","Find someone local")}</h1></div></div>
  ${S.dna?"":`<button class="box" style="width:100%;text-align:left;background:var(--yellow);border:0" data-a="go" data-s="swipe"><b>🧬 ${T("Cari DNA Perjalanan Anda","Find your Travel DNA")}</b><br><span class="small" style="color:var(--ink)">${T("Sepuluh pilihan, dan daftar ini akan menyesuaikan.","Ten swipes, and this list sorts itself for you.")}</span></button>`}
+ ${planEntry()}
  ${S.here?`<div class="savebar on"><span style="font-size:1.5rem">📍</span><div><b>${T("Menampilkan tempat di dekat Anda","Showing what is near you")}</b><div class="small">${T("Lokasi berasal dari GPS ponsel dan tetap berfungsi tanpa internet.","Your position comes from the phone’s GPS, which works with no internet.")}</div></div></div><div class="map">${mapSVG(list.map(x=>x.b))}</div>`
  :`<button class="savebar" data-a="loc"><span style="font-size:1.5rem">📍</span><div><b>${T("Gunakan lokasi saya","Use my location")}</b><div class="small">${T("Lihat jarak setiap tempat. Opsional dan tidak dibagikan.","See how far each place is. Optional, and never shared with anyone.")}</div></div></button>`}
  <div class="cats">${cats.map(([k,e])=>`<button class="cat ${S.sector===k?"on":""}" data-a="sector" data-s="${k}"><span>${e}</span>${sectorText(k)}</button>`).join("")}</div>
@@ -304,10 +344,11 @@ V.dna=()=>{if(!S.dna)return V.swipe();const rows=Object.keys(DIMS).map(k=>[k,Mat
  <div class="box">${rows.map(([k,p],i)=>`<div class="bar-row"><b><span>${dimensionText(k)}</span><span>${p}%</span></b><div class="track"><i style="width:${p}%;background:${PAL[i%4]}"></i></div></div>`).join("")}</div>
  ${low.length?`<p class="sub" style="margin-top:.8rem">${T("Anda cenderung melewatkan ","You tend to skip ")}${low.join(T(" dan "," and "))}.</p>`:""}
  <p class="small" style="margin-top:.6rem">${T("📥 Tersimpan di ponsel. Tetap berfungsi tanpa sinyal.","📥 Kept on this phone. It still works with no signal.")}</p>
- <div class="row" style="margin-top:1rem"><button class="btn" data-a="go" data-s="match">${T("Lihat kecocokan saya","See my matches")}</button><button class="btn alt" data-a="redo">${T("Geser lagi","Swipe again")}</button></div></div>`};
+ <div class="row" style="margin-top:1rem"><button class="btn" data-a="go" data-s="match">${T("Lihat kecocokan saya","See my matches")}</button><button class="btn alt" data-a="redo">${T("Geser lagi","Swipe again")}</button></div>${planEntry()}</div>`};
 
 V.match=()=>{if(!S.dna)return V.swipe();const r=all().map(b=>({b,m:matchOf(b)})).sort((x,y)=>y.m.score-x.m.score),{b,m}=r[0],weak=m.score<55;
  return `<div class="pad"><p class="sub">${weak?T("Kami belum yakin dengan pilihan mana pun","We are not sure about any of these"):T("Kecocokan terbaik di dekat Anda","Your best match nearby")}</p>
+ ${planEntry()}
  <div class="box" style="margin-top:.5rem;border:0;background:${b.col}"><div class="match-num">${m.score}%</div><p style="font-size:.85rem">${T("cocok dengan DNA Perjalanan Anda","match with your Travel DNA")}</p>
  <h2 style="font-size:1.5rem;margin-top:.6rem">${b.e} ${esc(b.name)}</h2><p>${sectorText(b.sector)} · ${esc(b.place)}</p></div>
  <div class="box">${weak?`<p>${T("Pilihan Anda hanya sedikit cocok dengan tempat-tempat ini. Lihat dan tentukan sendiri.","Your swipes and these places overlap only a little. Have a look and decide for yourself.")}</p>`:`<b>${T("Alasan tempat ini cocok","Why it fits you")}</b>`}
@@ -315,6 +356,28 @@ V.match=()=>{if(!S.dna)return V.swipe();const r=all().map(b=>({b,m:matchOf(b)}))
  <div class="row" style="margin-top:1rem"><button class="btn" data-a="view" data-id="${b.id}">${T("Lihat pengalaman","View experience")}</button><button class="btn alt" data-a="offline" data-id="${b.id}">${S.saved[b.id]?T("Tersimpan offline ✓","Saved offline ✓"):T("Simpan offline","Save offline")}</button></div>
  <label class="f">${T("Juga di sekitar Anda","Also near you")}</label>${r.slice(1).map(({b,m})=>`<button class="bz" data-a="view" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${sectorText(b.sector)}</span></span><span class="pct">${m.score}%</span></button>`).join("")}
  <p class="small" style="margin-top:.8rem">${T("Skor membandingkan enam nilai DNA Perjalanan Anda dengan DNA Pengalaman tiap tempat. Ini saran, bukan janji.","The score compares your six Travel DNA values with each place’s Experience DNA. It is a suggestion, not a promise.")}</p></div>`};
+
+V.plan=()=>{const p=ui.dayPlan||(ui.dayPlan={minutes:240,budget:'',built:false}),currency=planCurrency();
+ const heading=`<div class="pad"><h1 style="font-size:1.7rem">✨ ${T('Rencanakan hari saya','Plan my day')}</h1>`;
+ if(!S.dna)return heading+`<p class="sub">${T('Temukan DNA Perjalanan Anda dahulu agar kami dapat menyesuaikan rencana hari Anda.','Find your Travel DNA first so we can personalize your day.')}</p><button class="btn wide" data-a="go" data-s="swipe">${T('Cari DNA Perjalanan saya','Find my Travel DNA')}</button></div>`;
+ const validBudget=p.budget===''||/^\d+(?:\.\d{1,2})?$/.test(p.budget),plan=p.built?planDay(p.minutes,p.budget===''?null:validBudget?Number(p.budget):NaN,currency):null;
+ let results='';
+ if(plan){
+  if(plan.invalid)results=`<p role="alert">${T('Masukkan anggaran yang valid dalam mata uang yang ditampilkan, atau kosongkan.','Enter a valid budget in the displayed currency, or leave it blank.')}</p>`;
+  else if(!plan.items.length)results=`<p role="status">${T('Belum ada pengalaman terverifikasi yang sesuai batas tersebut. Coba tambah waktu atau anggaran.','No verified experiences fit those limits yet. Try more time or a larger budget.')}</p>`;
+  else{const currencies=Object.keys(plan.totals),total=currencies.length===1?T('Total diketahui: ','Known total: ')+planMoney(plan.totals[currencies[0]],currencies[0]):currencies.length>1?T('Harga ditampilkan satu per satu karena mata uang daftar berbeda.','Prices shown individually because listings use different currencies.'):T('Harga belum tercantum.','Prices not listed.');
+   results=`<div class="box" role="status"><b>${plan.items.length} ${T('pengalaman','experiences')} · ${plan.approximate?T('sekitar ','approx. '):''}${planTime(plan.minutes)}</b><p>${esc(total)}${plan.unknownPrices?' · '+T('Sebagian harga belum tercantum atau belum jelas','Some prices not listed or unclear'):''}</p></div>
+   ${plan.items.map((item,i)=>{const shared=Object.keys(DIMS).filter(k=>S.dna[k]>=.5&&item.b.dna[k]>=.5).sort((a,b)=>S.dna[b]-S.dna[a]).slice(0,2);
+    return `<div class="box"><h2 style="font-size:1.2rem">${i+1}. ${esc(item.b.name)}</h2>${item.L.name?`<p>${esc(item.L.name)}</p>`:''}<p>${item.duration.approximate?T('Sekitar ','About '):''}${planTime(item.duration.minutes)} · ${item.price?esc(planMoney(item.price.cents,item.price.currency)):T('Harga belum tercantum atau belum jelas','Price not listed or unclear')}</p><p class="small">${item.score}% ${T('cocok dengan DNA Perjalanan','Travel DNA match')}</p><p>${shared.length?T('Sesuai preferensi Anda: ','Matches your preferences: ')+shared.map(dimensionText).join(T(' dan ',' and '))+'.':T('Dipilih berdasarkan skor DNA Perjalanan Anda.','Chosen by your Travel DNA match score.')} ${T('Sesuai waktu yang tersedia.','Fits within your available time.')}</p><button class="btn alt" data-a="view" data-id="${esc(item.b.id)}">${T('Lihat pengalaman','View experience')}</button></div>`}).join('')}`;
+  }
+ }
+ return heading+`<label class="f" for="plan-time">${T('Waktu tersedia','Available time')}</label><select class="t" id="plan-time">${[2,4,6,8].map(h=>`<option value="${h*60}" ${p.minutes===h*60?'selected':''}>${h===8?T('Sehari penuh / ','Full day / '):''}${h} ${T('jam','hours')}</option>`).join('')}</select>
+ <label class="f" for="plan-budget">${T('Anggaran (opsional)','Budget (optional)')}${currency?' · '+esc(currency):''}</label><input class="t" id="plan-budget" type="text" inputmode="decimal" aria-describedby="plan-budget-hint" value="${esc(p.budget)}" ${currency?'':'disabled'}>
+ <p class="small" id="plan-budget-hint">${currency?T('Gunakan angka tanpa pemisah ribuan (contoh: 250000). Batas hanya berlaku untuk harga yang diketahui dalam ','Use digits without thousands separators (for example: 250000). The limit applies only to known prices in ')+esc(currency)+'.':T('Mata uang belum diketahui. Anggaran belum dapat diperiksa.','No listing currency is known. A budget cannot be checked yet.')}</p>
+ <button class="btn sun wide" style="margin-top:.7rem" data-a="buildPlan">${T('Buat rencana saya','Build my plan')}</button>
+ <p class="small" style="margin-top:.7rem">${T('Urutan saran berdasarkan kecocokan DNA. Durasi yang tidak jelas tidak disertakan. Waktu perjalanan tidak dihitung; tanyakan jam buka, ketersediaan, dan biaya akhir kepada pemilik. Harga yang hilang tidak dianggap gratis. Dengan anggaran, harga dalam mata uang lain tidak disertakan.','Suggestions ordered by DNA match. Unclear durations are omitted. Travel time is not included; confirm opening times, availability, and final costs with hosts. Missing prices are not free. With a budget, prices in other currencies are excluded.')}</p>
+ <div id="plan-results" aria-live="polite">${results}</div></div>`;
+};
 
 V.exp=()=>{const b=biz(S.biz),L=Lst(b);return `<div class="hero" style="background:${b.col}"><button class="pill back" data-a="go" data-s="explore">‹ All places</button>${b.e}</div>
  <div class="pad" style="padding-top:1rem"><h1 style="font-size:1.6rem">${esc(L.name||b.name)}</h1>
@@ -453,7 +516,7 @@ V.ai=()=>{const P=t=>`<p style="text-align:justify;hyphens:auto">${t}</p>`,H=t=>
 /* ---------- Render ---------- */
 const GNAV=()=>[["explore","🧭",T("Jelajahi","Explore")],["swipe","🧬",T("DNA Perjalanan","Travel DNA")],["inbox","💬",T("Pesan","Messages")],["trips","📅",T("Kunjungan","Visits")],["help","🗣️",T("Frasa","Phrases")]];
 const BNAV=()=>[["b-list","🎙️",T("Usaha","Listing")],["b-insights","💛",T("Tamu","Visitors")],["b-msgs","💬",T("Pesan","Messages")],["b-book","📅",T("Pesanan","Bookings")],["b-journey","🌱",T("Tumbuh","Growth")]];
-const GROUP={chat:"inbox",dna:"swipe",match:"swipe",exp:"explore",card:"explore",thanks:"explore",story:"explore","b-thread":"b-msgs","b-story":"b-insights"};
+const GROUP={chat:"inbox",dna:"swipe",match:"swipe",plan:"explore",exp:"explore",card:"explore",thanks:"explore",story:"explore","b-thread":"b-msgs","b-story":"b-insights"};
 function render(sync=true){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]||V.land)();
  $("#net").className="pill net"+(S.online?"":" off");$("#net").textContent=S.online?T("● Terhubung","● Online"):T("○ Luring","○ Offline");
  $("#acct").textContent=S.role==="biz"?B().e+" "+B().host:"🧳 "+(S.guest.n||T("Tamu","Guest"));
@@ -640,6 +703,7 @@ async function resetDemo(){
  }catch(e){offlineError(e)}finally{resetting=false}
 }
 const A={
+ buildPlan:()=>{ui.dayPlan={minutes:Number($("#plan-time").value),budget:$("#plan-budget").value.trim(),built:true};render(false)},
  go:el=>go(el.dataset.s), swipe:el=>swipe(+el.dataset.v),
  redo:()=>{S.i=0;S.likes=[];S.dna=null;go("swipe")},
  net:()=>setOnline(!S.online),
@@ -718,6 +782,7 @@ function closedNote(b,d){if(!offDay(b,d))return"";const day=DAYN[new Date(d+"T12
  return `<div role="status" style="background:#FFE4D9;border:1.5px solid var(--orange);border-radius:16px;padding:.7rem .8rem;margin-top:.8rem"><b>⚠️ ${esc(b.host)} ${T("biasanya tutup pada hari "+day+".","is usually closed on "+day+".")}</b><p class="small" style="color:var(--ink);margin-top:.2rem">${T("Buka: ","Open: ")}${esc(Lst(b).availability)}. ${T("Anda tetap dapat mengirim permintaan, tetapi mungkin ditolak. Sebaiknya tanyakan dahulu.","You can still send the request, but it may be declined. It is best to ask first.")}</p><button class="btn alt" style="margin-top:.5rem;min-height:40px;padding:.4rem .9rem" data-a="go" data-s="chat">💬 ${T("Pesan ","Message ")}${esc(b.host)} ${T("terlebih dahulu","first")}</button></div>`}
 const SLOTS_T=["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00"];
 document.addEventListener("input",e=>{const id=e.target.id;
+ if(id==='plan-time'||id==='plan-budget'){ui.dayPlan=ui.dayPlan||{minutes:240,budget:'',built:false};ui.dayPlan[id==='plan-time'?'minutes':'budget']=id==='plan-time'?Number(e.target.value):e.target.value;ui.dayPlan.built=false;const results=$('#plan-results');if(results)results.innerHTML=''}
  if(id==="bd"){const w=$("#bwarn");if(w)w.innerHTML=closedNote(biz(S.biz),e.target.value)}
  if(id==="bti"&&e.target.value){ui.time=e.target.value;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c.dataset.h===ui.time))}
  if(id==="msg"){keep();$("#pv").innerHTML=pcHTML(draftCard());save()}
