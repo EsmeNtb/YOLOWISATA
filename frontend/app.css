@@ -284,3 +284,9 @@ details.box[open] summary::after{content:"－"}
 /* inputs and buttons inside fold-out boxes were sized without their padding and spilled out on the right */
 *,*::before,*::after{box-sizing:border-box}
 details.box summary{align-items:flex-start}
+
+/* --- pop-ups sit in the middle of the screen on computers (still slide up from the bottom on phones) --- */
+@media(min-width:760px){
+ .modal{place-items:center!important;padding:1.5rem!important}
+ .sheet{position:static;width:100%;max-width:520px;margin:0;border-radius:26px;max-height:calc(100% - 2rem);animation:pop .22s ease-out}
+}

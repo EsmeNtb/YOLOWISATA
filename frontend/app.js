@@ -299,7 +299,7 @@ V.inbox=()=>{const row=b=>{const ms=thread(b,gt()),last=ms[ms.length-1];return `
 V.trips=()=>{const ks=S.bookings.filter(k=>k.gid===S.gid);return `<div class="pad"><h1 style="font-size:1.7rem">Your visits</h1><p class="sub">You ask, the host decides. No one is charged here.</p>
  ${ks.length?ks.slice().reverse().map(k=>{const b=biz(k.biz);return `<div class="box"><div style="display:flex;gap:.7rem;align-items:center"><span style="font-size:1.8rem">${b.e}</span><div style="flex:1"><b>${esc(b.name)}</b><div class="small">${esc(k.date)} at ${k.time||"09:00"} · ${k.people} ${k.people>1?"people":"person"}</div></div>
  <span class="tag ${k.status==="confirmed"?"strong":k.status==="declined"?"warn":"early"}">${k.status==="confirmed"?"Confirmed":k.status==="declined"?"Declined":"Waiting"}</span></div>
- <p class="small" style="margin-top:.5rem">${k.sync==="pending"?"📦 Saved on this phone. Will send when connection returns.":k.status==="pending"?"Sent. Waiting for "+esc(b.host)+" to confirm.":k.status==="confirmed"?esc(b.host)+" is expecting you.":esc(b.host)+" cannot host you that day. Try another date."}</p></div>`}).join(""):`<div class="box"><b>No visits yet</b><p class="sub">Pick a place and ask to book. It takes two taps.</p></div>`}
+ ${k.off&&k.status==="pending"?`<p class="small" style="margin-top:.5rem">⚠️ ${esc(b.host)} is usually closed that day, so this may be declined.</p>`:""}<p class="small" style="margin-top:.5rem">${k.sync==="pending"?"📦 Saved on this phone. Will send when connection returns.":k.status==="pending"?"Sent. Waiting for "+esc(b.host)+" to confirm.":k.status==="confirmed"?esc(b.host)+" is expecting you.":esc(b.host)+" cannot host you that day. Try another date."}</p></div>`}).join(""):`<div class="box"><b>No visits yet</b><p class="sub">Pick a place and ask to book. It takes two taps.</p></div>`}
  <button class="btn wide" style="margin-top:1rem" data-a="view" data-id="${S.biz}">Ask to book ${esc(biz(S.biz).name)}</button></div>`};
 
 const PROMPTS=["What will you remember?","What would you tell the next traveler?","What made this place special?"];
@@ -365,7 +365,7 @@ V["b-thread"]=()=>{const b=B(),t=threadsOf(b).find(t=>t.id===ui.tid);if(!t)retur
 V["b-book"]=()=>{const b=B(),ks=bookingsOf(b);return `<div class="pad"><h1 style="font-size:1.6rem">${T("Pesanan","Bookings")}</h1><p class="sub">${T("Tamu meminta, Anda yang memutuskan.","Guests ask, you decide.")}</p>
  ${ks.length?ks.slice().reverse().map(k=>`<div class="box"><div style="display:flex;gap:.7rem;align-items:center"><div style="flex:1"><b>${esc(k.who)}</b><div class="small">${esc(tv(k.date))} ${T("pukul","at")} ${k.time||"09:00"} · ${k.people} ${T("orang",k.people>1?"people":"person")}</div></div>
  ${k.status==="pending"?"":`<span class="tag ${k.status==="confirmed"?"strong":"warn"}">${k.status==="confirmed"?T("Diterima","Confirmed"):T("Ditolak","Declined")}</span>`}</div>
- ${k.sync==="pending"?`<p class="small" style="margin-top:.5rem">📦 ${T("Permintaan ini belum terkirim dari ponsel tamu.","This request has not left the guest’s phone yet.")}</p>`:k.status==="pending"?`<div class="row" style="margin-top:.7rem"><button class="btn" data-a="bdec" data-id="${k.id}" data-v="confirmed">${T("Terima","Confirm")}</button><button class="btn alt" data-a="bdec" data-id="${k.id}" data-v="declined">${T("Tolak","Decline")}</button></div>`:""}</div>`).join(""):`<div class="box"><b>${T("Belum ada pesanan","No bookings yet")}</b><p class="sub">${T("Permintaan dari tamu akan muncul di sini.","Requests from guests will appear here.")}</p></div>`}
+ ${k.off&&k.status==="pending"?`<p class="small" style="margin-top:.5rem">⚠️ ${T("Tamu meminta hari di luar jadwal buka Anda.","The guest asked for a day outside your opening days.")}</p>`:""}${k.sync==="pending"?`<p class="small" style="margin-top:.5rem">📦 ${T("Permintaan ini belum terkirim dari ponsel tamu.","This request has not left the guest’s phone yet.")}</p>`:k.status==="pending"?`<div class="row" style="margin-top:.7rem"><button class="btn" data-a="bdec" data-id="${k.id}" data-v="confirmed">${T("Terima","Confirm")}</button><button class="btn alt" data-a="bdec" data-id="${k.id}" data-v="declined">${T("Tolak","Decline")}</button></div>`:""}</div>`).join(""):`<div class="box"><b>${T("Belum ada pesanan","No bookings yet")}</b><p class="sub">${T("Permintaan dari tamu akan muncul di sini.","Requests from guests will appear here.")}</p></div>`}
  <p class="small" style="margin-top:.8rem">${T("YoloWisata tidak pernah menerima pesanan atas nama Anda.","YoloWisata never accepts a booking for you.")}</p></div>`};
 
 V["b-insights"]=()=>{const b=B(),A=insightsFor(b);
@@ -429,9 +429,11 @@ function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toas
   ${ev.map(e=>{const o=e.backend?null:ownerText(e);return `<div class="quote">“${esc(o||e.t)}”<small>${e.backend?T("Bukti tamu · teks asli","Visitor evidence · original text"):e.n?esc(e.n)+" "+e.f+" · "+T("kartu pos","postcard"):e.f+" · "+T("pertanyaan","question")}${o?" · "+T("diterjemahkan, aslinya: ","translated, original: ")+esc(e.t):""}</small></div>`}).join("")}
   <button class="btn wide" style="margin-top:1rem" data-a="close">${T("Tutup","Close")}</button></div></div>`}
  if(m.t==="book"){const b=biz(S.biz),d=new Date(Date.now()+6*864e5).toISOString().slice(0,10);
-  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.3rem">Ask ${esc(b.host)} for a visit</h2><p class="sub">${esc(Lst(b).availability?"Open: "+Lst(b).availability:"Ask about opening days")}. ${esc(b.host)} confirms each request personally.</p>
+  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><button data-a="close" aria-label="Close" style="float:right;width:38px;height:38px;border-radius:50%;background:var(--white);border:1.5px solid var(--line);font-weight:800;line-height:1;margin:-.2rem -.2rem .4rem .6rem">✕</button><h2 style="font-size:1.3rem">Ask ${esc(b.host)} for a visit</h2><p class="sub">${esc(Lst(b).availability?"Open: "+Lst(b).availability:"Ask about opening days")}. ${esc(b.host)} confirms each request personally.</p>
   <div class="row"><div style="flex:2"><label class="f" for="bd">Day</label><input class="t" type="date" id="bd" value="${d}"></div><div style="flex:1"><label class="f" for="bp">People</label><select class="t" id="bp">${[1,2,3,4,5,6,7,8].map(n=>`<option ${n===2?"selected":""}>${n}</option>`).join("")}</select></div></div>
-  <label class="f">Time</label><div id="bt">${["08:00","09:00","10:00","13:00","15:00"].map(h=>`<button class="chip pick ${(ui.time||"09:00")===h?"on":""}" data-a="btime" data-h="${h}">${h}</button>`).join("")}</div>
+  <div id="bwarn">${closedNote(b,d)}</div>
+  <label class="f">Time</label><div id="bt">${SLOTS_T.map(h=>`<button class="chip pick ${(ui.time||"09:00")===h?"on":""}" data-a="btime" data-h="${h}">${h}</button>`).join("")}</div>
+  <div style="display:flex;align-items:center;gap:.6rem;margin-top:.3rem"><label class="small" for="bti">or another time</label><input class="t" type="time" id="bti" step="900" style="width:auto" value="${ui.time&&!SLOTS_T.includes(ui.time)?ui.time:""}"></div>
   <button class="btn wide" style="margin-top:1rem" data-a="book">Send request</button><p class="small" style="margin-top:.5rem">${S.online?"No payment in this demo.":"You are offline. The request is kept on this phone and sent later."}</p></div></div>`}
  o.innerHTML=h+t}
 let tt;function toast(t){ui.toast=t;renderOver();clearTimeout(tt);tt=setTimeout(()=>{ui.toast="";renderOver()},3600)}
@@ -519,11 +521,11 @@ const A={
  bq:el=>{push(B(),ui.tid,{from:"b",t:el.dataset.t,en:el.dataset.en});render()},
  bsend:()=>{const v=$("#cin").value.trim();if(!v)return;const en=PB.id[norm(v)];push(B(),ui.tid,Object.assign({from:"b",t:v},en?{en}:{}));render()},
  trm:el=>{S.tr[el.dataset.k]=!S.tr[el.dataset.k];render()},
- btime:el=>{ui.time=el.dataset.h;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c===el))},
+ btime:el=>{const o=$("#bti");if(o)o.value="";ui.time=el.dataset.h;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c===el))},
  bookopen:()=>{ui.modal={t:"book"};renderOver()},
  book:()=>{const d=$("#bd").value,b=biz(S.biz);if(!d){toast("Pick a day first.");return}
   const nice=new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
+  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,off:offDay(b,d)?1:0,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
  bdec:el=>{const id=el.dataset.id,k=S.bookings.find(k=>k.id===id);if(k){k.status=el.dataset.v;k.ts=Date.now()}else{S.bstat[id]=el.dataset.v;S.bts[id]=Date.now()}render();toast(T((el.dataset.v==="confirmed"?"Diterima.":"Ditolak.")+(S.online?" Tamu sudah bisa melihatnya.":" Tersimpan di ponsel. Dikirim saat ada sinyal."),(el.dataset.v==="confirmed"?"Confirmed.":"Declined.")+(S.online?" The guest can see it now.":" Saved locally. Will sync when connection returns.")))},
  prompt:el=>{S.draft.p=+el.dataset.i;keep();render()}, bg:el=>{S.draft.bg=el.dataset.b;keep();render()},
  stk:el=>{const s=el.dataset.s,a=S.draft.s;a.includes(s)?a.splice(a.indexOf(s),1):a.length<4&&a.push(s);keep();render()},
@@ -554,7 +556,15 @@ const A={
 function keep(){const m=$("#msg");if(m)S.draft.t=m.value}
 function grab(){const t=$("#trn");if(t)ui.transcript=t.value;ui.over=ui.over||{};document.querySelectorAll("#flds input").forEach(i=>{if(i.value.trim())ui.over[i.dataset.k]=i.value.trim();else delete ui.over[i.dataset.k]})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&A[el.dataset.a])A[el.dataset.a](el,e)});
+const DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+/* true when the listing names its open days and the chosen date is not one of them; unknown opening days never warn */
+function offDay(b,d){const av=(Lst(b).availability||"");if(!d||/every day/i.test(av))return false;const open=DAYN.filter(n=>av.includes(n));if(!open.length)return false;return !open.includes(DAYN[new Date(d+"T12:00").getDay()])}
+function closedNote(b,d){if(!offDay(b,d))return"";const day=DAYN[new Date(d+"T12:00").getDay()];
+ return `<div role="status" style="background:#FFE4D9;border:1.5px solid var(--orange);border-radius:16px;padding:.7rem .8rem;margin-top:.8rem"><b>⚠️ ${esc(b.host)} is usually closed on ${day}s.</b><p class="small" style="color:var(--ink);margin-top:.2rem">Open: ${esc(Lst(b).availability)}. You can still send the request, but it may be declined. It is best to ask first.</p><button class="btn alt" style="margin-top:.5rem;min-height:40px;padding:.4rem .9rem" data-a="go" data-s="chat">💬 Message ${esc(b.host)} first</button></div>`}
+const SLOTS_T=["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00"];
 document.addEventListener("input",e=>{const id=e.target.id;
+ if(id==="bd"){const w=$("#bwarn");if(w)w.innerHTML=closedNote(biz(S.biz),e.target.value)}
+ if(id==="bti"&&e.target.value){ui.time=e.target.value;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c.dataset.h===ui.time))}
  if(id==="msg"){keep();$("#pv").innerHTML=pcHTML(draftCard());save()}
  if(id==="trn"&&!ui.edit){ui.transcript=e.target.value;ui.over={};$("#flds").innerHTML=fieldsHTML(extract(ui.transcript,B()))}});
 document.addEventListener("change",e=>{if(e.target.id!=="ph"||!e.target.files[0])return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),k=Math.min(1,420/img.width);c.width=img.width*k;c.height=img.height*k;c.getContext("2d").drawImage(img,0,0,c.width,c.height);keep();S.draft.photo=c.toDataURL("image/jpeg",.7);render()};img.src=r.result};r.readAsDataURL(e.target.files[0])});
