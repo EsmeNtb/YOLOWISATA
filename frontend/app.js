@@ -3,12 +3,14 @@ const API=((window.YOLO_CONFIG||{}).api||"").replace(/\/$/,"");
 const DIMS={hands:"Hands-on",nature:"Nature",culture:"Local culture",food:"Food discovery",quiet:"Quiet places",crowds:"Crowded attractions"};
 const PAL=["#FFC928","#47C882","#FF7043","#7193D8","#D6E8FA"];
 const WHYG={hands:"You make something yourself",nature:"Time outdoors",culture:"A small local business with its own story",food:"Local food, made by locals",quiet:"Small groups, far from the crowds"};
+const PB={en:{},id:{}},norm=t=>t.toLowerCase().replace(/[^\p{L}\p{N} ]/gu,"").replace(/\s+/g," ").trim();   /* small sentence phrasebook for free-typed chat */
 let CARDS=[],SECTORS={},SAMPLES={},BIZ0=[],LOVED={},ASKS={},LID={},IDEAS=[],IDEAID={},GQ=[],BR=[],IDQ={},PHR=[],POS={},GATE=[18,86];
 function applyContent(c){CARDS=c.swipeCards;GATE=(c.village&&c.village.gate)||GATE;
  for(const k in c.sectors){const s=c.sectors[k];SECTORS[k]=[s.emoji,s.dna,s.suffix];SAMPLES[k]=s.sample}
  const lex=(src,dst)=>{for(const k in src){dst[k]=[src[k].en,src[k].words];LID[k]=src[k].id}};lex(c.themes.loved,LOVED);lex(c.themes.asks,ASKS);
  IDEAS=c.ideas||[];IDEAS.forEach(i=>IDEAID[i.title]=[i.title_id||i.title,i.text_id||i.text]);
  GQ=c.guestQuestions||[];GQ.forEach(q=>IDQ[q.t]=q.id);BR=c.ownerReplies||[];
+ (c.phrasebook||[]).forEach(p=>{PB.en[norm(p.en)]=p.id;PB.id[norm(p.id)]=PB.id[norm(p.id)]||p.en[0].toUpperCase()+p.en.slice(1)});
  PHR=(c.phrases||[]).map(p=>[p.id,p.en,p.say,p.emoji]);
  BIZ0=c.businesses.map(b=>Object.assign({why:null,chips:[],story:"",L:{},cards:[],qs:[],bookings:[],threads:[],e:(SECTORS[b.sector]||SECTORS.Other)[0],col:"#FFC928",place:""},b,{dna:b.dna||(SECTORS[b.sector]||SECTORS.Other)[1]}));
  BIZ0.forEach(b=>{if(b.pos)POS[b.id]=b.pos})}
@@ -202,23 +204,24 @@ V.login=()=>{const a=S.acct,biz=ui.ltab==="biz",flags=["🌍","🇮🇩","🇲�
  ${biz?`
  <div class="box"><h3>Log in to your business</h3><p class="sub">Use the phone number and PIN you registered with.</p>${phonePin}
  <button class="btn wide" style="margin-top:.9rem" data-a="blogin">Log in</button></div>
- <div class="box"><h3>New here? Register your business</h3><p class="sub">Any kind: a farm, a workshop, a kitchen, a homestay, a guide.</p>
+ <details class="box" ${ui.regOpen?"open":""}><summary data-a="regopen"><span><b>New here? Register your business</b><br><span class="small">Any sector is welcome: farm, workshop, kitchen, homestay, guide and more</span></span></summary>
  <label class="f" for="bn">Your first name</label><input class="t" id="bn" maxlength="24" placeholder="For example Rina">
  <div style="margin-top:.6rem">${Object.keys(SECTORS).map(k=>`<button class="chip pick ${ui.newSector===k?"on":""}" data-a="nsec" data-s="${k}">${SECTORS[k][0]} ${k}</button>`).join("")}</div>
  <div class="row"><div style="flex:3"><label class="f" for="rp">Phone number</label><input class="t" id="rp" inputmode="tel" placeholder="0812…"></div><div style="flex:2"><label class="f" for="rpin">Choose a PIN</label><input class="t" id="rpin" type="password" inputmode="numeric" maxlength="6"></div></div>
  <button class="btn sun wide" style="margin-top:.9rem" data-a="register">Register and describe it by voice</button>
- ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected, so the phone number and PIN are optional and this business lives on this device only.</p>`}</div>
+ ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected, so the phone number and PIN are optional and this business lives on this device only.</p>`}</details>
  <details class="box"><summary><b>Try a sample business</b> <span class="small">no login needed</span></summary>
  ${all().map(b=>`<button class="bz" data-a="asbiz" data-id="${b.id}"><span class="tile" style="background:${b.col}">${b.e}</span><span><b>${esc(b.name)}</b><span class="small">${b.sector}</span></span></button>`).join("")}</details>`
  :`
- <div class="box sel"><h3>How guests see you</h3><p class="sub">Optional. Used on your messages, bookings and postcards.</p>
- <div class="row"><div style="flex:2"><label class="f" for="gn">Nickname</label><input class="t" id="gn" maxlength="20" value="${esc(S.guest.n)}"></div>
+ <div class="box sel"><h3>Welcome 👋</h3><p class="sub">No sign-up needed. Add a nickname if you like.</p>
+ <div class="row"><div style="flex:2"><label class="f" for="gn">Nickname (optional)</label><input class="t" id="gn" maxlength="20" value="${esc(S.guest.n)}"></div>
  <div style="flex:1"><label class="f" for="gf">From</label><select class="t" id="gf">${flags.map(x=>`<option ${x===S.guest.f?"selected":""}>${x}</option>`).join("")}</select></div></div>
- <button class="btn wide" style="margin-top:.9rem" data-a="asguest">Save and keep exploring</button></div>
+ <button class="btn wide" style="margin-top:.9rem" data-a="asguest">Keep exploring</button></div>
  ${a&&a.kind==="guest"?`<div class="box"><h3>Logged in</h3><p class="sub">Your visits and chats follow you to any device where you log in with ${esc(a.phone)}.</p><button class="btn alt wide" style="margin-top:.8rem" data-a="logout">Log out</button></div>`
- :`<div class="box"><h3>Log in or create an account</h3><p class="sub">Only needed if you want your visits and chats on another device. The first time you use a number, this creates the account.</p>${phonePin}
- <button class="btn alt wide" style="margin-top:.9rem" data-a="glogin">Log in</button>
- ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected right now, so accounts are switched off. Everything you do is still kept on this device.</p>`}</div>`}`}
+ :`<details class="box"><summary><span><b>Log in or Sign up</b><br><span class="small">Keep your chats and visits on any device</span></span></summary>
+ <p class="sub" style="margin-top:.7rem">Enter your phone number and a PIN.<br>New number? We’ll create your account.</p>${phonePin}
+ <button class="btn alt wide" style="margin-top:.9rem" data-a="glogin">Continue</button>
+ ${API?"":`<p class="small" style="margin-top:.5rem">No server is connected right now, so accounts are switched off. Everything you do is still kept on this device.</p>`}</details>`}`}
  <p class="small" style="margin-top:1.2rem;display:flex;gap:1rem;flex-wrap:wrap"><button style="text-decoration:underline;font-weight:700" data-a="go" data-s="ai">How YoloWisata works</button><button style="text-decoration:underline" data-a="reset">Clear everything on this device</button></p>
  </div>`};
 
@@ -282,7 +285,7 @@ V.exp=()=>{const b=biz(S.biz),L=Lst(b);return `<div class="hero" style="backgrou
 function chatHTML(b,tid,side){const en=side==="g"||S.blang==="en",ms=thread(b,tid),other=en?"en":"id",lang=side==="g"?"English":T("bahasa Indonesia","English"),bz=side==="b";
  return ms.map((m,i)=>{if(m.from==="sys")return `<div class="bub sys">${esc(m.t)}</div>`;
   const me=m.from===side,k=b.id+tid+i,tr=m[other];
-  return `<div class="bub ${me?"me":""}">${esc(me||!tr||S.tr[k]?m.t:tr)}<small>${me?(m.sync==="pending"?(bz?T("📦 Tersimpan di ponsel. Dikirim saat ada sinyal.","📦 Saved on this phone. Will send when connection returns."):"📦 Saved on this phone. Will send when connection returns."):(tr?"":"")):tr?`${bz?T("Diterjemahkan ke "+lang+" di ponsel ini","Translated to English on this phone"):"Translated to "+lang+" on this phone"} · <button data-a="trm" data-k="${k}">${S.tr[k]?(bz?T("terjemahan","translation"):"translation"):(bz?T("teks asli","original"):"original")}</button>`:(bz?T("Kalimat ini belum bisa diterjemahkan. Kalau ragu, tanyakan langsung.","No translation for this sentence yet. If unsure, ask in person."):"No translation for this sentence yet. If unsure, ask in person.")}</small></div>`}).join("")||`<div class="bub sys">No messages yet. Say hello.</div>`}
+  return `<div class="bub ${me?"me":""}">${esc(me||!tr||S.tr[k]?m.t:tr)}<small>${me?(m.sync==="pending"?(bz?T("📦 Tersimpan di ponsel. Dikirim saat ada sinyal.","📦 Saved on this phone. Will send when connection returns."):"📦 Saved on this phone. Will send when connection returns."):(tr?"":"")):tr?`${bz?T("Diterjemahkan ke "+lang+" di ponsel ini","Translated to English on this phone"):"Translated to "+lang+" on this phone"} · <button data-a="trm" data-k="${k}">${S.tr[k]?(bz?T("terjemahan","translation"):"translation"):(bz?T("teks asli","original"):"original")}</button>`:(other==="en"&&m.id)||(other==="id"&&m.en&&m.from==="b")?"":(bz?T("Kalimat ini belum bisa diterjemahkan. Kalau ragu, tanyakan langsung.","Shown as the guest wrote it. No translation for this sentence yet."):"Shown as written. No translation for this sentence yet. If unsure, ask in person.")}</small></div>`}).join("")||`<div class="bub sys">No messages yet. Say hello.</div>`}
 V.chat=()=>{const b=biz(S.biz);return `<div class="chat"><div class="head"><button class="pill" data-a="go" data-s="inbox">‹ Chats</button><span style="font-size:1.5rem">${b.e}</span><b>${esc(b.host)}</b><span class="small">replies in Indonesian</span></div>
  <div class="msgs">${chatHTML(b,gt(),"g")}</div>
  <div class="foot"><div>${GQ.map((q,i)=>`<button class="chip pick" data-a="gq" data-i="${i}">${q.t}</button>`).join("")}</div>
@@ -296,7 +299,7 @@ V.inbox=()=>{const row=b=>{const ms=thread(b,gt()),last=ms[ms.length-1];return `
 V.trips=()=>{const ks=S.bookings.filter(k=>k.gid===S.gid);return `<div class="pad"><h1 style="font-size:1.7rem">Your visits</h1><p class="sub">You ask, the host decides. No one is charged here.</p>
  ${ks.length?ks.slice().reverse().map(k=>{const b=biz(k.biz);return `<div class="box"><div style="display:flex;gap:.7rem;align-items:center"><span style="font-size:1.8rem">${b.e}</span><div style="flex:1"><b>${esc(b.name)}</b><div class="small">${esc(k.date)} at ${k.time||"09:00"} · ${k.people} ${k.people>1?"people":"person"}</div></div>
  <span class="tag ${k.status==="confirmed"?"strong":k.status==="declined"?"warn":"early"}">${k.status==="confirmed"?"Confirmed":k.status==="declined"?"Declined":"Waiting"}</span></div>
- <p class="small" style="margin-top:.5rem">${k.sync==="pending"?"📦 Saved on this phone. Will send when connection returns.":k.status==="pending"?"Sent. Waiting for "+esc(b.host)+" to confirm.":k.status==="confirmed"?esc(b.host)+" is expecting you.":esc(b.host)+" cannot host you that day. Try another date."}</p></div>`}).join(""):`<div class="box"><b>No visits yet</b><p class="sub">Pick a place and ask to book. It takes two taps.</p></div>`}
+ ${k.off&&k.status==="pending"?`<p class="small" style="margin-top:.5rem">⚠️ ${esc(b.host)} is usually closed that day, so this may be declined.</p>`:""}<p class="small" style="margin-top:.5rem">${k.sync==="pending"?"📦 Saved on this phone. Will send when connection returns.":k.status==="pending"?"Sent. Waiting for "+esc(b.host)+" to confirm.":k.status==="confirmed"?esc(b.host)+" is expecting you.":esc(b.host)+" cannot host you that day. Try another date."}</p></div>`}).join(""):`<div class="box"><b>No visits yet</b><p class="sub">Pick a place and ask to book. It takes two taps.</p></div>`}
  <button class="btn wide" style="margin-top:1rem" data-a="view" data-id="${S.biz}">Ask to book ${esc(biz(S.biz).name)}</button></div>`};
 
 const PROMPTS=["What will you remember?","What would you tell the next traveler?","What made this place special?"];
@@ -330,7 +333,7 @@ const ORBC=["#FFC928","#47C882","#FF7043","#7193D8","#FFFFFF","#FFE9A3"];
 V.story=()=>{const b=biz(S.biz),c=cardsOf(b);
  return `<div class="scene">${farmSVG(true)}<div class="cap"><h1>The Story of This Place</h1><p class="hand">${c.length?"Moments that stayed here. Tap one.":"No memories yet. Be the first."}</p></div>
  ${c.map((c,i)=>{const [x,y]=SLOTS[i%SLOTS.length],sz=46+(i*7)%20,mine=!!c.biz;
-  return `<button class="orb ${["","wink","","oh"][i%4]} ${mine?"new":""} ${c.status&&c.status!=="sent"?"pending":""}" data-a="open" data-id="${c.id}" aria-label="Postcard from ${esc(c.n||"a traveler")}" style="left:calc(${x}% - ${sz/2}px);top:calc(${y+9}% - ${sz/2}px);width:${sz}px;height:${sz}px;background:${ORBC[i%ORBC.length]};--d:${4+i%5}s;--dl:-${i*.7}s"><span class="face"><i></i></span><span class="ic">${first(c.s)}</span></button>`}).join("")}
+  return `<button class="orb ${["","wink","","oh"][i%4]} ${mine?"new":""} ${c.status&&c.status!=="sent"?"pending":""}" data-a="open" data-id="${c.id}" aria-label="Postcard from ${esc(c.n||"a traveler")}" style="left:calc(${x}% - ${sz/2}px);top:calc(${y+9}% - ${sz/2}px);width:${sz}px;height:${sz}px;background:${ORBC[i%ORBC.length]};--d:${4+i%5}s;--dl:-${i*.7}s"><span class="of"><i></i></span><span class="ic">${first(c.s)}</span></button>`}).join("")}
  </div><div class="pad" style="padding-top:.9rem"><p class="sub">${c.length} memories left by travelers at ${esc(b.name)}${c.length?", in "+new Set(c.map(x=>x.l)).size+" languages":""}.</p>
  <div class="row" style="margin-top:.8rem"><button class="btn" data-a="go" data-s="card">Leave your postcard</button><button class="btn alt" data-a="go" data-s="exp">Back to ${esc(b.host)}</button></div></div>`};
 
@@ -362,7 +365,7 @@ V["b-thread"]=()=>{const b=B(),t=threadsOf(b).find(t=>t.id===ui.tid);if(!t)retur
 V["b-book"]=()=>{const b=B(),ks=bookingsOf(b);return `<div class="pad"><h1 style="font-size:1.6rem">${T("Pesanan","Bookings")}</h1><p class="sub">${T("Tamu meminta, Anda yang memutuskan.","Guests ask, you decide.")}</p>
  ${ks.length?ks.slice().reverse().map(k=>`<div class="box"><div style="display:flex;gap:.7rem;align-items:center"><div style="flex:1"><b>${esc(k.who)}</b><div class="small">${esc(tv(k.date))} ${T("pukul","at")} ${k.time||"09:00"} · ${k.people} ${T("orang",k.people>1?"people":"person")}</div></div>
  ${k.status==="pending"?"":`<span class="tag ${k.status==="confirmed"?"strong":"warn"}">${k.status==="confirmed"?T("Diterima","Confirmed"):T("Ditolak","Declined")}</span>`}</div>
- ${k.sync==="pending"?`<p class="small" style="margin-top:.5rem">📦 ${T("Permintaan ini belum terkirim dari ponsel tamu.","This request has not left the guest’s phone yet.")}</p>`:k.status==="pending"?`<div class="row" style="margin-top:.7rem"><button class="btn" data-a="bdec" data-id="${k.id}" data-v="confirmed">${T("Terima","Confirm")}</button><button class="btn alt" data-a="bdec" data-id="${k.id}" data-v="declined">${T("Tolak","Decline")}</button></div>`:""}</div>`).join(""):`<div class="box"><b>${T("Belum ada pesanan","No bookings yet")}</b><p class="sub">${T("Permintaan dari tamu akan muncul di sini.","Requests from guests will appear here.")}</p></div>`}
+ ${k.off&&k.status==="pending"?`<p class="small" style="margin-top:.5rem">⚠️ ${T("Tamu meminta hari di luar jadwal buka Anda.","The guest asked for a day outside your opening days.")}</p>`:""}${k.sync==="pending"?`<p class="small" style="margin-top:.5rem">📦 ${T("Permintaan ini belum terkirim dari ponsel tamu.","This request has not left the guest’s phone yet.")}</p>`:k.status==="pending"?`<div class="row" style="margin-top:.7rem"><button class="btn" data-a="bdec" data-id="${k.id}" data-v="confirmed">${T("Terima","Confirm")}</button><button class="btn alt" data-a="bdec" data-id="${k.id}" data-v="declined">${T("Tolak","Decline")}</button></div>`:""}</div>`).join(""):`<div class="box"><b>${T("Belum ada pesanan","No bookings yet")}</b><p class="sub">${T("Permintaan dari tamu akan muncul di sini.","Requests from guests will appear here.")}</p></div>`}
  <p class="small" style="margin-top:.8rem">${T("YoloWisata tidak pernah menerima pesanan atas nama Anda.","YoloWisata never accepts a booking for you.")}</p></div>`};
 
 V["b-insights"]=()=>{const b=B(),A=insightsFor(b);
@@ -426,9 +429,11 @@ function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toas
   ${ev.map(e=>{const o=e.backend?null:ownerText(e);return `<div class="quote">“${esc(o||e.t)}”<small>${e.backend?T("Bukti tamu · teks asli","Visitor evidence · original text"):e.n?esc(e.n)+" "+e.f+" · "+T("kartu pos","postcard"):e.f+" · "+T("pertanyaan","question")}${o?" · "+T("diterjemahkan, aslinya: ","translated, original: ")+esc(e.t):""}</small></div>`}).join("")}
   <button class="btn wide" style="margin-top:1rem" data-a="close">${T("Tutup","Close")}</button></div></div>`}
  if(m.t==="book"){const b=biz(S.biz),d=new Date(Date.now()+6*864e5).toISOString().slice(0,10);
-  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.3rem">Ask ${esc(b.host)} for a visit</h2><p class="sub">${esc(Lst(b).availability?"Open: "+Lst(b).availability:"Ask about opening days")}. ${esc(b.host)} confirms each request personally.</p>
+  h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><button data-a="close" aria-label="Close" style="float:right;width:38px;height:38px;border-radius:50%;background:var(--white);border:1.5px solid var(--line);font-weight:800;line-height:1;margin:-.2rem -.2rem .4rem .6rem">✕</button><h2 style="font-size:1.3rem">Ask ${esc(b.host)} for a visit</h2><p class="sub">${esc(Lst(b).availability?"Open: "+Lst(b).availability:"Ask about opening days")}. ${esc(b.host)} confirms each request personally.</p>
   <div class="row"><div style="flex:2"><label class="f" for="bd">Day</label><input class="t" type="date" id="bd" value="${d}"></div><div style="flex:1"><label class="f" for="bp">People</label><select class="t" id="bp">${[1,2,3,4,5,6,7,8].map(n=>`<option ${n===2?"selected":""}>${n}</option>`).join("")}</select></div></div>
-  <label class="f">Time</label><div id="bt">${["08:00","09:00","10:00","13:00","15:00"].map(h=>`<button class="chip pick ${(ui.time||"09:00")===h?"on":""}" data-a="btime" data-h="${h}">${h}</button>`).join("")}</div>
+  <div id="bwarn">${closedNote(b,d)}</div>
+  <label class="f">Time</label><div id="bt">${SLOTS_T.map(h=>`<button class="chip pick ${(ui.time||"09:00")===h?"on":""}" data-a="btime" data-h="${h}">${h}</button>`).join("")}</div>
+  <div style="display:flex;align-items:center;gap:.6rem;margin-top:.3rem"><label class="small" for="bti">or another time</label><input class="t" type="time" id="bti" step="900" style="width:auto" value="${ui.time&&!SLOTS_T.includes(ui.time)?ui.time:""}"></div>
   <button class="btn wide" style="margin-top:1rem" data-a="book">Send request</button><p class="small" style="margin-top:.5rem">${S.online?"No payment in this demo.":"You are offline. The request is kept on this phone and sent later."}</p></div></div>`}
  o.innerHTML=h+t}
 let tt;function toast(t){ui.toast=t;renderOver();clearTimeout(tt);tt=setTimeout(()=>{ui.toast="";renderOver()},3600)}
@@ -477,7 +482,8 @@ const A={
  net:()=>setOnline(!S.online),
  close:(el,e)=>{if(e.target===el||el.tagName==="BUTTON"){ui.modal=null;renderOver()}},
  reset:()=>{S=fresh();insightCache.clear();noorInsightId=null;ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};render();toast("Cleared. This device is back to a fresh start.")},
- asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go(S.dna?"explore":"swipe");toast("Saved.")},
+ asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go("explore");toast("Saved.")},
+ regopen:()=>{ui.regOpen=!ui.regOpen},   /* remember it, so picking a sector does not fold the form shut */
  ltab:el=>{ui.ltab=el.dataset.t;go("login")},
  logout:()=>{S.acct=null;render();toast("Logged out. Your data stays on this device.")},
  glogin:()=>{const phone=$("#lp").value.replace(/\D/g,""),pin=$("#lpin").value;if(phone.length<8||pin.length<4){toast("Enter your phone number and a PIN of 4 to 6 digits.");return}
@@ -510,16 +516,16 @@ const A={
  offline:el=>{const b=biz(el.dataset.id);S.saved[b.id]=1;render();toast("Saved on this phone: "+b.name+", your Travel DNA and "+cardsOf(b).length+" postcards.")},
  chatwith:el=>{S.biz=el.dataset.id;go("chat")},
  gq:el=>{const q=GQ[+el.dataset.i],b=biz(S.biz);push(b,gt(),{from:"g",t:q.t,id:q.id});if(q.auto&&Lst(b).price)push(b,gt(),{from:"sys",t:"From the listing: "+Lst(b).price+". "+b.host+" can still answer herself or himself.",sync:"sent"});render()},
- gsend:()=>{const v=$("#cin").value.trim();if(!v)return;push(biz(S.biz),gt(),{from:"g",t:v});render()},
+ gsend:()=>{const v=$("#cin").value.trim();if(!v)return;const id=PB.en[norm(v)];push(biz(S.biz),gt(),Object.assign({from:"g",t:v},id?{id}:{}));render()},
  thread:el=>{ui.tid=el.dataset.id;go("b-thread")},
  bq:el=>{push(B(),ui.tid,{from:"b",t:el.dataset.t,en:el.dataset.en});render()},
- bsend:()=>{const v=$("#cin").value.trim();if(!v)return;push(B(),ui.tid,{from:"b",t:v});render()},
+ bsend:()=>{const v=$("#cin").value.trim();if(!v)return;const en=PB.id[norm(v)];push(B(),ui.tid,Object.assign({from:"b",t:v},en?{en}:{}));render()},
  trm:el=>{S.tr[el.dataset.k]=!S.tr[el.dataset.k];render()},
- btime:el=>{ui.time=el.dataset.h;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c===el))},
+ btime:el=>{const o=$("#bti");if(o)o.value="";ui.time=el.dataset.h;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c===el))},
  bookopen:()=>{ui.modal={t:"book"};renderOver()},
  book:()=>{const d=$("#bd").value,b=biz(S.biz);if(!d){toast("Pick a day first.");return}
   const nice=new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
-  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
+  S.bookings.push({id:"k"+newId(),gid:S.gid,ts:Date.now(),biz:b.id,who:(S.guest.n||"Guest")+" "+S.guest.f,date:nice,visit_date:d,off:offDay(b,d)?1:0,time:ui.time||"09:00",people:+$("#bp").value,status:"pending",sync:st()});go("trips");toast(S.online?"Request sent to "+b.host+".":"Saved on this phone. Will send when connection returns.")},
  bdec:el=>{const id=el.dataset.id,k=S.bookings.find(k=>k.id===id);if(k){k.status=el.dataset.v;k.ts=Date.now()}else{S.bstat[id]=el.dataset.v;S.bts[id]=Date.now()}render();toast(T((el.dataset.v==="confirmed"?"Diterima.":"Ditolak.")+(S.online?" Tamu sudah bisa melihatnya.":" Tersimpan di ponsel. Dikirim saat ada sinyal."),(el.dataset.v==="confirmed"?"Confirmed.":"Declined.")+(S.online?" The guest can see it now.":" Saved locally. Will sync when connection returns.")))},
  prompt:el=>{S.draft.p=+el.dataset.i;keep();render()}, bg:el=>{S.draft.bg=el.dataset.b;keep();render()},
  stk:el=>{const s=el.dataset.s,a=S.draft.s;a.includes(s)?a.splice(a.indexOf(s),1):a.length<4&&a.push(s);keep();render()},
@@ -550,7 +556,15 @@ const A={
 function keep(){const m=$("#msg");if(m)S.draft.t=m.value}
 function grab(){const t=$("#trn");if(t)ui.transcript=t.value;ui.over=ui.over||{};document.querySelectorAll("#flds input").forEach(i=>{if(i.value.trim())ui.over[i.dataset.k]=i.value.trim();else delete ui.over[i.dataset.k]})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&A[el.dataset.a])A[el.dataset.a](el,e)});
+const DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+/* true when the listing names its open days and the chosen date is not one of them; unknown opening days never warn */
+function offDay(b,d){const av=(Lst(b).availability||"");if(!d||/every day/i.test(av))return false;const open=DAYN.filter(n=>av.includes(n));if(!open.length)return false;return !open.includes(DAYN[new Date(d+"T12:00").getDay()])}
+function closedNote(b,d){if(!offDay(b,d))return"";const day=DAYN[new Date(d+"T12:00").getDay()];
+ return `<div role="status" style="background:#FFE4D9;border:1.5px solid var(--orange);border-radius:16px;padding:.7rem .8rem;margin-top:.8rem"><b>⚠️ ${esc(b.host)} is usually closed on ${day}s.</b><p class="small" style="color:var(--ink);margin-top:.2rem">Open: ${esc(Lst(b).availability)}. You can still send the request, but it may be declined. It is best to ask first.</p><button class="btn alt" style="margin-top:.5rem;min-height:40px;padding:.4rem .9rem" data-a="go" data-s="chat">💬 Message ${esc(b.host)} first</button></div>`}
+const SLOTS_T=["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00"];
 document.addEventListener("input",e=>{const id=e.target.id;
+ if(id==="bd"){const w=$("#bwarn");if(w)w.innerHTML=closedNote(biz(S.biz),e.target.value)}
+ if(id==="bti"&&e.target.value){ui.time=e.target.value;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c.dataset.h===ui.time))}
  if(id==="msg"){keep();$("#pv").innerHTML=pcHTML(draftCard());save()}
  if(id==="trn"&&!ui.edit){ui.transcript=e.target.value;ui.over={};$("#flds").innerHTML=fieldsHTML(extract(ui.transcript,B()))}});
 document.addEventListener("change",e=>{if(e.target.id!=="ph"||!e.target.files[0])return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),k=Math.min(1,420/img.width);c.width=img.width*k;c.height=img.height*k;c.getContext("2d").drawImage(img,0,0,c.width,c.height);keep();S.draft.photo=c.toDataURL("image/jpeg",.7);render()};img.src=r.result};r.readAsDataURL(e.target.files[0])});

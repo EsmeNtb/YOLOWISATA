@@ -924,5 +924,107 @@
     74.0
    ]
   }
+ ],
+ "phrasebook": [
+  {
+   "en": "hello",
+   "id": "Halo"
+  },
+  {
+   "en": "hi",
+   "id": "Hai"
+  },
+  {
+   "en": "good morning",
+   "id": "Selamat pagi"
+  },
+  {
+   "en": "good afternoon",
+   "id": "Selamat siang"
+  },
+  {
+   "en": "good evening",
+   "id": "Selamat malam"
+  },
+  {
+   "en": "thank you",
+   "id": "Terima kasih"
+  },
+  {
+   "en": "thanks",
+   "id": "Terima kasih"
+  },
+  {
+   "en": "thank you very much",
+   "id": "Terima kasih banyak"
+  },
+  {
+   "en": "yes",
+   "id": "Ya"
+  },
+  {
+   "en": "no",
+   "id": "Tidak"
+  },
+  {
+   "en": "ok",
+   "id": "Oke"
+  },
+  {
+   "en": "okay",
+   "id": "Oke"
+  },
+  {
+   "en": "see you tomorrow",
+   "id": "Sampai jumpa besok"
+  },
+  {
+   "en": "see you",
+   "id": "Sampai jumpa"
+  },
+  {
+   "en": "how are you",
+   "id": "Apa kabar"
+  },
+  {
+   "en": "what time do you open",
+   "id": "Jam berapa buka"
+  },
+  {
+   "en": "are you open today",
+   "id": "Apakah buka hari ini"
+  },
+  {
+   "en": "are you open tomorrow",
+   "id": "Apakah buka besok"
+  },
+  {
+   "en": "can i pay by card",
+   "id": "Bisa bayar pakai kartu"
+  },
+  {
+   "en": "can i pay cash",
+   "id": "Bisa bayar tunai"
+  },
+  {
+   "en": "where are you",
+   "id": "Di mana lokasinya"
+  },
+  {
+   "en": "we are on our way",
+   "id": "Kami sedang dalam perjalanan"
+  },
+  {
+   "en": "we will be late",
+   "id": "Kami akan terlambat"
+  },
+  {
+   "en": "sorry",
+   "id": "Maaf"
+  },
+  {
+   "en": "you are welcome",
+   "id": "Sama-sama"
+  }
  ]
 }
