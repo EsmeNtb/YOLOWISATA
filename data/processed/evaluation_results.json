@@ -1,0 +1,323 @@
+{
+  "generated_timestamp": "2026-10-04T02:45:49.220926Z",
+  "baseline_implementation": "Deterministic regex and keyword matching (backend.ai v0.2)",
+  "dataset_counts": {
+    "tourism_feedback": 45,
+    "tourism_feedback_challenge": 30,
+    "voice_listing": 18,
+    "intent_test": 30,
+    "translation_test": 24
+  },
+  "experience_dna_standard": {
+    "macro_f1": 0.9075369075369075,
+    "micro_f1": 0.9038461538461537
+  },
+  "experience_dna_challenge": {
+    "macro_f1": 0.025641025641025644,
+    "micro_f1": 0.05,
+    "missed_examples": [
+      {
+        "id": "challenge_en_001",
+        "text": "Watching the beans change color as they heated over the fire was the highlight.",
+        "expected": [
+          "roast"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_002",
+        "text": "The navigation app took us to the wrong spot, but the owner was very welcoming when we finally arrived.",
+        "expected": [
+          "host",
+          "directions"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_003",
+        "text": "Strolling through the fields and looking out over the valley was breathtaking.",
+        "expected": [
+          "view",
+          "walk"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_004",
+        "text": "Can we purchase some of the produce to take back home? Sampling the different cups was great.",
+        "expected": [
+          "beans",
+          "tasting"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_005",
+        "text": "Is a bite to eat part of the package?",
+        "expected": [
+          "food"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_007",
+        "text": "Could you explain the steps from picking the berry to drying it?",
+        "expected": [
+          "process"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_008",
+        "text": "Do you have rooms available for the evening? Also, can you post the wooden pieces to my address?",
+        "expected": [
+          "ship",
+          "carve",
+          "stay"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_en_009",
+        "text": "Preparing the meal in the kitchen together was such a lovely experience.",
+        "expected": [
+          "host",
+          "cook"
+        ],
+        "predicted": [
+          "food"
+        ]
+      },
+      {
+        "id": "challenge_es_001",
+        "text": "Dorar los granos al fuego junto a la dueña fue un momento inolvidable.",
+        "expected": [
+          "host",
+          "roast"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_002",
+        "text": "Nos desorientamos bastante para dar con el lugar, falta señalización.",
+        "expected": [
+          "directions"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_003",
+        "text": "El recorrido por el terreno fue relajante, y la panorámica espectacular.",
+        "expected": [
+          "view",
+          "walk"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_004",
+        "text": "¿Podemos adquirir unas bolsas del producto para llevarnos a nuestro país?",
+        "expected": [
+          "beans"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_005",
+        "text": "¿Ofrecen algo de cenar o almorzar durante la visita?",
+        "expected": [
+          "food"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_006",
+        "text": "Me encantaría saborear distintas infusiones si es posible.",
+        "expected": [
+          "tasting"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_007",
+        "text": "Darle forma al tronco fue muy divertido. ¿Hacen despachos a otras ciudades?",
+        "expected": [
+          "carve",
+          "ship"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_008",
+        "text": "¿Tienen habitaciones para pasar la noche allí?",
+        "expected": [
+          "stay"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_es_009",
+        "text": "Me gustaría entender mejor las etapas de fermentación y secado.",
+        "expected": [
+          "process"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_001",
+        "text": "Menggoreng biji kopinya di atas wajan tanah liat sungguh pengalaman langka.",
+        "expected": [
+          "roast"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_002",
+        "text": "Titik di peta digital ternyata salah sehingga kami sempat nyasar cukup jauh.",
+        "expected": [
+          "directions"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_003",
+        "text": "Menyusuri jalan setapak di ladang bersama pemiliknya sangat berkesan.",
+        "expected": [
+          "host",
+          "walk"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_004",
+        "text": "Bisa borong beberapa bungkus hasil kebun ini untuk oleh-oleh?",
+        "expected": [
+          "beans"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_005",
+        "text": "Apakah disediakan hidangan pengganjal perut untuk para tamu?",
+        "expected": [
+          "food"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_006",
+        "text": "Lanskap dari atas bukit sungguh memukau, apalagi udaranya sejuk.",
+        "expected": [
+          "view"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_007",
+        "text": "Saya ingin mencoba tegukan dari berbagai jenis seduhan yang lain.",
+        "expected": [
+          "tasting"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_008",
+        "text": "Meracik bumbu di dapur untuk hidangan siang sangat seru.",
+        "expected": [
+          "food",
+          "cook"
+        ],
+        "predicted": []
+      },
+      {
+        "id": "challenge_id_009",
+        "text": "Tolong jelaskan lagi tahapan pengolahannya dari pemetikan sampai penjemuran.",
+        "expected": [
+          "process"
+        ],
+        "predicted": []
+      }
+    ]
+  },
+  "listing_extraction_metrics": {
+    "correct_fields": 55,
+    "evaluated_fields": 144,
+    "overall_accuracy": 0.3819444444444444,
+    "missing_predictions": 89,
+    "hallucinations": 0,
+    "per_field": {
+      "business_name": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "experience_title": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "description": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      },
+      "price": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "currency": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "duration_minutes": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      },
+      "activities": {
+        "evaluated": 18,
+        "correct": 7,
+        "hallucinated": 0,
+        "missing": 11
+      },
+      "availability": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      }
+    }
+  },
+  "intent_status": {
+    "status": "Intent classifier: not implemented / baseline unavailable",
+    "accuracy": null,
+    "macro_f1": null
+  },
+  "translation_status": {
+    "status": "Translation is currently implemented via prepared phrases / fixed mappings in frontend only. Requires later model or human evaluation.",
+    "total_examples": 24,
+    "counts_by_direction": {
+      "en-id": 4,
+      "id-en": 4,
+      "en-es": 4,
+      "es-en": 4,
+      "es-id": 4,
+      "id-es": 4
+    }
+  },
+  "hallucination_count": 0,
+  "known_limitations": [
+    "Intent classification is not implemented yet.",
+    "Translation relies on fixed client-side phrases, not evaluateable automatically.",
+    "Voice listing extraction currently uses simple regexes, lacking robustness to varied phrasing.",
+    "Experience DNA relies on keyword matching which fails on synonyms or complex phrasing."
+  ]
+}
