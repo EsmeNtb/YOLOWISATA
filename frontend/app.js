@@ -29,7 +29,7 @@ const ownerText=e=>{if(S.blang==="en")return e.en||null;if(e.loc||e.l==="Indones
 /* ---------- State, kept on the device ---------- */
 const KEY="yolowisata-v3";
 const newId=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
-const fresh=()=>({acct:null,gid:newId(),acked:{},bts:{},lts:{},screen:"land",role:"guest",guest:{n:"",f:"🌍"},blang:"id",learned:{},here:null,biz:"noor",myBiz:"noor",custom:[],online:true,i:0,likes:[],dna:null,saved:{},mine:[],msgs:{},bookings:[],bstat:{},idea:{},listings:{},lsync:{},sector:"All",draft:{bg:"sun",s:[],p:0,t:"",voice:false,photo:""},tr:{}});
+const fresh=()=>({acct:null,gid:newId(),acked:{},bts:{},lts:{},screen:"land",role:"guest",guest:{n:"",f:"🌍"},blang:"id",learned:{},here:null,biz:"noor",myBiz:"noor",custom:[],online:true,i:0,likes:[],dna:null,saved:{},mine:[],hid:{},msgs:{},bookings:[],bstat:{},idea:{},listings:{},lsync:{},sector:"All",draft:{bg:"sun",s:[],p:0,t:"",voice:false,photo:""},tr:{}});
 let S=fresh();
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(fresh(),JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
@@ -40,7 +40,8 @@ const all=()=>BIZ0.concat(S.custom);
 const biz=id=>all().find(b=>b.id===id)||BIZ0[0];
 const B=()=>biz(S.role==="biz"?S.myBiz:S.biz);
 const Lst=b=>Object.assign({},b.L,S.listings[b.id]);
-const cardsOf=b=>b.cards.map((c,i)=>({...c,id:b.id+"-s"+i})).concat(S.mine.filter(m=>m.biz===b.id));
+const isHid=c=>!!(c.hidden||(S.hid||{})[c.id]);
+const cardsOf=(b,own)=>b.cards.map((c,i)=>({...c,id:b.id+"-s"+i})).concat(S.mine.filter(m=>m.biz===b.id&&!m.removed)).filter(c=>own||!isHid(c));
 const thread=(b,tid)=>((b.threads.find(t=>t.id===tid)||{}).msgs||[]).concat(S.msgs[b.id+":"+tid]||[]);
 const gt=()=>"g"+S.gid;
 /* after logging in on a new device: take over the account's guest id, and move anything made here under it */
@@ -66,8 +67,8 @@ function matchOf(b){const d=S.dna||computeDNA();let diff=0;for(const k in DIMS)d
  const w=b.why||WHYG;return{score:Math.round((1-diff/6)*100),why:Object.keys(w).filter(k=>d[k]>=.5&&b.dna[k]>=.5).map(k=>w[k])}}
 
 /* ---------- AI 4: Experience DNA from postcards, questions and guest messages ---------- */
-function analyse(b){const hw=b.host.toLowerCase().split(" ").pop(),LV=Object.assign({},LOVED,LOVED.host?{host:[LOVED.host[0],LOVED.host[1].concat(hw)]}:{});const cards=b.cards.concat(S.mine.filter(m=>m.biz===b.id&&m.status==="sent"));
- let qs=b.qs.slice(),waiting=S.mine.filter(m=>m.biz===b.id&&m.status!=="sent").length;
+function analyse(b){const hw=b.host.toLowerCase().split(" ").pop(),LV=Object.assign({},LOVED,LOVED.host?{host:[LOVED.host[0],LOVED.host[1].concat(hw)]}:{});const cards=b.cards.concat(S.mine.filter(m=>m.biz===b.id&&m.status==="sent"&&!m.removed));
+ let qs=b.qs.slice(),waiting=S.mine.filter(m=>m.biz===b.id&&m.status!=="sent"&&!m.removed).length;
  for(const k in S.msgs)if(k.startsWith(b.id+":"))S.msgs[k].forEach(m=>{if(m.from==="g"){if(m.sync==="pending")waiting++;else qs.push({f:m.f||S.guest.f,t:m.t,loc:(m.f||S.guest.f)==="🇮🇩"?1:0})}});
  const loved={},asks={},ev={},seg={intl:{},loc:{}};
  const add=(o,k,item)=>{o[k]=(o[k]||0)+1;(ev[k]=ev[k]||[]).push(item)};
@@ -235,7 +236,7 @@ V.explore=()=>{const cats=[["All","✨"]].concat(Object.keys(SECTORS).slice(0,5)
  <div class="cats">${cats.map(([k,e])=>`<button class="cat ${S.sector===k?"on":""}" data-a="sector" data-s="${k}"><span>${e}</span>${k}</button>`).join("")}</div>
  <div class="places">${list.map(({b,m,d})=>`<button class="pcard" data-a="view" data-id="${b.id}"><div class="art" style="background:${b.col}">${b.e}</div><div class="body"><b>${esc(b.name)}</b><div class="small">${b.sector} · ${esc(b.place)}</div>
  ${m!==null?`<span class="tag early">${m}% match</span>`:""}${d?`<span class="tag blue">${d} km away</span>`:""}${S.saved[b.id]?`<span class="tag strong">Saved offline</span>`:""}</div></button>`).join("")||`<div class="box"><b>Nobody here yet</b><p class="sub">No ${S.sector.toLowerCase()} business has joined in this village so far.</p></div>`}</div>
- <p class="small" style="margin-top:.9rem">Run something yourself? <button style="text-decoration:underline;font-weight:700" data-a="go" data-s="login">Add your business</button></p></div>`};
+ <p class="small" style="margin-top:.9rem">Run something yourself? <button style="text-decoration:underline;font-weight:700" data-a="ltab" data-t="biz" data-reg="1">Add your business</button></p></div>`};
 
 V.help=()=>{const n=PHR.filter((_,i)=>S.learned[i]).length,all8=n===PHR.length;
  return `<div class="pad"><div class="hello ${all8?"cheer":""}">${MASCOT}<div><h1 style="font-size:1.6rem">${all8?"Kamu hebat!":"Say it in Indonesian"}</h1><p class="sub">${all8?"You can say all "+n+". You sound local already.":"Listen, repeat, then try it on a real person."}</p></div></div>
@@ -324,18 +325,22 @@ V.card=()=>{const d=S.draft,b=biz(S.biz);return `<div class="pad"><button class=
  <div class="row" style="margin-top:.7rem"><button class="btn alt" data-a="voice">${d.voice?"🎙️ Voice note added":"🎙️ Add a voice note"}</button><label class="btn alt" tabindex="0">📷 ${d.photo?"Photo added":"Add a photo"}<input type="file" accept="image/*" id="ph" hidden></label></div>
  <button class="btn warm wide" style="margin-top:1rem" data-a="send">Leave your postcard</button>
  <p class="small" style="margin-top:.6rem">${S.online?"":"You are offline. Your postcard will be kept on this phone and sent later. "}Only your nickname, flag and message are shared with ${esc(b.host)}.</p></div>`};
-V.thanks=()=>{const c=S.mine.filter(m=>m.gid===S.gid).pop();if(!c)return V.card();return `<div class="pad" style="text-align:center"><div style="text-align:left;transform:rotate(-2deg);margin:.6rem 0 1.2rem">${pcHTML(c)}</div>
+V.thanks=()=>{const c=S.mine.filter(m=>m.gid===S.gid&&!m.removed).pop();if(!c)return V.card();return `<div class="pad" style="text-align:center"><div style="text-align:left;transform:rotate(-2deg);margin:.6rem 0 1.2rem">${pcHTML(c)}</div>
  <h1 style="font-size:1.6rem">Thank you.</h1><p class="hand" style="margin:.4rem 0 1rem">Your postcard is now part of this place’s story.</p>
  <button class="btn warm wide" data-a="go" data-s="story">See it in The Story of This Place</button></div>`};
 
 const SLOTS=[[12,17],[35,14],[60,18],[84,15],[22,31],[47,29],[72,32],[91,38],[8,46],[30,49],[63,47],[85,55],[14,63],[33,69],[72,68],[89,74],[10,83],[28,88],[74,88],[53,40],[20,75],[82,88]];
 const ORBC=["#FFC928","#47C882","#FF7043","#7193D8","#FFFFFF","#FFE9A3"];
-V.story=()=>{const b=biz(S.biz),c=cardsOf(b);
- return `<div class="scene">${farmSVG(true)}<div class="cap"><h1>The Story of This Place</h1><p class="hand">${c.length?"Moments that stayed here. Tap one.":"No memories yet. Be the first."}</p></div>
+function storyHTML(b,own){const c=cardsOf(b,own),nh=c.filter(isHid).length;
+ return `<div class="scene">${farmSVG(true)}<div class="cap"><h1>${own?T("Cerita Tempat Ini","The Story of This Place"):"The Story of This Place"}</h1><p class="hand">${own?T("Ketuk kartu untuk menyembunyikan atau menampilkannya.","Tap a postcard to hide or show it."):c.length?"Moments that stayed here. Tap one.":"No memories yet. Be the first."}</p></div>
  ${c.map((c,i)=>{const [x,y]=SLOTS[i%SLOTS.length],sz=46+(i*7)%20,mine=!!c.biz;
-  return `<button class="orb ${["","wink","","oh"][i%4]} ${mine?"new":""} ${c.status&&c.status!=="sent"?"pending":""}" data-a="open" data-id="${c.id}" aria-label="Postcard from ${esc(c.n||"a traveler")}" style="left:calc(${x}% - ${sz/2}px);top:calc(${y+9}% - ${sz/2}px);width:${sz}px;height:${sz}px;background:${ORBC[i%ORBC.length]};--d:${4+i%5}s;--dl:-${i*.7}s"><span class="of"><i></i></span><span class="ic">${first(c.s)}</span></button>`}).join("")}
- </div><div class="pad" style="padding-top:.9rem"><p class="sub">${c.length} memories left by travelers at ${esc(b.name)}${c.length?", in "+new Set(c.map(x=>x.l)).size+" languages":""}.</p>
- <div class="row" style="margin-top:.8rem"><button class="btn" data-a="go" data-s="card">Leave your postcard</button><button class="btn alt" data-a="go" data-s="exp">Back to ${esc(b.host)}</button></div></div>`};
+  return `<button class="orb ${["","wink","","oh"][i%4]} ${mine?"new":""} ${c.status&&c.status!=="sent"?"pending":""}" data-a="open" data-id="${c.id}" aria-label="Postcard from ${esc(c.n||"a traveler")}${isHid(c)?", hidden":""}" style="left:calc(${x}% - ${sz/2}px);top:calc(${y+9}% - ${sz/2}px);width:${sz}px;height:${sz}px;background:${ORBC[i%ORBC.length]};--d:${4+i%5}s;--dl:-${i*.7}s${isHid(c)?";opacity:.35;outline:2px dashed var(--ink);outline-offset:3px":""}"><span class="of"><i></i></span><span class="ic">${first(c.s)}</span></button>`}).join("")}
+ </div><div class="pad" style="padding-top:.9rem">${own?`<p class="sub">${T(`${c.length-nh} kartu pos tampil untuk tamu${nh?`, ${nh} disembunyikan`:""}. Kartu yang disembunyikan tetap dihitung di ringkasan Anda.`,`${c.length-nh} postcards are shown to guests${nh?`, ${nh} hidden`:""}. Hidden postcards still count in your insights.`)}</p>
+ <button class="btn alt wide" style="margin-top:.8rem" data-a="go" data-s="b-insights">‹ ${T("Kembali","Back")}</button></div>`
+ :`<p class="sub">${c.length} memories left by travelers at ${esc(b.name)}${c.length?", in "+new Set(c.map(x=>x.l)).size+" languages":""}.</p>
+ <div class="row" style="margin-top:.8rem"><button class="btn" data-a="go" data-s="card">Leave your postcard</button><button class="btn alt" data-a="go" data-s="exp">Back to ${esc(b.host)}</button></div></div>`}`}
+V.story=()=>storyHTML(biz(S.biz),false);
+V["b-story"]=()=>storyHTML(B(),true);
 
 /* ----- Local business side: Indonesian by default, English with the 🌐 switch ----- */
 V["b-list"]=()=>{const b=B(),L=ui.transcript?extract(ui.transcript,b):null,cur=S.listings[b.id]||(b.custom?null:b.L);
@@ -387,6 +392,7 @@ V["b-insights"]=()=>{const b=B(),A=insightsFor(b);
  <div class="row" style="margin-top:.8rem"><button class="btn" data-a="idea" data-v="saved">${T("Simpan ide","Save idea")}</button><button class="btn alt" data-a="idea" data-v="later">${T("Lain kali","Not now")}</button></div>
  <div class="row" style="margin-top:.5rem"><button class="btn alt" data-a="evid" data-group="asks" data-k="${esc(idea.need[1])}">${T("Kenapa?","Learn why")}</button><button class="btn alt" data-a="say" data-t="${esc(idea.say)}">🔊 ${T("Dengarkan","Listen")}</button></div></div>`
  :`<div class="box" style="background:var(--pale);border:0"><b>${T("Belum ada saran","No suggestion yet")}</b><p>${T("Bukti belum cukup untuk menyarankan hal baru. Belum yakin, jadi tanyakan pada tamu berikutnya apa yang mereka harapkan.","There is not enough evidence to suggest something new. Not sure, so ask your next visitors what they wished for.")}</p></div>`}
+ <button class="btn alt wide" style="margin-top:.9rem" data-a="go" data-s="b-story">💌 ${T("Lihat dan atur Cerita Tempat Ini","See and manage The Story of This Place")}</button>
  <p class="small" style="margin-top:.8rem">${T("YoloWisata tidak pernah mengubah daftar atau harga Anda sendiri. Anda yang memilih.","YoloWisata never changes your listing or prices by itself. You choose.")}</p></div>`};
 
 V["b-journey"]=()=>{const b=B(),A=insightsFor(b),has=!!(S.listings[b.id]||!b.custom),old=!b.custom&&b.id==="noor";
@@ -395,22 +401,26 @@ V["b-journey"]=()=>{const b=B(),A=insightsFor(b),has=!!(S.listings[b.id]||!b.cus
  <div class="plant">${M.slice().reverse().map(m=>`<div class="m ${m[2]?"":"todo"}"><b>${m[2]?"":T("Berikutnya: ","Next: ")}${m[0]}</b><span class="small">${m[1]}</span></div>`).join("")}</div>
  <p class="small" style="margin-top:.4rem">🌱 ${T("Tanaman tumbuh dari bawah. Tidak perlu belajar grafik.","The plant grows from the bottom. No charts to learn.")}</p></div>`};
 
-V.ai=()=>`<div class="pad ai"><h1 style="font-size:1.5rem">How it works offline, and what the AI does</h1>
- <div class="box" style="background:var(--pale);border:0"><h3>A website that behaves like an app</h3><p>YoloWisata is a website, so there is nothing to download from a store. The first time it opens with any signal, the browser keeps a copy of the app and of the places you saved. After that it opens with no internet at all. Anything you do offline (a postcard, a message, a booking, a voice note) waits on the phone and is sent when a signal appears. Tap the Online pill at the top to try it.</p></div>
- <div class="box"><h3>1. Travel DNA matching</h3><p>Ten swipes become six numbers. The match score is the distance between those numbers and each business’s Experience DNA. A weak match says so.</p></div>
- <div class="box"><h3>2. Voice to listing</h3><p>The owner speaks in Bahasa Indonesia. Speech-to-text, then extraction into six fields. Anything not heard is marked “Not sure”, never guessed. Nothing is published until the owner confirms.</p></div>
- <div class="box"><h3>Owner’s language first</h3><p>The business side is in Bahasa Indonesia by default. The 🌐 button switches it to English. Online insight quotes keep the visitor’s original text, including English and Indonesian. When a local translation is available, it keeps the original underneath.</p></div>
- <div class="box"><h3>3. Translation in messages</h3><p>Guests write in their language, the owner reads Indonesian, and the other way round. The original is always one tap away. Reply suggestions come from a fixed list and are never sent automatically.</p></div>
- <div class="box"><h3>4. Experience DNA</h3><p>With the backend connected, visitor insights use its theme counts, evidence labels and original quotes. Offline or when that request fails, the on-device analyzer uses the feedback saved on this phone. Each finding carries its count and a label: Strong pattern (6 or more), Early signal (3 to 5), Not enough evidence yet. Suggested experiments use the existing idea templates only when the evidence supports them. Saving an idea never publishes or changes a listing.</p></div>
- <div class="box"><h3>Location</h3><p>Guests can choose to share their location to see what is near and how far. GPS needs no internet, the position stays on the phone, and everything works without it. In this demo the village is fictional, so the pin starts at the village gate.</p></div>
- <div class="box"><h3>Any sector</h3><p>A farm, a carpenter and a kitchen share the same screens. A new business picks a sector, records one voice note and is listed. New businesses start with “Not enough evidence yet” until real visitors write.</p></div>
- <div class="box"><h3>Data</h3><p>In this prototype: 20 postcards, 16 visitor questions and a handful of messages and bookings, all synthetic and written by the team. They do not cover real visitor wording, slang, sarcasm, voice recordings, or any language beyond the seven used here. Planned for the real build: NLLB-200 (translation), Mozilla Common Voice and MMS (Indonesian speech), MASSIVE (sorting guest messages by intent), OpenStreetMap (what is findable near the village today).</p></div>
- <div class="box"><h3>What is real in this prototype</h3><p>Matching and listing extraction run in your browser. Visitor theme counts and evidence labels come from the backend when available, with on-device analysis as fallback. With the backend connected, postcards, messages, bookings and listings are shared between phones; without it they stay on one device. Translations here come from a small prepared phrase list, standing in for an on-device translation model; sentences outside it are shown untranslated and say so. A keyword lexicon stands in for a small language model in the theme counts. The microphone is simulated, and “offline” is simulated with the pill. The bundled demo feedback is synthetic.</p></div></div>`;
+V.ai=()=>{const P=t=>`<p style="text-align:justify;hyphens:auto">${t}</p>`,H=t=>`<h2 style="font-size:1.15rem;margin:1.6rem 0 -.2rem">${t}</h2>`,B=(h,t,pale)=>`<div class="box"${pale?' style="background:var(--pale);border:0"':""}><h3>${h}</h3>${P(t)}</div>`;
+ return `<div class="pad ai" lang="en"><button class="pill" style="margin-bottom:.9rem" data-a="go" data-s="login">‹ Back</button>
+ <h1 style="font-size:1.6rem">How YoloWisata works</h1><p class="sub" style="margin-top:.3rem">A website for travelers and local businesses that keeps working when the internet does not.</p>
+ ${B("Works without internet","YoloWisata is a website, so there is nothing to install. After the first visit it opens with no connection. Anything done offline, such as a message, a booking, a postcard or a voice note, is kept on the device and sent when the signal returns.",1)}
+ ${H("What the AI does")}
+ ${B("1. Matching","Ten swipes become a Travel DNA. Each business has an Experience DNA. The match score compares the two, and a weak match says so.")}
+ ${B("2. Voice to listing","An owner describes the business out loud, in their own language. The words become a listing with a name, price, duration, activities and opening days. Anything not heard is marked “Not sure” and is never guessed.")}
+ ${B("3. Translation","Guests and owners each write and read in their own language. The original text is always one tap away.")}
+ ${B("4. Visitor insights","Postcards, questions and messages are counted by theme. Every finding shows its count, the quotes behind it and a label: Strong pattern, Early signal or Not enough evidence yet.")}
+ ${H("Good to know")}
+ ${B("People decide","The AI suggests and people decide. It never accepts a booking, changes a price, sends a reply or publishes a listing on its own.")}
+ ${B("Any kind of business","A farm, a workshop, a kitchen, a homestay or a guide all use the same screens, and each business uses the app in its own language.")}
+ ${B("Location","Sharing a location is optional. It works without internet, and the position stays on the device.")}
+ ${H("About this prototype")}
+ ${B("What is real and what is simulated","Matching and listing extraction run on the device. Visitor insights come from the server when it is connected, and from the device otherwise. Translation uses a prepared phrase list in place of a translation model, so other sentences are shown as written. The voice recording and the demo village are simulated, and the sample postcards and questions were written by the team.")}</div>`};
 
 /* ---------- Render ---------- */
 const GNAV=[["explore","🧭","Explore"],["swipe","🧬","Travel DNA"],["inbox","💬","Messages"],["trips","📅","Visits"],["help","🗣️","Phrases"]];
 const BNAV=()=>[["b-list","🎙️",T("Usaha","Listing")],["b-insights","💛",T("Tamu","Visitors")],["b-msgs","💬",T("Pesan","Messages")],["b-book","📅",T("Pesanan","Bookings")],["b-journey","🌱",T("Tumbuh","Growth")]];
-const GROUP={chat:"inbox",dna:"swipe",match:"swipe",exp:"explore",card:"explore",thanks:"explore",story:"explore","b-thread":"b-msgs"};
+const GROUP={chat:"inbox",dna:"swipe",match:"swipe",exp:"explore",card:"explore",thanks:"explore",story:"explore","b-thread":"b-msgs","b-story":"b-insights"};
 function render(){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]||V.land)();
  $("#net").className="pill net"+(S.online?"":" off");$("#net").textContent=S.online?"● Online":"○ Offline";
  $("#acct").textContent=S.role==="biz"?B().e+" "+B().host:"🧳 "+(S.guest.n||"Guest");
@@ -421,7 +431,10 @@ function render(){refreshInsights();const s=S.screen;$("#view").innerHTML=(V[s]|
 const stepsHTML=()=>STEPS.map(([k,t,w])=>`<li><button class="${S.screen===k||(k==="swipe"&&S.screen==="dna")||(k==="card"&&S.screen==="thanks")||(k==="b-msgs"&&S.screen==="b-thread")?"on":""}" data-a="go" data-s="${k}"><span>${t}<span class="who">${w}</span></span></button></li>`).join("");
 function renderOver(){const m=ui.modal,o=$("#over"),t=ui.toast?`<div class="toast" role="status">${ui.toast}</div>`:"";if(!m){o.innerHTML=t;return}
  let h="";
- if(m.t==="pc"){const c=cardsOf(biz(S.biz)).find(c=>c.id===m.id);h=`<div class="modal" data-a="close"><div class="in">${pcHTML(c,true)}<button class="btn alt wide" style="margin-top:.8rem" data-a="close">Back to the field</button></div></div>`}
+ if(m.t==="pc"){const own=S.role==="biz",c=cardsOf(B(),own).find(c=>c.id===m.id);if(!c){ui.modal=null;o.innerHTML=t;return}
+  const act=own?`<button class="btn ${isHid(c)?"":"warm"} wide" style="margin-top:.6rem" data-a="pchide" data-id="${c.id}">${isHid(c)?T("Tampilkan lagi di Cerita","Show in the Story again"):T("Sembunyikan dari Cerita","Hide from the Story")}</button><p class="small" style="color:var(--ink);margin-top:.4rem;text-align:center">${T("Tamu tidak akan melihatnya. Tidak dihapus, dan tetap dihitung di ringkasan Anda.","Guests will not see it. It is not deleted, and still counts in your insights.")}</p>`
+   :c.gid===S.gid?`<button class="btn alt wide" style="margin-top:.6rem" data-a="pcdel" data-id="${c.id}">${m.sure?"Tap again to remove it for good":"🗑️ Remove my postcard"}</button>`:"";
+  h=`<div class="modal" data-a="close"><div class="in">${pcHTML(c,true)}${act}<button class="btn alt wide" style="margin-top:.6rem" data-a="close">${own?T("Kembali","Back"):"Back to the field"}</button></div></div>`}
  if(m.t==="menu")h=`<div class="modal" data-a="close" style="place-items:end;padding:0"><div class="sheet"><h2 style="font-size:1.2rem;margin-bottom:.5rem">The story, step by step</h2><ol class="steps">${stepsHTML()}</ol>
  <div class="row" style="margin-top:.8rem"><button class="btn alt" data-a="go" data-s="ai">How it works</button><button class="btn alt" data-a="reset">Reset demo</button></div></div></div>`;
  if(m.t==="evid"){const b=B(),a=insightsFor(b),group=m.group||"asks",ev=(a.source==="backend"?a.evidence[group][m.k]:a.ev[m.k])||[],[c,tx]=insightLabel(a,group,m.k);
@@ -459,7 +472,7 @@ const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;ret
 const api=(path,method,body)=>fetch(API+path,{method:method||"GET",headers:body?{"Content-Type":"application/json"}:{},body:body?JSON.stringify(body):undefined}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()});
 const inflight={};
 function outbox(){const o=[];
- S.mine.forEach(m=>{if(m.status==="sent"&&m.gid===S.gid)o.push(["postcards",m.id,m])});
+ S.mine.forEach(m=>{if(m.status==="sent"&&(m.gid===S.gid||m.modBy===S.gid))o.push(["postcards",m.id+(m.removed?":r":"")+(m.hidden?":h":m.modBy?":s":""),m.removed?Object.assign({},m,{t:"(removed)"}):m])});
  for(const k in S.msgs)S.msgs[k].forEach(m=>{if(m.mid&&m.from!=="sys"&&m.sync!=="pending"&&m.own===S.gid)o.push(["messages",m.mid,Object.assign({},m,{id:m.mid,thread:k})])});
  S.bookings.forEach(k=>{if(k.sync!=="pending")o.push(["bookings",k.id+":"+k.status,k])});
  for(const id in S.bstat)o.push(["bookingstatus",id+":"+S.bstat[id],{id,status:S.bstat[id],ts:S.bts[id]||0}]);
@@ -470,7 +483,7 @@ function flush(){if(!API||!S.online)return;outbox().forEach(([kind,key,rec])=>{c
  api("/api/"+kind,"POST",rec).then(()=>{S.acked[k]=1;delete inflight[k];save()}).catch(()=>{delete inflight[k]})})}
 function pull(){if(!API||!S.online)return;api("/api/sync").then(d=>{let ch=false;const vals=k=>Object.values(d[k]||{});
  vals("businesses").forEach(r=>{const c=S.custom.find(b=>b.id===r.id);if(BIZ0.some(b=>b.id===r.id))return;if(!c){S.custom.push(r);ch=true}else if(c.name!==r.name||c.story!==r.story){c.name=r.name;c.story=r.story;ch=true}});
- vals("postcards").forEach(r=>{if(!S.mine.some(m=>m.id===r.id)){S.mine.push(Object.assign({},r,{status:"sent"}));ch=true}});
+ vals("postcards").forEach(r=>{const m=S.mine.find(m=>m.id===r.id);if(!m){S.mine.push(Object.assign({},r,{status:"sent"}));ch=true}else if((r.ts||0)>(m.ts||0)){Object.assign(m,r,{status:"sent"});ch=true}});
  vals("messages").forEach(r=>{const a=S.msgs[r.thread]=S.msgs[r.thread]||[];if(!a.some(m=>m.mid===r.mid)){a.push(r);a.sort((x,y)=>(x.ts||0)-(y.ts||0));ch=true}});
  vals("bookings").forEach(r=>{const k=S.bookings.find(k=>k.id===r.id);if(!k){S.bookings.push(r);ch=true}else if((r.ts||0)>(k.ts||0)){Object.assign(k,r);ch=true}});
  vals("bookingstatus").forEach(r=>{if((r.ts||0)>(S.bts[r.id]||0)){S.bstat[r.id]=r.status;S.bts[r.id]=r.ts;ch=true}});
@@ -484,7 +497,7 @@ const A={
  reset:()=>{S=fresh();insightCache.clear();noorInsightId=null;ui={modal:null,rec:0,edit:false,transcript:"",tid:"",newSector:"Craft",ltab:"guest"};render();toast("Cleared. This device is back to a fresh start.")},
  asguest:()=>{S.guest={n:$("#gn").value.trim(),f:$("#gf").value};go("explore");toast("Saved.")},
  regopen:()=>{ui.regOpen=!ui.regOpen},   /* remember it, so picking a sector does not fold the form shut */
- ltab:el=>{ui.ltab=el.dataset.t;go("login")},
+ ltab:el=>{ui.ltab=el.dataset.t;if(el.dataset.reg)ui.regOpen=true;go("login")},
  logout:()=>{S.acct=null;render();toast("Logged out. Your data stays on this device.")},
  glogin:()=>{const phone=$("#lp").value.replace(/\D/g,""),pin=$("#lpin").value;if(phone.length<8||pin.length<4){toast("Enter your phone number and a PIN of 4 to 6 digits.");return}
   if(!API||!S.online){toast(API?"You are offline. Log in when you have signal.":"Accounts need the server. Your data is still kept on this device.");return}
@@ -534,6 +547,11 @@ const A={
   S.mine.push({id:"m"+newId(),gid:S.gid,ts:Date.now(),biz:S.biz,n:S.guest.n||"A traveler",f:S.guest.f,l:"Original language",t:d.t.trim(),bg:d.bg,s:d.s.join(""),prompt:PROMPTS[d.p],voice:d.voice,photo:d.photo,loc:S.guest.f==="🇮🇩"?1:0,status:st()});
   S.draft=fresh().draft;go("thanks")},
  open:el=>{ui.modal={t:"pc",id:el.dataset.id};renderOver()},
+ pcdel:el=>{const c=S.mine.find(m=>m.id===el.dataset.id&&m.gid===S.gid);if(!c)return;if(!ui.modal.sure){ui.modal.sure=1;renderOver();return}
+  c.removed=true;c.t="";c.photo="";c.ts=Date.now();ui.modal=null;render();toast("Your postcard was removed.")},
+ pchide:el=>{const id=el.dataset.id,c=S.mine.find(m=>m.id===id);
+  if(c){c.hidden=!c.hidden;c.ts=Date.now();c.modBy=S.gid}else{S.hid[id]=!S.hid[id]}   /* sample postcards from the data file are hidden on this device only */
+  ui.modal=null;render();toast(isHid(c||{id})?T("Disembunyikan dari Cerita.","Hidden from the Story."):T("Tampil lagi di Cerita.","Showing in the Story again."))},
  tr:el=>{S.tr[el.dataset.k]=!S.tr[el.dataset.k];renderOver()},
  rec:()=>{const b=B(),done=t=>{ui.rec=0;ui.mr=null;ui.transcript=t||sampleFor(b);ui.over={};render()},fake=()=>{ui.rec=1;render();setTimeout(()=>done(),2400)};
   if(ui.rec){if(ui.mr)ui.mr.stop();return}
