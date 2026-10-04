@@ -1,0 +1,170 @@
+[
+  {
+    "id": "tr_01",
+    "source_language": "en",
+    "target_language": "id",
+    "source": "How much is the coffee roasting experience?",
+    "expected": "Berapa harga pengalaman menyangrai kopi?"
+  },
+  {
+    "id": "tr_02",
+    "source_language": "id",
+    "target_language": "en",
+    "source": "Harganya 150 ribu rupiah per orang.",
+    "expected": "The price is 150,000 rupiah per person."
+  },
+  {
+    "id": "tr_03",
+    "source_language": "en",
+    "target_language": "id",
+    "source": "Can you send directions from the main road?",
+    "expected": "Bisa kirim petunjuk arah dari jalan besar?"
+  },
+  {
+    "id": "tr_04",
+    "source_language": "id",
+    "target_language": "en",
+    "source": "Saya kirim petunjuk arah lewat pesan ini.",
+    "expected": "I will send directions in this message."
+  },
+  {
+    "id": "tr_05",
+    "source_language": "en",
+    "target_language": "id",
+    "source": "Are you open this weekend?",
+    "expected": "Apakah Anda buka akhir pekan ini?"
+  },
+  {
+    "id": "tr_06",
+    "source_language": "id",
+    "target_language": "en",
+    "source": "Ya, bisa. Silakan datang!",
+    "expected": "Yes, you can. Please come!"
+  },
+  {
+    "id": "tr_07",
+    "source_language": "en",
+    "target_language": "id",
+    "source": "Is lunch included in the price?",
+    "expected": "Apakah makan siang sudah termasuk dalam harga?"
+  },
+  {
+    "id": "tr_08",
+    "source_language": "id",
+    "target_language": "en",
+    "source": "Makan belum termasuk, tapi ada warung dekat sini.",
+    "expected": "A meal is not included yet, but there is a stall nearby."
+  },
+  {
+    "id": "tr_09",
+    "source_language": "en",
+    "target_language": "es",
+    "source": "Hello, I would like to book a farm walk for tomorrow.",
+    "expected": "Hola, me gustaría reservar una caminata por la finca para mañana."
+  },
+  {
+    "id": "tr_10",
+    "source_language": "es",
+    "target_language": "en",
+    "source": "Lo siento, mañana estamos cerrados.",
+    "expected": "Sorry, we are closed tomorrow."
+  },
+  {
+    "id": "tr_11",
+    "source_language": "en",
+    "target_language": "es",
+    "source": "Can we buy some coffee beans to take home?",
+    "expected": "¿Podemos comprar granos de café para llevar a casa?"
+  },
+  {
+    "id": "tr_12",
+    "source_language": "es",
+    "target_language": "en",
+    "source": "Sí, vendemos bolsas de un kilo.",
+    "expected": "Yes, we sell one-kilogram bags."
+  },
+  {
+    "id": "tr_13",
+    "source_language": "en",
+    "target_language": "es",
+    "source": "We are a bit lost. Is there a sign on the road?",
+    "expected": "Estamos un poco perdidos. ¿Hay algún letrero en el camino?"
+  },
+  {
+    "id": "tr_14",
+    "source_language": "es",
+    "target_language": "en",
+    "source": "Sigan recto hasta la casa verde.",
+    "expected": "Go straight until you reach the green house."
+  },
+  {
+    "id": "tr_15",
+    "source_language": "en",
+    "target_language": "es",
+    "source": "I am not sure, I will ask the owner.",
+    "expected": "No estoy seguro, le preguntaré al dueño."
+  },
+  {
+    "id": "tr_16",
+    "source_language": "es",
+    "target_language": "en",
+    "source": "Gracias por su ayuda, la pasamos muy bien.",
+    "expected": "Thank you for your help, we had a great time."
+  },
+  {
+    "id": "tr_17",
+    "source_language": "es",
+    "target_language": "id",
+    "source": "¿Cuánto cuesta el recorrido?",
+    "expected": "Berapa harga turnya?"
+  },
+  {
+    "id": "tr_18",
+    "source_language": "id",
+    "target_language": "es",
+    "source": "Harganya seratus ribu per orang.",
+    "expected": "El precio es cien mil por persona."
+  },
+  {
+    "id": "tr_19",
+    "source_language": "es",
+    "target_language": "id",
+    "source": "¿Podemos llevar a nuestros niños?",
+    "expected": "Bolehkah kami membawa anak-anak kami?"
+  },
+  {
+    "id": "tr_20",
+    "source_language": "id",
+    "target_language": "es",
+    "source": "Tentu saja, tempat ini ramah anak.",
+    "expected": "Por supuesto, este lugar es apto para niños."
+  },
+  {
+    "id": "tr_21",
+    "source_language": "es",
+    "target_language": "id",
+    "source": "No pudimos encontrar el camino.",
+    "expected": "Kami tidak bisa menemukan jalannya."
+  },
+  {
+    "id": "tr_22",
+    "source_language": "id",
+    "target_language": "es",
+    "source": "Maafkan saya, nanti saya pasang penunjuk arah yang lebih jelas.",
+    "expected": "Lo siento, luego pondré indicaciones más claras."
+  },
+  {
+    "id": "tr_23",
+    "source_language": "es",
+    "target_language": "id",
+    "source": "¿A qué hora abren el sábado?",
+    "expected": "Jam berapa buka pada hari Sabtu?"
+  },
+  {
+    "id": "tr_24",
+    "source_language": "id",
+    "target_language": "es",
+    "source": "Kami buka jam delapan pagi setiap akhir pekan.",
+    "expected": "Abrimos a las ocho de la mañana todos los fines de semana."
+  }
+]

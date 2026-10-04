@@ -1,0 +1,366 @@
+[
+  {
+    "id": "fb_en_01",
+    "language": "en",
+    "text": "Roasting our own beans was the highlight of the trip.",
+    "labels": [
+      "roast"
+    ]
+  },
+  {
+    "id": "fb_en_02",
+    "language": "en",
+    "text": "Noor is a great host, but the farm was so hard to find without clear directions.",
+    "labels": [
+      "host",
+      "directions"
+    ]
+  },
+  {
+    "id": "fb_en_03",
+    "language": "en",
+    "text": "Loved the walk around the farm and seeing the view.",
+    "labels": [
+      "walk",
+      "view"
+    ]
+  },
+  {
+    "id": "fb_en_04",
+    "language": "en",
+    "text": "Can we buy more coffee to take home? The tasting was great.",
+    "labels": [
+      "beans",
+      "tasting"
+    ]
+  },
+  {
+    "id": "fb_en_05",
+    "language": "en",
+    "text": "Is lunch included after the tour?",
+    "labels": [
+      "food"
+    ]
+  },
+  {
+    "id": "fb_en_06",
+    "language": "en",
+    "text": "Amazing hospitality! We loved talking with Noor.",
+    "labels": [
+      "host"
+    ]
+  },
+  {
+    "id": "fb_en_07",
+    "language": "en",
+    "text": "Could you explain how the coffee is processed again?",
+    "labels": [
+      "process"
+    ]
+  },
+  {
+    "id": "fb_en_08",
+    "language": "en",
+    "text": "Are we able to stay overnight at the farm?",
+    "labels": [
+      "stay"
+    ]
+  },
+  {
+    "id": "fb_en_09",
+    "language": "en",
+    "text": "Do you offer shipping for the carved wooden pieces?",
+    "labels": [
+      "carve",
+      "ship"
+    ]
+  },
+  {
+    "id": "fb_en_10",
+    "language": "en",
+    "text": "The cooking class with Sari was amazing, we made sambal together.",
+    "labels": [
+      "cook",
+      "host"
+    ]
+  },
+  {
+    "id": "fb_en_11",
+    "language": "en",
+    "text": "I really enjoyed everything.",
+    "labels": []
+  },
+  {
+    "id": "fb_en_12",
+    "language": "en",
+    "text": "We got completely lost and the meal was cold.",
+    "labels": [
+      "directions",
+      "food"
+    ]
+  },
+  {
+    "id": "fb_en_13",
+    "language": "en",
+    "text": "The coffee tasting was too short, we wanted to try more varieties.",
+    "labels": [
+      "tasting"
+    ]
+  },
+  {
+    "id": "fb_en_14",
+    "language": "en",
+    "text": "The view from the top of the hill is breathtaking.",
+    "labels": [
+      "view"
+    ]
+  },
+  {
+    "id": "fb_en_15",
+    "language": "en",
+    "text": "It was just okay.",
+    "labels": []
+  },
+  {
+    "id": "fb_es_01",
+    "language": "es",
+    "text": "Tostar el café con Noor fue una experiencia mágica.",
+    "labels": [
+      "roast",
+      "host"
+    ]
+  },
+  {
+    "id": "fb_es_02",
+    "language": "es",
+    "text": "Nos perdimos al llegar, necesitan poner más letreros.",
+    "labels": [
+      "directions"
+    ]
+  },
+  {
+    "id": "fb_es_03",
+    "language": "es",
+    "text": "La caminata por el campo fue relajante, y la vista es hermosa.",
+    "labels": [
+      "walk",
+      "view"
+    ]
+  },
+  {
+    "id": "fb_es_04",
+    "language": "es",
+    "text": "Queremos comprar café para llevar a casa. ¿Se puede?",
+    "labels": [
+      "beans"
+    ]
+  },
+  {
+    "id": "fb_es_05",
+    "language": "es",
+    "text": "¿La comida está incluida en el precio?",
+    "labels": [
+      "food"
+    ]
+  },
+  {
+    "id": "fb_es_06",
+    "language": "es",
+    "text": "Me encantaría probar más tipos de café.",
+    "labels": [
+      "tasting"
+    ]
+  },
+  {
+    "id": "fb_es_07",
+    "language": "es",
+    "text": "Tallar madera con el señor Darto fue muy divertido. ¿Pueden enviarlo por correo?",
+    "labels": [
+      "carve",
+      "ship"
+    ]
+  },
+  {
+    "id": "fb_es_08",
+    "language": "es",
+    "text": "¿Tienen alojamiento para quedarse la noche entera?",
+    "labels": [
+      "stay"
+    ]
+  },
+  {
+    "id": "fb_es_09",
+    "language": "es",
+    "text": "Las historias de la familia son muy interesantes.",
+    "labels": [
+      "host"
+    ]
+  },
+  {
+    "id": "fb_es_10",
+    "language": "es",
+    "text": "Cocinar juntos fue lo mejor, la comida estuvo riquísima.",
+    "labels": [
+      "cook",
+      "food"
+    ]
+  },
+  {
+    "id": "fb_es_11",
+    "language": "es",
+    "text": "Todo muy bonito gracias.",
+    "labels": []
+  },
+  {
+    "id": "fb_es_12",
+    "language": "es",
+    "text": "No pudimos encontrar el lugar y nadie nos ayudó.",
+    "labels": [
+      "directions"
+    ]
+  },
+  {
+    "id": "fb_es_13",
+    "language": "es",
+    "text": "Quiero entender mejor el proceso de secado del café.",
+    "labels": [
+      "process"
+    ]
+  },
+  {
+    "id": "fb_es_14",
+    "language": "es",
+    "text": "Tostamos café y caminamos por la finca, excelente día.",
+    "labels": [
+      "roast",
+      "walk"
+    ]
+  },
+  {
+    "id": "fb_es_15",
+    "language": "es",
+    "text": "Un lugar bastante agradable.",
+    "labels": []
+  },
+  {
+    "id": "fb_id_01",
+    "language": "id",
+    "text": "Menyangrai kopi sendiri sangat menyenangkan.",
+    "labels": [
+      "roast"
+    ]
+  },
+  {
+    "id": "fb_id_02",
+    "language": "id",
+    "text": "Jalan ke kebun susah ditemukan, kami tersesat lama.",
+    "labels": [
+      "directions"
+    ]
+  },
+  {
+    "id": "fb_id_03",
+    "language": "id",
+    "text": "Jalan-jalan di kebun bersama Bu Noor sangat berkesan.",
+    "labels": [
+      "walk",
+      "host"
+    ]
+  },
+  {
+    "id": "fb_id_04",
+    "language": "id",
+    "text": "Saya mau beli biji kopinya untuk dibawa pulang, bisa?",
+    "labels": [
+      "beans"
+    ]
+  },
+  {
+    "id": "fb_id_05",
+    "language": "id",
+    "text": "Apakah tiketnya sudah termasuk makan siang?",
+    "labels": [
+      "food"
+    ]
+  },
+  {
+    "id": "fb_id_06",
+    "language": "id",
+    "text": "Pemandangan dari atas bukit bagus sekali, apalagi udaranya segar.",
+    "labels": [
+      "view"
+    ]
+  },
+  {
+    "id": "fb_id_07",
+    "language": "id",
+    "text": "Saya ingin mencicipi jenis sangraian yang lain juga.",
+    "labels": [
+      "tasting"
+    ]
+  },
+  {
+    "id": "fb_id_08",
+    "language": "id",
+    "text": "Seru bisa masak sambal bareng, rasanya enak.",
+    "labels": [
+      "cook",
+      "food"
+    ]
+  },
+  {
+    "id": "fb_id_09",
+    "language": "id",
+    "text": "Boleh dijelaskan lagi cara pengolahan kopinya?",
+    "labels": [
+      "process"
+    ]
+  },
+  {
+    "id": "fb_id_10",
+    "language": "id",
+    "text": "Ada penginapan untuk menginap semalam?",
+    "labels": [
+      "stay"
+    ]
+  },
+  {
+    "id": "fb_id_11",
+    "language": "id",
+    "text": "Keren sekali ukiran kayunya. Bisa dikirim ke Jakarta?",
+    "labels": [
+      "carve",
+      "ship"
+    ]
+  },
+  {
+    "id": "fb_id_12",
+    "language": "id",
+    "text": "Secara keseluruhan biasa saja.",
+    "labels": []
+  },
+  {
+    "id": "fb_id_13",
+    "language": "id",
+    "text": "Petunjuk arah membingungkan, tapi mengobrol dengan Bu Noor mengobati rasa lelah.",
+    "labels": [
+      "directions",
+      "host"
+    ]
+  },
+  {
+    "id": "fb_id_14",
+    "language": "id",
+    "text": "Sangrai kopi dan keliling kebun adalah pengalaman luar biasa.",
+    "labels": [
+      "roast",
+      "walk"
+    ]
+  },
+  {
+    "id": "fb_id_15",
+    "language": "id",
+    "text": "Sangat direkomendasikan.",
+    "labels": []
+  }
+]

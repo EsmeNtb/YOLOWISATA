@@ -1,0 +1,353 @@
+[
+  {
+    "id": "vl_en_01",
+    "language": "en",
+    "text": "Hi, my name is Noor. I have a coffee farm. Guests can do a farm walk, pick some cherries, and roast coffee. It takes about three hours. It costs 150000 rupiah. I'm open Saturday and Sunday.",
+    "expected": {
+      "business_name": "Noor's Coffee Farm",
+      "experience_title": "Coffee Farm Experience",
+      "description": "A 3-hour visit to the coffee farm. Activities include a farm walk, picking coffee cherries, and roasting coffee.",
+      "price": 150000,
+      "currency": "IDR",
+      "duration_minutes": 180,
+      "activities": [
+        "farm_walk",
+        "coffee_picking",
+        "coffee_roasting"
+      ],
+      "availability": [
+        "saturday",
+        "sunday"
+      ]
+    }
+  },
+  {
+    "id": "vl_en_02",
+    "language": "en",
+    "text": "My name is Darto. Welcome to my wood workshop. You can learn to carve wood and make your own piece. It's two hours, and the price is 100000 rupiah per person. Open every day.",
+    "expected": {
+      "business_name": "Darto's Wood Workshop",
+      "experience_title": "Wood Workshop",
+      "description": "A 2-hour visit to the wood workshop. Activities include wood carving and making your own piece.",
+      "price": 100000,
+      "currency": "IDR",
+      "duration_minutes": 120,
+      "activities": [
+        "wood_carving"
+      ],
+      "availability": [
+        "every_day"
+      ]
+    }
+  },
+  {
+    "id": "vl_en_03",
+    "language": "en",
+    "text": "Hello, my name is Sari. Come to my kitchen. We can go to the market and cook together. Takes three hours, price is 120000 rupiah. I am open on Wednesday and Saturday.",
+    "expected": {
+      "business_name": "Sari's Kitchen",
+      "experience_title": "Cooking Experience",
+      "description": "A 3-hour visit to the kitchen. Activities include market shopping and cooking together.",
+      "price": 120000,
+      "currency": "IDR",
+      "duration_minutes": 180,
+      "activities": [
+        "market_shopping",
+        "cooking"
+      ],
+      "availability": [
+        "wednesday",
+        "saturday"
+      ]
+    }
+  },
+  {
+    "id": "vl_en_04",
+    "language": "en",
+    "text": "I'm Rina, I offer a guided walk in the village. It's 75,000 rupiah and takes two hours. Open Monday to Friday.",
+    "expected": {
+      "business_name": "Rina's Guided Walk",
+      "experience_title": "Guided Walk Experience",
+      "description": "A 2-hour guided walk in the village.",
+      "price": 75000,
+      "currency": "IDR",
+      "duration_minutes": 120,
+      "activities": [
+        "guided_walk"
+      ],
+      "availability": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday"
+      ]
+    }
+  },
+  {
+    "id": "vl_en_05",
+    "language": "en",
+    "text": "My name is Noor. I don't know the exact schedule yet, but visitors can roast coffee and do a farm walk.",
+    "expected": {
+      "business_name": "Noor's Coffee Farm",
+      "experience_title": "Coffee Farm Experience",
+      "description": "Activities include coffee roasting and a farm walk.",
+      "price": null,
+      "currency": null,
+      "duration_minutes": null,
+      "activities": [
+        "coffee_roasting",
+        "farm_walk"
+      ],
+      "availability": []
+    }
+  },
+  {
+    "id": "vl_en_06",
+    "language": "en",
+    "text": "Hey I'm Noor, I have a coffee farm. Not sure about the price right now, you should ask the owner when you get here.",
+    "expected": {
+      "business_name": "Noor's Coffee Farm",
+      "experience_title": "Coffee Farm Experience",
+      "description": "Visit the coffee farm. Please ask the owner for pricing and details.",
+      "price": null,
+      "currency": null,
+      "duration_minutes": null,
+      "activities": [],
+      "availability": []
+    }
+  },
+  {
+    "id": "vl_es_01",
+    "language": "es",
+    "text": "Hola, me llamo Noor. Tengo una finca de café. Pueden caminar por la finca, recoger granos y tostar su café. Dura tres horas y cuesta 200 pesos. Abierto sábados y domingos.",
+    "expected": {
+      "business_name": "Finca de Café de Noor",
+      "experience_title": "Experiencia en Finca de Café",
+      "description": "Una visita de 3 horas. Las actividades incluyen caminata, recolección de café y tostar café.",
+      "price": 200,
+      "currency": "MXN",
+      "duration_minutes": 180,
+      "activities": [
+        "farm_walk",
+        "coffee_picking",
+        "coffee_roasting"
+      ],
+      "availability": [
+        "saturday",
+        "sunday"
+      ]
+    }
+  },
+  {
+    "id": "vl_es_02",
+    "language": "es",
+    "text": "Soy Darto. En mi taller pueden tallar madera. Son dos horas y el precio es de 150 pesos por persona. Abierto de lunes a viernes.",
+    "expected": {
+      "business_name": "Taller de Madera de Darto",
+      "experience_title": "Taller de Madera",
+      "description": "Una visita de 2 horas. Las actividades incluyen tallado de madera.",
+      "price": 150,
+      "currency": "MXN",
+      "duration_minutes": 120,
+      "activities": [
+        "wood_carving"
+      ],
+      "availability": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday"
+      ]
+    }
+  },
+  {
+    "id": "vl_es_03",
+    "language": "es",
+    "text": "Me llamo Sari. Cocinaremos juntos en mi cocina. Dura tres horas, 180 pesos. Miércoles y sábados.",
+    "expected": {
+      "business_name": "Cocina de Sari",
+      "experience_title": "Experiencia Culinaria",
+      "description": "Una visita de 3 horas para cocinar juntos.",
+      "price": 180,
+      "currency": "MXN",
+      "duration_minutes": 180,
+      "activities": [
+        "cooking"
+      ],
+      "availability": [
+        "wednesday",
+        "saturday"
+      ]
+    }
+  },
+  {
+    "id": "vl_es_04",
+    "language": "es",
+    "text": "Soy Noor. Pueden venir a la finca a tostar café. No estoy seguro de los días, pregunten a mi hijo.",
+    "expected": {
+      "business_name": "Finca de Café de Noor",
+      "experience_title": "Experiencia en Finca de Café",
+      "description": "Actividades incluyen tostar café.",
+      "price": null,
+      "currency": null,
+      "duration_minutes": null,
+      "activities": [
+        "coffee_roasting"
+      ],
+      "availability": []
+    }
+  },
+  {
+    "id": "vl_es_05",
+    "language": "es",
+    "text": "Hola, mi nombre es Rina. Hago caminatas guiadas por el pueblo. Dura 2 horas.",
+    "expected": {
+      "business_name": "Caminatas de Rina",
+      "experience_title": "Caminata Guiada",
+      "description": "Caminata guiada de 2 horas por el pueblo.",
+      "price": null,
+      "currency": null,
+      "duration_minutes": 120,
+      "activities": [
+        "guided_walk"
+      ],
+      "availability": []
+    }
+  },
+  {
+    "id": "vl_es_06",
+    "language": "es",
+    "text": "Me llamo Noor, bienvenidos a la finca. Cuesta 250 pesos, incluye caminata y degustación. Abrimos los viernes.",
+    "expected": {
+      "business_name": "Finca de Café de Noor",
+      "experience_title": "Experiencia en Finca de Café",
+      "description": "Actividades incluyen caminata y degustación.",
+      "price": 250,
+      "currency": "MXN",
+      "duration_minutes": null,
+      "activities": [
+        "farm_walk",
+        "tasting"
+      ],
+      "availability": [
+        "friday"
+      ]
+    }
+  },
+  {
+    "id": "vl_id_01",
+    "language": "id",
+    "text": "Nama saya Noor. Saya punya kebun kopi. Tamu bisa keliling kebun, petik kopi, lalu sangrai kopi sendiri. Lamanya tiga jam. Harganya 150 ribu rupiah per orang. Buka hari Sabtu dan Minggu.",
+    "expected": {
+      "business_name": "Kebun Kopi Noor",
+      "experience_title": "Pengalaman Kebun Kopi",
+      "description": "Kunjungan 3 jam. Aktivitas termasuk keliling kebun, memetik kopi, dan menyangrai kopi.",
+      "price": 150000,
+      "currency": "IDR",
+      "duration_minutes": 180,
+      "activities": [
+        "farm_walk",
+        "coffee_picking",
+        "coffee_roasting"
+      ],
+      "availability": [
+        "saturday",
+        "sunday"
+      ]
+    }
+  },
+  {
+    "id": "vl_id_02",
+    "language": "id",
+    "text": "Nama saya Darto. Tamu bisa belajar ukir kayu. Lamanya dua jam. Harganya 100 ribu rupiah. Saya buka setiap hari.",
+    "expected": {
+      "business_name": "Bengkel Kayu Darto",
+      "experience_title": "Bengkel Kayu",
+      "description": "Kunjungan 2 jam untuk belajar mengukir kayu.",
+      "price": 100000,
+      "currency": "IDR",
+      "duration_minutes": 120,
+      "activities": [
+        "wood_carving"
+      ],
+      "availability": [
+        "every_day"
+      ]
+    }
+  },
+  {
+    "id": "vl_id_03",
+    "language": "id",
+    "text": "Nama saya Sari. Kita bisa masak sambal bersama. Tiga jam lamanya, harga 120 ribu rupiah. Buka Rabu dan Sabtu.",
+    "expected": {
+      "business_name": "Dapur Sari",
+      "experience_title": "Pengalaman Memasak",
+      "description": "Kunjungan 3 jam untuk memasak bersama.",
+      "price": 120000,
+      "currency": "IDR",
+      "duration_minutes": 180,
+      "activities": [
+        "cooking"
+      ],
+      "availability": [
+        "wednesday",
+        "saturday"
+      ]
+    }
+  },
+  {
+    "id": "vl_id_04",
+    "language": "id",
+    "text": "Nama saya Rina. Saya tawarkan jalan keliling desa, dua jam. Harganya 75 ribu rupiah. Buka setiap hari.",
+    "expected": {
+      "business_name": "Jalan Keliling Rina",
+      "experience_title": "Tur Jalan Kaki",
+      "description": "Tur jalan kaki selama 2 jam.",
+      "price": 75000,
+      "currency": "IDR",
+      "duration_minutes": 120,
+      "activities": [
+        "guided_walk"
+      ],
+      "availability": [
+        "every_day"
+      ]
+    }
+  },
+  {
+    "id": "vl_id_05",
+    "language": "id",
+    "text": "Nama saya Noor. Di kebun kopi ini kita bisa sangrai kopi. Untuk harga dan jam buka, silakan tanya langsung pada saya nanti ya.",
+    "expected": {
+      "business_name": "Kebun Kopi Noor",
+      "experience_title": "Pengalaman Kebun Kopi",
+      "description": "Aktivitas menyangrai kopi. Silakan tanya pemilik untuk informasi lebih lanjut.",
+      "price": null,
+      "currency": null,
+      "duration_minutes": null,
+      "activities": [
+        "coffee_roasting"
+      ],
+      "availability": []
+    }
+  },
+  {
+    "id": "vl_id_06",
+    "language": "id",
+    "text": "Nama saya Noor. Kami menawarkan keliling kebun kopi. Lamanya sekitar satu jam.",
+    "expected": {
+      "business_name": "Kebun Kopi Noor",
+      "experience_title": "Pengalaman Kebun Kopi",
+      "description": "Kunjungan 1 jam untuk keliling kebun.",
+      "price": null,
+      "currency": null,
+      "duration_minutes": 60,
+      "activities": [
+        "farm_walk"
+      ],
+      "availability": []
+    }
+  }
+]

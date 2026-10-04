@@ -1,0 +1,182 @@
+[
+  {
+    "id": "int_01",
+    "language": "en",
+    "text": "I'd like to book a tour for two people this Saturday.",
+    "expected_intent": "booking_request"
+  },
+  {
+    "id": "int_02",
+    "language": "en",
+    "text": "How much does the coffee roasting experience cost?",
+    "expected_intent": "price_question"
+  },
+  {
+    "id": "int_03",
+    "language": "en",
+    "text": "Are you open on Mondays?",
+    "expected_intent": "availability_question"
+  },
+  {
+    "id": "int_04",
+    "language": "en",
+    "text": "We got lost near the main road, how do we get to the farm?",
+    "expected_intent": "directions_question"
+  },
+  {
+    "id": "int_05",
+    "language": "en",
+    "text": "Can we roast our own coffee during the visit?",
+    "expected_intent": "activity_question"
+  },
+  {
+    "id": "int_06",
+    "language": "en",
+    "text": "Do you sell bags of roasted beans to take home?",
+    "expected_intent": "product_interest"
+  },
+  {
+    "id": "int_07",
+    "language": "en",
+    "text": "The farm walk was amazing and Noor was so welcoming!",
+    "expected_intent": "feedback"
+  },
+  {
+    "id": "int_08",
+    "language": "en",
+    "text": "Hello, good morning!",
+    "expected_intent": "greeting"
+  },
+  {
+    "id": "int_09",
+    "language": "en",
+    "text": "Just wondering if we could try the coffee before buying.",
+    "expected_intent": "product_interest"
+  },
+  {
+    "id": "int_10",
+    "language": "en",
+    "text": "We loved it, but the trail was really muddy.",
+    "expected_intent": "feedback"
+  },
+  {
+    "id": "int_11",
+    "language": "es",
+    "text": "Quisiera reservar una visita para el próximo domingo.",
+    "expected_intent": "booking_request"
+  },
+  {
+    "id": "int_12",
+    "language": "es",
+    "text": "¿Cuál es el precio de la degustación?",
+    "expected_intent": "price_question"
+  },
+  {
+    "id": "int_13",
+    "language": "es",
+    "text": "¿Tienen espacio disponible mañana por la tarde?",
+    "expected_intent": "availability_question"
+  },
+  {
+    "id": "int_14",
+    "language": "es",
+    "text": "No encuentro el camino desde el pueblo, ¿me ayudan?",
+    "expected_intent": "directions_question"
+  },
+  {
+    "id": "int_15",
+    "language": "es",
+    "text": "¿Se puede caminar por los cafetales solos?",
+    "expected_intent": "activity_question"
+  },
+  {
+    "id": "int_16",
+    "language": "es",
+    "text": "Me interesa comprar café en grano.",
+    "expected_intent": "product_interest"
+  },
+  {
+    "id": "int_17",
+    "language": "es",
+    "text": "Una experiencia inolvidable, gracias por todo.",
+    "expected_intent": "feedback"
+  },
+  {
+    "id": "int_18",
+    "language": "es",
+    "text": "¡Hola buenas tardes!",
+    "expected_intent": "greeting"
+  },
+  {
+    "id": "int_19",
+    "language": "es",
+    "text": "Tengo una queja sobre el cobro que me hicieron.",
+    "expected_intent": "feedback"
+  },
+  {
+    "id": "int_20",
+    "language": "es",
+    "text": "Me perdí, ¿hay algún letrero en la entrada?",
+    "expected_intent": "directions_question"
+  },
+  {
+    "id": "int_21",
+    "language": "id",
+    "text": "Saya mau pesan tempat untuk 4 orang hari Sabtu.",
+    "expected_intent": "booking_request"
+  },
+  {
+    "id": "int_22",
+    "language": "id",
+    "text": "Berapa harganya per orang?",
+    "expected_intent": "price_question"
+  },
+  {
+    "id": "int_23",
+    "language": "id",
+    "text": "Buka tidak ya hari libur nasional?",
+    "expected_intent": "availability_question"
+  },
+  {
+    "id": "int_24",
+    "language": "id",
+    "text": "Bisa kirim petunjuk arah atau lokasi map?",
+    "expected_intent": "directions_question"
+  },
+  {
+    "id": "int_25",
+    "language": "id",
+    "text": "Apakah ada kegiatan untuk anak-anak?",
+    "expected_intent": "activity_question"
+  },
+  {
+    "id": "int_26",
+    "language": "id",
+    "text": "Bisa beli biji kopi sangrai 1 kg?",
+    "expected_intent": "product_interest"
+  },
+  {
+    "id": "int_27",
+    "language": "id",
+    "text": "Sangrai kopi sendiri seru banget, terima kasih Bu Noor!",
+    "expected_intent": "feedback"
+  },
+  {
+    "id": "int_28",
+    "language": "id",
+    "text": "Selamat pagi Ibu.",
+    "expected_intent": "greeting"
+  },
+  {
+    "id": "int_29",
+    "language": "id",
+    "text": "Harganya agak mahal menurut saya, tapi sepadan.",
+    "expected_intent": "feedback"
+  },
+  {
+    "id": "int_30",
+    "language": "id",
+    "text": "Tolong share lokasinya ya.",
+    "expected_intent": "directions_question"
+  }
+]
