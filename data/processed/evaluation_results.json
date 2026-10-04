@@ -1,0 +1,203 @@
+{
+  "generated_timestamp": "2026-10-04T01:23:25.768703Z",
+  "baseline_implementation": "Deterministic regex and keyword matching (backend.ai v0.2)",
+  "dataset_counts": {
+    "tourism_feedback": 45,
+    "voice_listing": 18,
+    "intent_test": 30,
+    "translation_test": 24
+  },
+  "experience_dna_metrics": {
+    "per_label": {
+      "roast": {
+        "tp": 4,
+        "fp": 1,
+        "fn": 1,
+        "precision": 0.8,
+        "recall": 0.8,
+        "f1": 0.8000000000000002
+      },
+      "directions": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 3,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6666666666666666
+      },
+      "host": {
+        "tp": 7,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333333333333333
+      },
+      "walk": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.888888888888889
+      },
+      "view": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "beans": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "tasting": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "food": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.8333333333333334,
+        "f1": 0.9090909090909091
+      },
+      "process": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1": 0.8
+      },
+      "stay": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1": 0.8
+      },
+      "carve": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "ship": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "cook": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "macro_precision": 0.9750000000000001,
+    "macro_recall": 0.8666666666666666,
+    "macro_f1": 0.9075369075369076,
+    "micro_f1": 0.9038461538461537
+  },
+  "listing_extraction_metrics": {
+    "correct_fields": 55,
+    "evaluated_fields": 144,
+    "overall_accuracy": 0.3819444444444444,
+    "missing_predictions": 89,
+    "hallucinations": 0,
+    "per_field": {
+      "business_name": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "experience_title": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "description": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      },
+      "price": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "currency": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "duration_minutes": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      },
+      "activities": {
+        "evaluated": 18,
+        "correct": 7,
+        "hallucinated": 0,
+        "missing": 11
+      },
+      "availability": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      }
+    }
+  },
+  "intent_status": {
+    "status": "Intent classifier: not implemented / baseline unavailable",
+    "accuracy": null,
+    "macro_f1": null
+  },
+  "translation_status": {
+    "status": "Translation is currently implemented via prepared phrases / fixed mappings in frontend only. Requires later model or human evaluation.",
+    "total_examples": 24,
+    "counts_by_direction": {
+      "en-id": 4,
+      "id-en": 4,
+      "en-es": 4,
+      "es-en": 4,
+      "es-id": 4,
+      "id-es": 4
+    }
+  },
+  "hallucination_count": 0,
+  "known_limitations": [
+    "Intent classification is not implemented yet.",
+    "Translation relies on fixed client-side phrases, not evaluateable automatically.",
+    "Voice listing extraction currently uses simple regexes, lacking robustness to varied phrasing.",
+    "Experience DNA relies on keyword matching which fails on synonyms or complex phrasing."
+  ]
+}
