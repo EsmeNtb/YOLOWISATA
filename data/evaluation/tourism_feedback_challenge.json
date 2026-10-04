@@ -1,0 +1,247 @@
+[
+  {
+    "id": "challenge_en_001",
+    "language": "en",
+    "text": "Watching the beans change color as they heated over the fire was the highlight.",
+    "labels": [
+      "roast"
+    ]
+  },
+  {
+    "id": "challenge_en_002",
+    "language": "en",
+    "text": "The navigation app took us to the wrong spot, but the owner was very welcoming when we finally arrived.",
+    "labels": [
+      "directions",
+      "host"
+    ]
+  },
+  {
+    "id": "challenge_en_003",
+    "language": "en",
+    "text": "Strolling through the fields and looking out over the valley was breathtaking.",
+    "labels": [
+      "walk",
+      "view"
+    ]
+  },
+  {
+    "id": "challenge_en_004",
+    "language": "en",
+    "text": "Can we purchase some of the produce to take back home? Sampling the different cups was great.",
+    "labels": [
+      "beans",
+      "tasting"
+    ]
+  },
+  {
+    "id": "challenge_en_005",
+    "language": "en",
+    "text": "Is a bite to eat part of the package?",
+    "labels": [
+      "food"
+    ]
+  },
+  {
+    "id": "challenge_en_006",
+    "language": "en",
+    "text": "We loved listening to the family's background and history.",
+    "labels": [
+      "host"
+    ]
+  },
+  {
+    "id": "challenge_en_007",
+    "language": "en",
+    "text": "Could you explain the steps from picking the berry to drying it?",
+    "labels": [
+      "process"
+    ]
+  },
+  {
+    "id": "challenge_en_008",
+    "language": "en",
+    "text": "Do you have rooms available for the evening? Also, can you post the wooden pieces to my address?",
+    "labels": [
+      "stay",
+      "ship",
+      "carve"
+    ]
+  },
+  {
+    "id": "challenge_en_009",
+    "language": "en",
+    "text": "Preparing the meal in the kitchen together was such a lovely experience.",
+    "labels": [
+      "cook",
+      "host"
+    ]
+  },
+  {
+    "id": "challenge_en_010",
+    "language": "en",
+    "text": "Everything was absolutely fantastic and we really appreciated the effort.",
+    "labels": []
+  },
+  {
+    "id": "challenge_es_001",
+    "language": "es",
+    "text": "Dorar los granos al fuego junto a la dueña fue un momento inolvidable.",
+    "labels": [
+      "roast",
+      "host"
+    ]
+  },
+  {
+    "id": "challenge_es_002",
+    "language": "es",
+    "text": "Nos desorientamos bastante para dar con el lugar, falta señalización.",
+    "labels": [
+      "directions"
+    ]
+  },
+  {
+    "id": "challenge_es_003",
+    "language": "es",
+    "text": "El recorrido por el terreno fue relajante, y la panorámica espectacular.",
+    "labels": [
+      "walk",
+      "view"
+    ]
+  },
+  {
+    "id": "challenge_es_004",
+    "language": "es",
+    "text": "¿Podemos adquirir unas bolsas del producto para llevarnos a nuestro país?",
+    "labels": [
+      "beans"
+    ]
+  },
+  {
+    "id": "challenge_es_005",
+    "language": "es",
+    "text": "¿Ofrecen algo de cenar o almorzar durante la visita?",
+    "labels": [
+      "food"
+    ]
+  },
+  {
+    "id": "challenge_es_006",
+    "language": "es",
+    "text": "Me encantaría saborear distintas infusiones si es posible.",
+    "labels": [
+      "tasting"
+    ]
+  },
+  {
+    "id": "challenge_es_007",
+    "language": "es",
+    "text": "Darle forma al tronco fue muy divertido. ¿Hacen despachos a otras ciudades?",
+    "labels": [
+      "carve",
+      "ship"
+    ]
+  },
+  {
+    "id": "challenge_es_008",
+    "language": "es",
+    "text": "¿Tienen habitaciones para pasar la noche allí?",
+    "labels": [
+      "stay"
+    ]
+  },
+  {
+    "id": "challenge_es_009",
+    "language": "es",
+    "text": "Me gustaría entender mejor las etapas de fermentación y secado.",
+    "labels": [
+      "process"
+    ]
+  },
+  {
+    "id": "challenge_es_010",
+    "language": "es",
+    "text": "Nos pareció una visita excelente, lo recomendamos ampliamente.",
+    "labels": []
+  },
+  {
+    "id": "challenge_id_001",
+    "language": "id",
+    "text": "Menggoreng biji kopinya di atas wajan tanah liat sungguh pengalaman langka.",
+    "labels": [
+      "roast"
+    ]
+  },
+  {
+    "id": "challenge_id_002",
+    "language": "id",
+    "text": "Titik di peta digital ternyata salah sehingga kami sempat nyasar cukup jauh.",
+    "labels": [
+      "directions"
+    ]
+  },
+  {
+    "id": "challenge_id_003",
+    "language": "id",
+    "text": "Menyusuri jalan setapak di ladang bersama pemiliknya sangat berkesan.",
+    "labels": [
+      "walk",
+      "host"
+    ]
+  },
+  {
+    "id": "challenge_id_004",
+    "language": "id",
+    "text": "Bisa borong beberapa bungkus hasil kebun ini untuk oleh-oleh?",
+    "labels": [
+      "beans"
+    ]
+  },
+  {
+    "id": "challenge_id_005",
+    "language": "id",
+    "text": "Apakah disediakan hidangan pengganjal perut untuk para tamu?",
+    "labels": [
+      "food"
+    ]
+  },
+  {
+    "id": "challenge_id_006",
+    "language": "id",
+    "text": "Lanskap dari atas bukit sungguh memukau, apalagi udaranya sejuk.",
+    "labels": [
+      "view"
+    ]
+  },
+  {
+    "id": "challenge_id_007",
+    "language": "id",
+    "text": "Saya ingin mencoba tegukan dari berbagai jenis seduhan yang lain.",
+    "labels": [
+      "tasting"
+    ]
+  },
+  {
+    "id": "challenge_id_008",
+    "language": "id",
+    "text": "Meracik bumbu di dapur untuk hidangan siang sangat seru.",
+    "labels": [
+      "cook",
+      "food"
+    ]
+  },
+  {
+    "id": "challenge_id_009",
+    "language": "id",
+    "text": "Tolong jelaskan lagi tahapan pengolahannya dari pemetikan sampai penjemuran.",
+    "labels": [
+      "process"
+    ]
+  },
+  {
+    "id": "challenge_id_010",
+    "language": "id",
+    "text": "Secara keseluruhan pengalaman kami sangat memuaskan.",
+    "labels": []
+  }
+]
