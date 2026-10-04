@@ -389,20 +389,7 @@ V.story=()=>storyHTML(biz(S.biz),false);
 V["b-story"]=()=>storyHTML(B(),true);
 
 /* ----- Local business side: Indonesian by default, English with the 🌐 switch ----- */
-V["b-list"]=()=>{const b=B(),L=ui.transcript?extract(ui.transcript,b):null,cur=S.listings[b.id]||(b.custom?null:b.L);
- if(!ui.transcript)return `<div class="pad" style="text-align:center"><p class="hand">Halo, ${esc(b.host)}.</p><h1 style="font-size:1.6rem">${T("Ceritakan usaha Anda","Describe your business")}</h1><p class="sub">${T("Cukup bicara. Tidak perlu mengetik.","Just speak. No typing needed.")}</p>
- <button class="mic ${ui.rec?"rec":""}" data-a="rec" aria-label="${T("Rekam pesan suara","Record a voice note")}">${ui.rec?"■":"🎙️"}</button>
- <p style="font-weight:700">${ui.rec?T("Mendengarkan…","Listening…"):T("Tekan dan bicara","Tap and speak")}</p><p class="small">${ui.rec?"":T("Sebutkan nama Anda, kegiatan tamu, berapa lama, harganya, dan hari buka.","Say your name, what guests do, how long, how much, and which days.")}</p>
- ${cur?`<div class="box" style="text-align:left"><b>${b.e} ${esc(tv(cur.name||b.name))}</b><p class="sub">${esc(tv(cur.price||""))} · ${esc(tv(cur.duration||""))}</p><p class="small">${S.lsync[b.id]?T(S.lsync[b.id].startsWith("Saved")?"Tersimpan di ponsel. Dikirim saat ada sinyal.":"Terkirim. Tamu sudah bisa menemukannya.",S.lsync[b.id]):T("Aktif. Tamu bisa menemukannya.","Live. Guests can find it.")}</p></div>`:`<div class="box" style="text-align:left"><b>${T("Belum ada daftar","No listing yet")}</b><p class="sub">${T("Rekam satu pesan suara, dan tamu bisa menemukan Anda.","Record one voice note and guests can find you.")}</p></div>`}
- <p class="small" style="margin-top:1.2rem">${T("Catatan prototipe: mikrofon disimulasikan dengan contoh rekaman.","Prototype note: the microphone is simulated with a sample recording.")}</p></div>`;
- return `<div class="pad"><h1 style="font-size:1.4rem">${T("Apakah ini benar?","Is this right?")}</h1><p class="sub">${T("Belum ada yang diterbitkan sebelum Anda setuju.","Nothing is published until you confirm.")}</p>
- <label class="f" for="trn">${T("Yang kami dengar","What we heard")}</label><textarea class="t" id="trn" style="min-height:120px">${esc(ui.transcript)}</textarea>
- <p class="small">${T("Daftar di bawah dibuat hanya dari kata-kata di atas.","The listing below is built only from the words above.")}</p>
- <div class="box" id="flds">${fieldsHTML(L)}</div>
- <div class="row" style="margin-top:1rem"><button class="btn" data-a="confirm">${T("Benar","Confirm")}</button><button class="btn alt" data-a="edit">${ui.edit?T("Selesai","Done editing"):T("Ubah","Edit")}</button></div>
- <button class="btn alt wide" style="margin-top:.6rem" data-a="rerec">${T("Rekam lagi","Record again")}</button></div>`};
-function fieldsHTML(L){return FIELDS.map(([k,id,en])=>{const v=(ui.over&&ui.over[k])??L[k];
- return `<div class="fld"><span>${T(id,en)}</span>${ui.edit?`<input class="t" data-k="${k}" value="${esc(v||"")}" placeholder="${T("Mohon diisi","Please fill this in")}">`:(v?`<b>${esc(tv(v))}</b>`:`<b><span class="unsure">${T("Tidak yakin.","Not sure.")}</span> ${T("Saya tidak mendengar ini. Mohon beri tahu.","I did not hear this. Please tell me.")}</b>`)}</div>`}).join("")}
+V["b-list"]=()=>voiceView();
 
 V["b-msgs"]=()=>{const b=B(),ts=threadsOf(b),k=S.blang==="en"?"en":"id";return `<div class="pad"><h1 style="font-size:1.6rem">${T("Pesan tamu","Guest messages")}</h1><p class="sub">${T("Pesan tamu ditampilkan dalam bahasa Indonesia.","Guest messages, shown in English.")}</p>
  ${ts.length?ts.map(t=>{const ms=thread(b,t.id),last=ms[ms.length-1],wait=last.from==="g";return `<button class="bz" data-a="thread" data-id="${t.id}"><span class="tile" style="background:var(--pale)">${t.f}</span><span style="min-width:0"><b>${esc(t.who)}</b><span class="small" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px">${esc(last.from==="g"?(last[k]||last.t):last.t)}</span></span>${wait?`<span class="tag warn" style="margin-left:auto">${T("Balas","Reply")}</span>`:""}</button>`}).join(""):`<div class="box"><b>${T("Belum ada pesan","No messages yet")}</b><p class="sub">${T("Saat tamu menulis, pesannya muncul di sini dalam bahasa Anda.","When a guest writes, it appears here in your language.")}</p></div>`}</div>`};
@@ -450,7 +437,7 @@ V["b-journey"]=()=>{const b=B(),A=insightsFor(b),has=!!(S.listings[b.id]||!b.cus
 V.ai=()=>{const P=t=>`<p style="text-align:justify;hyphens:auto">${t}</p>`,H=t=>`<h2 style="font-size:1.15rem;margin:1.6rem 0 -.2rem">${t}</h2>`,B=(h,t,pale)=>`<div class="box"${pale?' style="background:var(--pale);border:0"':""}><h3>${h}</h3>${P(t)}</div>`;
  return `<div class="pad ai" lang="${S.blang}"><button class="pill" style="margin-bottom:.9rem" data-a="go" data-s="login">‹ ${T("Kembali","Back")}</button>
  <h1 style="font-size:1.6rem">${T("Cara kerja YoloWisata","How YoloWisata works")}</h1><p class="sub" style="margin-top:.3rem">${T("Situs untuk wisatawan dan usaha lokal yang tetap berfungsi tanpa internet.","A website for travelers and local businesses that keeps working when the internet does not.")}</p>
- ${B(T("Tetap berfungsi tanpa internet","Works without internet"),T("YoloWisata adalah situs web, jadi tidak perlu memasang aplikasi. Setelah kunjungan pertama, situs dapat dibuka tanpa koneksi. Aktivitas offline seperti pesan, kunjungan, kartu pos, atau catatan suara disimpan di perangkat dan dikirim saat tersambung kembali.","YoloWisata is a website, so there is nothing to install. After the first visit it opens with no connection. Anything done offline, such as a message, a booking, a postcard or a voice note, is kept on the device and sent when the signal returns."),1)}
+ ${B(T("Tetap berfungsi tanpa internet","Works without internet"),T("YoloWisata adalah situs web, jadi tidak perlu memasang aplikasi. Setelah kunjungan pertama, situs dapat dibuka tanpa koneksi. Aktivitas offline seperti pesan, kunjungan, kartu pos disimpan di perangkat dan dikirim saat tersambung kembali.","YoloWisata is a website, so there is nothing to install. After the first visit it opens with no connection. Anything done offline, such as a message, a booking, a postcard, is kept on the device and sent when the signal returns."),1)}
  ${H(T("Yang dilakukan AI","What the AI does"))}
  ${B(T("1. Pencocokan","1. Matching"),T("Sepuluh pilihan membentuk DNA Perjalanan. Setiap usaha memiliki DNA Pengalaman. Skor membandingkan keduanya dan menunjukkan jika kecocokannya rendah.","Ten swipes become a Travel DNA. Each business has an Experience DNA. The match score compares the two, and a weak match says so."))}
  ${B(T("2. Suara menjadi daftar usaha","2. Voice to listing"),T("Pemilik menjelaskan usahanya dengan suara dalam bahasanya sendiri. Informasi menjadi daftar berisi nama, harga, durasi, kegiatan, dan hari buka. Hal yang tidak terdengar ditandai ‘Belum yakin’ dan tidak ditebak.","An owner describes the business out loud, in their own language. The words become a listing with a name, price, duration, activities and opening days. Anything not heard is marked ‘Not sure’ and is never guessed."))}
@@ -461,7 +448,7 @@ V.ai=()=>{const P=t=>`<p style="text-align:justify;hyphens:auto">${t}</p>`,H=t=>
  ${B(T("Untuk berbagai jenis usaha","Any kind of business"),T("Kebun, bengkel, dapur, homestay, dan pemandu menggunakan layar yang sama; setiap usaha dapat memakai aplikasi dalam bahasanya.","A farm, a workshop, a kitchen, a homestay or a guide all use the same screens, and each business uses the app in its own language."))}
  ${B(T("Lokasi","Location"),T("Berbagi lokasi bersifat opsional. Fitur ini berfungsi tanpa internet dan posisi tetap di perangkat.","Sharing a location is optional. It works without internet, and the position stays on the device."))}
  ${H(T("Tentang prototipe ini","About this prototype"))}
- ${B(T("Yang nyata dan yang disimulasikan","What is real and what is simulated"),T("Pencocokan dan ekstraksi daftar berjalan di perangkat. Wawasan pengunjung berasal dari server saat tersambung, atau dari perangkat saat offline. Terjemahan memakai daftar frasa yang telah disiapkan. Rekaman suara dan desa demo disimulasikan; kartu pos dan pertanyaan contoh ditulis oleh tim.","Matching and listing extraction run on the device. Visitor insights come from the server when it is connected, and from the device otherwise. Translation uses a prepared phrase list in place of a translation model, so other sentences are shown as written. The voice recording and the demo village are simulated, and the sample postcards and questions were written by the team."))}</div>`};
+ ${B(T("Yang nyata dan yang disimulasikan","What is real and what is simulated"),T("Pencocokan berjalan di perangkat. Pemrosesan suara memerlukan server Python dengan model; tidak dijamin offline di ponsel. Wawasan pengunjung berasal dari server saat tersambung, atau dari perangkat saat offline. Terjemahan memakai daftar frasa yang telah disiapkan. Perekaman daftar memakai mikrofon; desa demo disimulasikan; kartu pos dan pertanyaan contoh ditulis oleh tim.","Matching runs on the device. Voice listing processing runs on a configured Python host; it is not guaranteed offline on the phone. Visitor insights come from the server when it is connected, and from the device otherwise. Translation uses a prepared phrase list in place of a translation model, so other sentences are shown as written. Listing recording uses the microphone; the demo village is simulated, and the sample postcards and questions were written by the team."))}</div>`};
 
 /* ---------- Render ---------- */
 const GNAV=()=>[["explore","🧭",T("Jelajahi","Explore")],["swipe","🧬",T("DNA Perjalanan","Travel DNA")],["inbox","💬",T("Pesan","Messages")],["trips","📅",T("Kunjungan","Visits")],["help","🗣️",T("Frasa","Phrases")]];
@@ -589,7 +576,7 @@ function outbox(){const o=[];
  S.mine.forEach(m=>{if(m.status==="sent"&&(m.removed||m.modBy===S.gid)&& (m.gid===S.gid||m.modBy===S.gid))o.push(["postcards",m.id+(m.removed?":r":"")+(m.hidden?":h":m.modBy?":s":""),m.removed?Object.assign({},m,{t:"(removed)"}):m])});
  for(const k in S.msgs)S.msgs[k].forEach(m=>{if(m.mid&&m.from!=="sys"&&m.own===S.gid)o.push(["messages",m.mid,Object.assign({},m,{id:m.mid,thread:k,sync:"sent"})])});
  S.bookings.forEach(k=>{const key="bookings/"+k.id+":"+k.status;if(k.local_pending||(!k.server_record&&!S.acked[key]))o.push(["bookings",k.id+":"+k.status,{...k,sync:"sent"}])});
- for(const id in S.listings)o.push(["listings",id+":"+hash(JSON.stringify(S.listings[id])),{id,L:S.listings[id],ts:S.lts[id]||0}]);
+ for(const id in S.listings)o.push(["listings",id+":"+(S.lts[id]||0)+":"+hash(JSON.stringify(S.listings[id])),{id,L:S.listings[id],ts:S.lts[id]||0}]);
  S.custom.forEach(b=>o.push(["businesses",b.id+":"+hash(b.name+b.story),b]));
  return o}
 function flush(){
@@ -603,9 +590,15 @@ function flush(){
    try{await api("/api/"+kind,"POST",rec);S.acked[k]=1;
     if(kind==="messages"){const m=(S.msgs[rec.thread]||[]).find(m=>m.mid===rec.mid);if(m)m.sync="sent"}
     if(kind==="bookings"){const b=S.bookings.find(b=>b.id===rec.id);if(b){b.sync="sent";b.local_pending=false}}
-    if(kind==="listings")S.lsync[rec.id]="Synced. Guests can find it now.";
+    if(kind==="listings"&&S.listings[rec.id]===rec.L&&(S.lts[rec.id]||0)===rec.ts){
+     S.lsync[rec.id]="Synced. Guests can find it now.";
+     if(typeof voiceListingSync==="function")voiceListingSync(rec.id,S.lsync[rec.id]);
+     if(S.role==="biz"&&S.screen==="b-list"&&S.myBiz===rec.id)toast(T("Daftar tersimpan dan tersinkron dengan YoloWisata.","Listing saved and synced with YoloWisata."));
+    }
     changed=true;save();
-  }catch(e){console.warn("Sync",kind,e.message);if(e.status>=400&&e.status<500){S.acked[k]=1;if(kind==="bookings"){const b=S.bookings.find(b=>b.id===rec.id);if(b){b.sync="failed_permanent";b.local_pending=false}}changed=true;save()}}finally{delete inflight[k]}
+  }catch(e){console.warn("Sync",kind,e.message);const permanent=e.status>=400&&e.status<500;
+   if(kind==="listings"&&S.listings[rec.id]===rec.L&&(S.lts[rec.id]||0)===rec.ts){S.lsync[rec.id]=permanent?"Saved on this device, but server sync needs attention.":"Saved on this device. Server sync will retry.";if(typeof voiceListingSync==="function")voiceListingSync(rec.id,S.lsync[rec.id]);changed=true;save()}
+   if(permanent){S.acked[k]=1;if(kind==="bookings"){const b=S.bookings.find(b=>b.id===rec.id);if(b){b.sync="failed_permanent";b.local_pending=false}}changed=true;save()}}finally{delete inflight[k]}
   }));
   const active=document.activeElement;
   if(changed&&!ui.modal&&!(active&&/INPUT|TEXTAREA|SELECT/.test(active.tagName||"")))render(false);
@@ -707,26 +700,16 @@ const A={
   if(c){c.hidden=!c.hidden;c.ts=Date.now();c.modBy=S.gid}else{S.hid[id]=!S.hid[id]}   /* sample postcards from the data file are hidden on this device only */
   ui.modal=null;render();toast(isHid(c||{id})?T("Disembunyikan dari Cerita.","Hidden from the Story."):T("Tampil lagi di Cerita.","Showing in the Story again."))},
  tr:el=>{S.tr[el.dataset.k]=!S.tr[el.dataset.k];renderOver()},
- rec:()=>{const b=B(),done=t=>{ui.rec=0;ui.mr=null;ui.transcript=t||sampleFor(b);ui.over={};render()},fake=()=>{ui.rec=1;render();setTimeout(()=>done(),2400)};
-  if(ui.rec){if(ui.mr)ui.mr.stop();return}
-  if(!(API&&S.online&&window.MediaRecorder&&navigator.mediaDevices))return fake();   /* no backend: sample recording */
-  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{const chunks=[],mr=new MediaRecorder(stream);ui.mr=mr;ui.rec=1;render();
-   mr.ondataavailable=e=>chunks.push(e.data);
-   mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());const fd=new FormData();fd.append("audio",new Blob(chunks,{type:mr.mimeType}),"note.webm");fd.append("sector",b.sector);
-    fetch(API+"/api/voice",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{done(d.transcript);if(d.demo)toast(T("Server belum punya model suara, jadi ini contoh rekaman.","The server has no speech model yet, so this is a sample transcript."))}).catch(()=>done())};
-   mr.start();setTimeout(()=>{if(mr.state==="recording")mr.stop()},30000)}).catch(fake)},
- rerec:()=>{ui.transcript="";ui.edit=false;ui.over={};render()},
- edit:()=>{grab();ui.edit=!ui.edit;render()},
- confirm:()=>{grab();const b=B(),L=Object.assign(extract(ui.transcript,b),ui.over);const miss=FIELDS.filter(f=>!L[f[0]]);
-  if(miss.length){ui.edit=true;render();toast(T("Masih kurang: "+miss.map(f=>f[1].toLowerCase()).join(", ")+". Isi atau rekam lagi.","Still missing: "+miss.map(f=>f[2].toLowerCase()).join(", ")+". Fill it in or record again."));return}
-  S.listings[b.id]=L;S.lts[b.id]=Date.now();S.lsync[b.id]=S.online?"Synced. Guests can find it now.":"Saved locally. Will sync when connection returns.";const c=S.custom.find(x=>x.id===b.id);if(c){c.name=L.name;c.story=L.description}
-  ui.transcript="";ui.edit=false;render();toast(T(S.online?"Terkirim. Tamu sudah bisa menemukannya.":"Tersimpan di ponsel. Dikirim saat ada sinyal.",S.lsync[b.id]))},
+ voiceRecord:()=>voiceRecord(),
+ voiceExtract:()=>voiceExtract(),
+ voiceManual:()=>voiceManual(),
+ voiceConfirm:()=>voiceConfirm(),
+ voiceChip:el=>voiceChip(el),
  idea:el=>{S.idea[B().id]=el.dataset.v;render()},
  evid:el=>{ui.modal={t:"evid",k:el.dataset.k,group:el.dataset.group||"asks"};renderOver()},
  say:el=>{const t=el.dataset.t;toast("🔊 “"+t+"”");return speakText(t,el.dataset.lang||"id",Number(el.dataset.r)||1)}
 };
 function keep(){const m=$("#msg");if(m)S.draft.t=m.value}
-function grab(){const t=$("#trn");if(t)ui.transcript=t.value;ui.over=ui.over||{};document.querySelectorAll("#flds input").forEach(i=>{if(i.value.trim())ui.over[i.dataset.k]=i.value.trim();else delete ui.over[i.dataset.k]})}
 document.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(el&&A[el.dataset.a])A[el.dataset.a](el,e)});
 const DAYN=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 /* true when the listing names its open days and the chosen date is not one of them; unknown opening days never warn */
@@ -738,8 +721,10 @@ document.addEventListener("input",e=>{const id=e.target.id;
  if(id==="bd"){const w=$("#bwarn");if(w)w.innerHTML=closedNote(biz(S.biz),e.target.value)}
  if(id==="bti"&&e.target.value){ui.time=e.target.value;document.querySelectorAll("#bt .chip").forEach(c=>c.classList.toggle("on",c.dataset.h===ui.time))}
  if(id==="msg"){keep();$("#pv").innerHTML=pcHTML(draftCard());save()}
- if(id==="trn"&&!ui.edit){ui.transcript=e.target.value;ui.over={};$("#flds").innerHTML=fieldsHTML(extract(ui.transcript,B()))}});
-document.addEventListener("change",e=>{if(e.target.id!=="ph"||!e.target.files[0])return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),k=Math.min(1,420/img.width);c.width=img.width*k;c.height=img.height*k;c.getContext("2d").drawImage(img,0,0,c.width,c.height);keep();S.draft.photo=c.toDataURL("image/jpeg",.7);render()};img.src=r.result};r.readAsDataURL(e.target.files[0])});
+ if(typeof voiceInput==="function" && (id.startsWith("voice-") || (e.target.dataset && (e.target.dataset.voiceField||e.target.dataset.voiceOther))))voiceInput(e.target)});
+document.addEventListener("change",e=>{
+ if(typeof voiceInput==="function" && e.target.dataset && e.target.dataset.voiceField)voiceInput(e.target);
+ if(e.target.id!=="ph"||!e.target.files[0])return;const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),k=Math.min(1,420/img.width);c.width=img.width*k;c.height=img.height*k;c.getContext("2d").drawImage(img,0,0,c.width,c.height);keep();S.draft.photo=c.toDataURL("image/jpeg",.7);render()};img.src=r.result};r.readAsDataURL(e.target.files[0])});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ui.modal){ui.modal=null;renderOver()}
  if(e.key==="Enter"&&e.target.id==="cin"){S.screen==="chat"?A.gsend():A.bsend()}
  if(S.screen==="swipe"&&!ui.modal){if(e.key==="ArrowRight")swipe(1);if(e.key==="ArrowLeft")swipe(0)}});

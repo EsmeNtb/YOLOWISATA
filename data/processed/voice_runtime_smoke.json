@@ -1,0 +1,17 @@
+{
+  "hardware": {
+    "os": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics",
+    "ram_bytes": 16309932032,
+    "gpu_used": false
+  },
+  "stt_smoke": {
+    "status": "model_loaded_and_silence_safely_rejected",
+    "processing_ms_including_load": 5087.02,
+    "audio": "generated two seconds of silence, not natural speech",
+    "accuracy_or_wer": "not measured",
+    "model": "models/faster-whisper-base",
+    "runtime": "1.2.1",
+    "compute_type": "int8"
+  }
+}

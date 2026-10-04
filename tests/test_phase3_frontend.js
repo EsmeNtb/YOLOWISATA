@@ -47,6 +47,7 @@ function app({online=true,api='https://backend.test',handler}={}){
    return {ok:true,json:async()=>copy(body)};
   }
  });
+ vm.runInContext(fs.readFileSync(path.join(root,'frontend/voice-listing.js'),'utf8'),context,{filename:'voice-listing.js'});
  vm.runInContext(source,context,{filename:'app.js'});
  const run=code=>vm.runInContext(code,context);
  run('S.blang="en"');

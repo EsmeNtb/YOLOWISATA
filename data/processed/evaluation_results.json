@@ -1,5 +1,5 @@
 {
-  "generated_timestamp": "2026-10-04T02:45:49.220926Z",
+  "generated_timestamp": "2026-10-04T06:35:11.517732Z",
   "baseline_implementation": "Deterministic regex and keyword matching (backend.ai v0.2)",
   "dataset_counts": {
     "tourism_feedback": 45,
@@ -9,7 +9,7 @@
     "translation_test": 24
   },
   "experience_dna_standard": {
-    "macro_f1": 0.9075369075369075,
+    "macro_f1": 0.9075369075369076,
     "micro_f1": 0.9038461538461537
   },
   "experience_dna_challenge": {
@@ -28,8 +28,8 @@
         "id": "challenge_en_002",
         "text": "The navigation app took us to the wrong spot, but the owner was very welcoming when we finally arrived.",
         "expected": [
-          "host",
-          "directions"
+          "directions",
+          "host"
         ],
         "predicted": []
       },
@@ -37,8 +37,8 @@
         "id": "challenge_en_003",
         "text": "Strolling through the fields and looking out over the valley was breathtaking.",
         "expected": [
-          "view",
-          "walk"
+          "walk",
+          "view"
         ],
         "predicted": []
       },
@@ -72,8 +72,8 @@
         "text": "Do you have rooms available for the evening? Also, can you post the wooden pieces to my address?",
         "expected": [
           "ship",
-          "carve",
-          "stay"
+          "stay",
+          "carve"
         ],
         "predicted": []
       },
@@ -109,8 +109,8 @@
         "id": "challenge_es_003",
         "text": "El recorrido por el terreno fue relajante, y la panorámica espectacular.",
         "expected": [
-          "view",
-          "walk"
+          "walk",
+          "view"
         ],
         "predicted": []
       },
@@ -142,8 +142,8 @@
         "id": "challenge_es_007",
         "text": "Darle forma al tronco fue muy divertido. ¿Hacen despachos a otras ciudades?",
         "expected": [
-          "carve",
-          "ship"
+          "ship",
+          "carve"
         ],
         "predicted": []
       },
@@ -224,8 +224,8 @@
         "id": "challenge_id_008",
         "text": "Meracik bumbu di dapur untuk hidangan siang sangat seru.",
         "expected": [
-          "food",
-          "cook"
+          "cook",
+          "food"
         ],
         "predicted": []
       },
@@ -240,6 +240,63 @@
     ]
   },
   "listing_extraction_metrics": {
+    "correct_fields": 55,
+    "evaluated_fields": 144,
+    "overall_accuracy": 0.3819444444444444,
+    "missing_predictions": 89,
+    "hallucinations": 0,
+    "per_field": {
+      "business_name": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "experience_title": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "description": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      },
+      "price": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "currency": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "duration_minutes": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      },
+      "activities": {
+        "evaluated": 18,
+        "correct": 7,
+        "hallucinated": 0,
+        "missing": 11
+      },
+      "availability": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      }
+    }
+  },
+  "listing_extraction_baseline": {
     "correct_fields": 55,
     "evaluated_fields": 144,
     "overall_accuracy": 0.3819444444444444,

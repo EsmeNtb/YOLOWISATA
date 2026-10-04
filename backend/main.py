@@ -17,10 +17,13 @@ Run from the project root:
 import hashlib
 import hmac
 import json
+import logging
+import math
 import os
 import secrets
 import threading
 from datetime import datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Literal
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -41,6 +44,8 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.database import supabase
 from backend import phase4, voice as voice_module
+from backend import listing_ai
+from starlette.concurrency import run_in_threadpool
 
 
 try:
@@ -660,7 +665,37 @@ async def extract(
 # AUDIO -> TRANSCRIPT -> STRUCTURED LISTING
 # ------------------------------------------------------------
 
-@app.post("/api/voice")
+class ListingProposalInput(BaseModel):
+    transcript: str = Field(min_length=1, max_length=4000)
+    language: Literal["en", "es", "id"]
+
+
+@app.post("/api/voice/proposal")
+def voice_proposal(req: ListingProposalInput):
+    """Text-only, no persistence. Safe for edited transcripts and frozen evaluation."""
+    try:
+        return listing_ai.extract_proposal(req.transcript, req.language)
+    except ValueError:
+        raise HTTPException(422, "Supply a nonempty transcript and en, es or id.") from None
+
+
+@app.post("/api/voice/transcribe")
+async def voice_transcribe(audio: UploadFile = File(...), language: Literal["en", "es", "id"] = Form(...)):
+    data = await audio.read(8_000_001)
+    await audio.close()
+    if len(data) > 8_000_000:
+        raise HTTPException(413, "Audio must be under 8 MB and 60 seconds.")
+    if not data:
+        raise HTTPException(422, "Audio is empty; type your transcript instead.")
+    try:
+        return await run_in_threadpool(voice_module.transcribe_audio, data, language)
+    except voice_module.STTUnavailable:
+        raise HTTPException(503, "Local speech model unavailable. Type your transcript instead.") from None
+    except voice_module.STTError:
+        raise HTTPException(422, "Could not transcribe. Record up to 60 seconds, or type your transcript.") from None
+
+
+@app.post("/api/voice", deprecated=True)
 async def voice(
     audio: UploadFile = File(...),
     sector: str = Form("Other"),
@@ -870,6 +905,153 @@ async def create_booking(req: Request):
 @app.post("/api/bookingstatus")
 async def update_booking_status(req: Request):
     return phase4_write("bookingstatus", await phase4_record(req))
+
+
+LISTING_DAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+def listing_changes(rec):
+    """Null scalars and unreviewed empty arrays mean not stated, not deletion.
+
+    The form marks deliberately cleared arrays in L.confirmed_empty_fields.
+    Omitted arrays are always preserved. Presentation strings are never parsed.
+    """
+    if not isinstance(rec.get("id"), str) or not 0 < len(rec["id"]) <= 80:
+        raise HTTPException(400, "Supply a business identifier.")
+    if type(rec.get("ts")) is not int or not 0 <= rec["ts"] <= 8640000000000000:
+        raise HTTPException(400, "Supply a valid integer save timestamp in milliseconds.")
+    listing = rec.get("L")
+    fields = listing.get("structured") if isinstance(listing, dict) else None
+    if not isinstance(fields, dict):
+        raise HTTPException(400, "Supply a confirmed structured listing.")
+    title = fields.get("experience_title")
+    if not isinstance(title, str) or not title.strip():
+        raise HTTPException(400, "Experience title must not be blank.")
+    changes = {"title": title.strip()}
+    for key in ("description", "price", "currency", "duration_minutes"):
+        value = fields.get(key)
+        if value is None:
+            continue
+        valid = True
+        if key == "description":
+            valid = isinstance(value, str)
+        elif key == "price":
+            valid = type(value) in (int, float) and 0 <= value <= 9999999999.99 and math.isfinite(value)
+        elif key == "currency":
+            valid = isinstance(value, str) and len(value) == 3 and all("A" <= c <= "Z" for c in value)
+        elif key == "duration_minutes":
+            valid = type(value) is int and value > 0
+        if not valid:
+            raise HTTPException(400, "Invalid structured listing field: " + key + ".")
+        changes[key] = value
+    cleared = listing.get("confirmed_empty_fields", [])
+    if not isinstance(cleared, list) or any(k not in ("activities", "availability") for k in cleared):
+        raise HTTPException(400, "Invalid confirmed empty fields.")
+    for key in ("activities", "availability"):
+        if key not in fields:
+            if key in cleared:
+                raise HTTPException(400, "A confirmed empty field must contain an empty array.")
+            continue
+        values = fields[key]
+        if not isinstance(values, list) or any(not isinstance(v, str) for v in values):
+            raise HTTPException(400, "Structured " + key + " must be an array of strings.")
+        if key in cleared and values:
+            raise HTTPException(400, "A confirmed empty field must contain an empty array.")
+        if key == "availability":
+            if any(v not in (*LISTING_DAYS, "every_day") for v in values):
+                raise HTTPException(400, "Invalid availability day.")
+            if "every_day" in values:
+                if any(v != "every_day" for v in values):
+                    raise HTTPException(400, "Use every_day without individual days.")
+                values = list(LISTING_DAYS)
+        if values or key in cleared:
+            changes[key] = values
+    return changes
+
+
+def write_listing(rec):
+    changes = listing_changes(rec)
+    # Receipts are separate from the original legacy record, and only exist after
+    # Supabase succeeds. Pre-migration store.json listings are not DB receipts.
+    digest = hashlib.sha256(json.dumps(rec["L"], sort_keys=True).encode()).hexdigest()
+    try:
+        with _lock:
+            business_id = business_uuid(rec["id"])
+            rows = (supabase.table("experiences").select("*")
+                    .eq("business_id", business_id).eq("is_active", True).limit(2).execute().data)
+            if len(rows) > 1:
+                raise HTTPException(409, "Multiple active experiences; listing sync needs attention.")
+            try:
+                store = load()
+            except OSError:
+                logging.getLogger(__name__).warning("Listing compatibility mirror could not be read.")
+                store = None
+            receipt = (store or {}).get("_listing_receipts", {}).get(business_id)
+            existing = rows[0] if rows else None
+            if receipt and rec["ts"] <= receipt["ts"]:
+                if not existing or existing["id"] != receipt["experience_id"]:
+                    raise HTTPException(409, "The active experience changed; review and save again.")
+                if rec["ts"] == receipt["ts"] and digest != receipt["digest"]:
+                    raise HTTPException(409, "This save timestamp already identifies another listing.")
+                return {"ok": True, "action": "unchanged", "experience": existing}
+
+            if existing:
+                if "availability" in changes:
+                    changes["availability"] = {**(existing.get("availability") or {}),
+                                               "days": changes["availability"]}
+                def same(key, value):
+                    old = existing.get(key)
+                    if key == "price":
+                        # Match the table's numeric(12,2) rounding on retries.
+                        return old is not None and Decimal(str(old)) == Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    return old == value
+                if all(same(k, v) for k, v in changes.items()):
+                    # Also covers a retry after DB success but mirror/response loss.
+                    saved, action = existing, "unchanged"
+                else:
+                    changes["revision"] = existing["revision"] + 1
+                    result = (supabase.table("experiences").update(changes)
+                              .eq("id", existing["id"]).eq("revision", existing["revision"])
+                              .eq("is_active", True).execute().data)
+                    if not result:
+                        raise HTTPException(409, "Experience changed during sync; review and save again.")
+                    saved, action = result[0], "updated"
+            else:
+                changes.update(business_id=business_id, is_active=True, revision=1)
+                changes.setdefault("activities", [])
+                changes["availability"] = {"days": changes.get("availability", []), "start_times": []}
+                # A deterministic insert ID also prevents duplicate inserts for
+                # this same save if two processes both observe no active record.
+                changes["id"] = str(uuid5(NAMESPACE_URL, f"yolowisata:listing:{business_id}:{rec['ts']}"))
+                result = supabase.table("experiences").insert(changes).execute().data
+                if not result:
+                    raise HTTPException(500, "Listing insert returned no record.")
+                saved, action = result[0], "created"
+
+            if store is not None:
+                store.setdefault("listings", {})[rec["id"]] = rec
+                store.setdefault("_listing_receipts", {})[business_id] = {
+                    "ts": rec["ts"], "digest": digest, "experience_id": saved["id"]}
+                try:
+                    save(store)
+                except Exception:
+                    # Do not log credentials, payloads, or raw exception text.
+                    logging.getLogger(__name__).warning("Listing saved in Supabase; compatibility mirror write failed.")
+            return {"ok": True, "action": action, "experience": saved}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        code = getattr(exc, "code", None)
+        if code in ("23505", "23P01"):
+            raise HTTPException(409, "Experience conflicts with an existing record.") from None
+        if code in ("23502", "23503", "23514", "22P02", "22003", "22007", "22008", "22001"):
+            raise HTTPException(400, "Invalid listing field or business reference.") from None
+        raise HTTPException(500, "Failed to save listing. Please retry.") from None
+
+
+@app.post("/api/listings")
+async def create_or_update_listing(req: Request):
+    return await run_in_threadpool(write_listing, await phase4_record(req))
 
 
 class TTSRequest(BaseModel):

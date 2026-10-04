@@ -9,6 +9,24 @@
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;height:100%;background:var(--pale);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:disabled{opacity:.55;cursor:default}
+.voice-listing{display:grid;gap:1rem}
+.voice-listing h1{font-size:1.6rem}
+.voice-listing h2{font-size:1.3rem}
+.voice-listing textarea{min-height:120px}
+.voice-mic{text-align:center}
+.voice-field{display:grid;gap:.4rem;margin-bottom:1rem}
+.voice-hint{font-size:.85rem;font-weight:700}
+.voice-save-state{border:2px solid var(--orange);border-radius:16px;padding:.85rem 1rem;background:#FFE4D9}
+.voice-save-state.err{border-color:#b42318;background:#fdecea}
+.voice-save-state.ok{border-color:var(--green);background:#DCF4E7}
+.voice-save-state p{margin-top:.35rem}
+.voice-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.voice-chips button{min-height:48px;min-width:48px;padding:.65rem .95rem;border-radius:14px;font-weight:700;font-size:1rem;background:var(--white);border:2px solid var(--line)}
+.voice-chips button.on{background:var(--yellow);border-color:var(--ink)}
+.voice-price-row{display:grid;grid-template-columns:1fr minmax(7rem,8.5rem);gap:.6rem;align-items:end}
+.voice-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.voice-saved-listing{border-left:6px solid var(--green)}
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,label:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 h1,h2,h3{line-height:1.12;margin:0;letter-spacing:-.02em;font-weight:800}
 p{margin:0}

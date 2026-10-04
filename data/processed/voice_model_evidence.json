@@ -1,0 +1,16 @@
+{
+  "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+  "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
+  "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+  "model_size_bytes": 1117320736,
+  "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+  "license": "apache-2.0",
+  "parameters_model_card": "1.54B",
+  "quantization": "Q4_K_M",
+  "stt": {
+    "model": "Systran/faster-whisper-base",
+    "revision": "ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66",
+    "license": "mit",
+    "files_size_bytes": 147884932
+  }
+}

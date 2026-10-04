@@ -247,11 +247,12 @@ class Phase4Tests(unittest.TestCase):
 
     def test_explicit_routes_precede_generic_and_mount_is_last(self):
         paths = [r.path for r in main.app.routes if "POST" in getattr(r, "methods", set())]
-        for kind in ("messages", "bookings", "bookingstatus"):
+        for kind in ("messages", "bookings", "bookingstatus", "listings"):
             self.assertLess(paths.index("/api/" + kind), paths.index("/api/{kind}"))
         self.assertEqual(main.app.routes[-1].name, "site")
-        self.post("listings", {"id": "noor", "L": {"name": "unchanged legacy route"}})
-        self.assertIn("noor", self.mirror()["listings"])
+        self.post("listings", {"id": "noor", "L": {"name": "presentation-only legacy listing"}}, 400)
+        self.post("businesses", {"id": "clocal", "name": "Local", "host": "Host", "sector": "Farm"})
+        self.assertIn("clocal", self.mirror()["businesses"])
 
 
 if __name__ == "__main__":

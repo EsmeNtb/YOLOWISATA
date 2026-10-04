@@ -1,0 +1,906 @@
+{
+  "generated_at": "2026-10-04T06:28:50.977365+00:00",
+  "dataset_sha256": "bf467c3ce73841c4b3d99d989c11b991d3058949af877eab989c5b82960b78cc",
+  "listing_extraction_baseline": {
+    "correct_fields": 55,
+    "evaluated_fields": 144,
+    "overall_accuracy": 0.3819444444444444,
+    "missing_predictions": 89,
+    "hallucinations": 0,
+    "per_field": {
+      "business_name": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "experience_title": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "description": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      },
+      "price": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "currency": {
+        "evaluated": 18,
+        "correct": 11,
+        "hallucinated": 0,
+        "missing": 7
+      },
+      "duration_minutes": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      },
+      "activities": {
+        "evaluated": 18,
+        "correct": 7,
+        "hallucinated": 0,
+        "missing": 11
+      },
+      "availability": {
+        "evaluated": 18,
+        "correct": 10,
+        "hallucinated": 0,
+        "missing": 8
+      }
+    }
+  },
+  "model_evidence": {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
+    "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "model_size_bytes": 1117320736,
+    "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+    "license": "apache-2.0",
+    "parameters_model_card": "1.54B",
+    "quantization": "Q4_K_M",
+    "stt": {
+      "model": "Systran/faster-whisper-base",
+      "revision": "ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66",
+      "license": "mit",
+      "files_size_bytes": 147884932
+    }
+  },
+  "runtime": {
+    "os": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics",
+    "ram_bytes": 16309932032,
+    "gpu_used": false,
+    "logical_cpus": 16,
+    "threads": 4,
+    "context_tokens": 4096,
+    "python": "3.12.10",
+    "packages": {
+      "llama-cpp-python": "0.3.36",
+      "faster-whisper": "1.2.1",
+      "ctranslate2": "4.8.2"
+    }
+  },
+  "cases": [
+    {
+      "id": "vl_en_01",
+      "wall_ms": 28448.15,
+      "transcript": "Hi, my name is Noor. I have a coffee farm. Guests can do a farm walk, pick some cherries, and roast coffee. It takes about three hours. It costs 150000 rupiah. I'm open Saturday and Sunday.",
+      "language": "en",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Coffee Farm",
+        "experience_title": null,
+        "description": "Guests can do a farm walk, pick some cherries, and roast coffee.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "experience_title",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 28448.13
+    },
+    {
+      "id": "vl_en_02",
+      "wall_ms": 14454.23,
+      "transcript": "My name is Darto. Welcome to my wood workshop. You can learn to carve wood and make your own piece. It's two hours, and the price is 100000 rupiah per person. Open every day.",
+      "language": "en",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "wood workshop",
+        "experience_title": "carve wood",
+        "description": "You can learn to carve wood and make your own piece.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "carve wood"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 14454.21
+    },
+    {
+      "id": "vl_en_03",
+      "wall_ms": 20921.33,
+      "transcript": "Hello, my name is Sari. Come to my kitchen. We can go to the market and cook together. Takes three hours, price is 120000 rupiah. I am open on Wednesday and Saturday.",
+      "language": "en",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": null,
+        "experience_title": null,
+        "description": "Come to my kitchen. We can go to the market and cook together.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "business_name",
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "business_name",
+        "currency",
+        "duration_minutes",
+        "experience_title",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 20921.31
+    },
+    {
+      "id": "vl_en_04",
+      "wall_ms": 23437.16,
+      "transcript": "I'm Rina, I offer a guided walk in the village. It's 75,000 rupiah and takes two hours. Open Monday to Friday.",
+      "language": "en",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Rina",
+        "experience_title": "guided walk in the village",
+        "description": "I'm Rina, I offer a guided walk in the village. It's 75,000 rupiah and takes two hours. Open Monday to Friday.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "guided walk in the village"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 23437.14
+    },
+    {
+      "id": "vl_en_05",
+      "wall_ms": 18660.21,
+      "transcript": "My name is Noor. I don't know the exact schedule yet, but visitors can roast coffee and do a farm walk.",
+      "language": "en",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Noor",
+        "experience_title": null,
+        "description": "My name is Noor. I don't know the exact schedule yet, but visitors can roast coffee and do a farm walk.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "experience_title"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 18660.2
+    },
+    {
+      "id": "vl_en_06",
+      "wall_ms": 15007.21,
+      "transcript": "Hey I'm Noor, I have a coffee farm. Not sure about the price right now, you should ask the owner when you get here.",
+      "language": "en",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Coffee Farm",
+        "experience_title": null,
+        "description": "I have a coffee farm. Not sure about the price right now, you should ask the owner when you get here.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "currency",
+        "experience_title"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 15007.19
+    },
+    {
+      "id": "vl_es_01",
+      "wall_ms": 19970.37,
+      "transcript": "Hola, me llamo Noor. Tengo una finca de café. Pueden caminar por la finca, recoger granos y tostar su café. Dura tres horas y cuesta 200 pesos. Abierto sábados y domingos.",
+      "language": "es",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "finca de café",
+        "experience_title": null,
+        "description": "Pueden caminar por la finca, recoger granos y tostar su café.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "experience_title",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 19970.34
+    },
+    {
+      "id": "vl_es_02",
+      "wall_ms": 13368.62,
+      "transcript": "Soy Darto. En mi taller pueden tallar madera. Son dos horas y el precio es de 150 pesos por persona. Abierto de lunes a viernes.",
+      "language": "es",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": null,
+        "experience_title": "tallar madera",
+        "description": "tallar madera",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "tallar madera"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "business_name",
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "business_name",
+        "currency",
+        "duration_minutes",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 13368.59
+    },
+    {
+      "id": "vl_es_03",
+      "wall_ms": 15874.71,
+      "transcript": "Me llamo Sari. Cocinaremos juntos en mi cocina. Dura tres horas, 180 pesos. Miércoles y sábados.",
+      "language": "es",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Sari",
+        "experience_title": null,
+        "description": "Me llamo Sari. Cocinaremos juntos en mi cocina.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "experience_title",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 15874.68
+    },
+    {
+      "id": "vl_es_04",
+      "wall_ms": 19088.74,
+      "transcript": "Soy Noor. Pueden venir a la finca a tostar café. No estoy seguro de los días, pregunten a mi hijo.",
+      "language": "es",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Noor",
+        "experience_title": "tostar café",
+        "description": "Soy Noor. Pueden venir a la finca a tostar café. No estoy seguro de los días, pregunten a mi hijo.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "tostar café"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 19088.72
+    },
+    {
+      "id": "vl_es_05",
+      "wall_ms": 14771.37,
+      "transcript": "Hola, mi nombre es Rina. Hago caminatas guiadas por el pueblo. Dura 2 horas.",
+      "language": "es",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Rina",
+        "experience_title": "caminatas guiadas por el pueblo",
+        "description": "Dura 2 horas.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "caminatas guiadas por el pueblo"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "duration_minutes"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 14771.35
+    },
+    {
+      "id": "vl_es_06",
+      "wall_ms": 19507.15,
+      "transcript": "Me llamo Noor, bienvenidos a la finca. Cuesta 250 pesos, incluye caminata y degustación. Abrimos los viernes.",
+      "language": "es",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "finca",
+        "experience_title": "caminata y degustación",
+        "description": "Me llamo Noor, bienvenidos a la finca. Cuesta 250 pesos, incluye caminata y degustación.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 19507.13
+    },
+    {
+      "id": "vl_id_01",
+      "wall_ms": 21068.29,
+      "transcript": "Nama saya Noor. Saya punya kebun kopi. Tamu bisa keliling kebun, petik kopi, lalu sangrai kopi sendiri. Lamanya tiga jam. Harganya 150 ribu rupiah per orang. Buka hari Sabtu dan Minggu.",
+      "language": "id",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": null,
+        "experience_title": null,
+        "description": "Tamu bisa keliling kebun, petik kopi, lalu sangrai kopi sendiri.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [],
+        "availability": []
+      },
+      "missing_fields": [
+        "business_name",
+        "experience_title",
+        "price",
+        "currency",
+        "duration_minutes",
+        "activities",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "business_name",
+        "currency",
+        "duration_minutes",
+        "experience_title",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 21067.76
+    },
+    {
+      "id": "vl_id_02",
+      "wall_ms": 23062.12,
+      "transcript": "Nama saya Darto. Tamu bisa belajar ukir kayu. Lamanya dua jam. Harganya 100 ribu rupiah. Saya buka setiap hari.",
+      "language": "id",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Darto",
+        "experience_title": "ukir kayu",
+        "description": "Nama saya Darto. Tamu bisa belajar ukir kayu. Lamanya dua jam. Harganya 100 ribu rupiah. Saya buka setiap hari.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "ukir kayu"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 23062.1
+    },
+    {
+      "id": "vl_id_03",
+      "wall_ms": 24385.93,
+      "transcript": "Nama saya Sari. Kita bisa masak sambal bersama. Tiga jam lamanya, harga 120 ribu rupiah. Buka Rabu dan Sabtu.",
+      "language": "id",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": null,
+        "experience_title": "masak sambal bersama",
+        "description": null,
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "masak sambal bersama"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "business_name",
+        "description",
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "business_name",
+        "currency",
+        "description",
+        "duration_minutes",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 24385.67
+    },
+    {
+      "id": "vl_id_04",
+      "wall_ms": 24760.95,
+      "transcript": "Nama saya Rina. Saya tawarkan jalan keliling desa, dua jam. Harganya 75 ribu rupiah. Buka setiap hari.",
+      "language": "id",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Rina",
+        "experience_title": "jalan keliling desa",
+        "description": "Nama saya Rina. Saya tawarkan jalan keliling desa, dua jam. Harganya 75 ribu rupiah. Buka setiap hari.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "jalan keliling desa"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency",
+        "duration_minutes",
+        "price"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 24760.9
+    },
+    {
+      "id": "vl_id_05",
+      "wall_ms": 18031.6,
+      "transcript": "Nama saya Noor. Di kebun kopi ini kita bisa sangrai kopi. Untuk harga dan jam buka, silakan tanya langsung pada saya nanti ya.",
+      "language": "id",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "kebun kopi",
+        "experience_title": "sangrai kopi",
+        "description": "Untuk harga dan jam buka, silakan tanya langsung pada saya nanti ya.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "sangrai kopi"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "availability",
+        "currency"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 18031.57
+    },
+    {
+      "id": "vl_id_06",
+      "wall_ms": 19619.99,
+      "transcript": "Nama saya Noor. Kami menawarkan keliling kebun kopi. Lamanya sekitar satu jam.",
+      "language": "id",
+      "extractor": {
+        "type": "small_ai",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "quantization": "Q4_K_M",
+        "model_size_bytes": 1117320736
+      },
+      "listing": {
+        "business_name": "Kebun Kopi",
+        "experience_title": "keliling kebun kopi",
+        "description": "Nama saya Noor. Kami menawarkan keliling kebun kopi. Lamanya sekitar satu jam.",
+        "price": null,
+        "currency": null,
+        "duration_minutes": null,
+        "activities": [
+          "keliling kebun kopi"
+        ],
+        "availability": []
+      },
+      "missing_fields": [
+        "price",
+        "currency",
+        "duration_minutes",
+        "availability"
+      ],
+      "uncertain_fields": [
+        "activities",
+        "currency",
+        "duration_minutes"
+      ],
+      "error": null,
+      "requires_confirmation": true,
+      "processing_ms": 19619.7
+    }
+  ],
+  "notes": [
+    "No STT accuracy measurement: dataset contains text only.",
+    "Original semantic scoring retained: description presence, list containment and numeric substrings are permissive.",
+    "Typed currency comparison fixes legacy scorer's IDR-only assumption for new output; baseline code path unchanged.",
+    "Benchmark expects inferred business names and MXN for unspecified pesos; safety wrapper does not supply those facts."
+  ],
+  "listing_extraction_small_ai": {
+    "correct_fields": 41,
+    "evaluated_fields": 144,
+    "overall_accuracy": 0.2847222222222222,
+    "missing_predictions": 103,
+    "hallucinations": 0,
+    "per_field": {
+      "business_name": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "experience_title": {
+        "evaluated": 18,
+        "correct": 0,
+        "hallucinated": 0,
+        "missing": 18
+      },
+      "description": {
+        "evaluated": 18,
+        "correct": 17,
+        "hallucinated": 0,
+        "missing": 1
+      },
+      "price": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      },
+      "currency": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      },
+      "duration_minutes": {
+        "evaluated": 18,
+        "correct": 5,
+        "hallucinated": 0,
+        "missing": 13
+      },
+      "activities": {
+        "evaluated": 18,
+        "correct": 1,
+        "hallucinated": 0,
+        "missing": 17
+      },
+      "availability": {
+        "evaluated": 18,
+        "correct": 6,
+        "hallucinated": 0,
+        "missing": 12
+      }
+    }
+  },
+  "latency_ms": {
+    "mean_including_cold_load": 19691.007222222222,
+    "median": 19563.57,
+    "min": 13368.62,
+    "max": 28448.15,
+    "p90_nearest_rank": 24760.95,
+    "first_case_cold_load": 28448.15,
+    "mean_remaining_17": 19175.88117647059
+  },
+  "invalid_outputs": 0,
+  "implementation_sha256": {
+    "backend/listing_ai.py": "26e12cab6bb8ebd67a11f018463abdb8364cb79449f0e024d01e51c9fd034337",
+    "scripts/listing_evaluation.py": "efc98c6d8ca32d3e442fdd77520cb11ea3c097596cbac38d21ad0130be352010"
+  }
+}
